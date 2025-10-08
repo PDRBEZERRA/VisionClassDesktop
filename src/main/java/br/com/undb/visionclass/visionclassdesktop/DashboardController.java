@@ -43,8 +43,7 @@ public class DashboardController {
 
     @FXML
     private void onGerirTurmasClick() {
-        System.out.println("Botão 'Gerir Turmas' clicado!");
-        // loadCenterView("turmas-view.fxml");
+        loadCenterView("turmas-view.fxml");
     }
 
     @FXML
