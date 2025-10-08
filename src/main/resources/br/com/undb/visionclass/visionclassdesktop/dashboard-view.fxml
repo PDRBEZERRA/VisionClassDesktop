@@ -18,12 +18,11 @@
                 <Button onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
                 <Button fx:id="gerirUsuariosButton" onAction="#onGerirUsuariosClick" styleClass="sidebar-button" text="Gerir Utilizadores" />
                 <Button onAction="#onGerirTurmasClick" styleClass="sidebar-button" text="Gerir Turmas" />
+                <Button onAction="#onRelatoriosClick" styleClass="sidebar-button" text="Relatórios" />
                 <Button onAction="#onSairButtonClick" styleClass="sidebar-button" text="Sair" />
             </children>
         </VBox>
     </left>
-    <center>
-    </center>
     <top>
         <HBox alignment="CENTER_RIGHT" prefHeight="80.0" styleClass="header" BorderPane.alignment="CENTER">
             <children>
@@ -47,4 +46,6 @@
             </children>
         </HBox>
     </top>
+    <center>
+    </center>
 </BorderPane>

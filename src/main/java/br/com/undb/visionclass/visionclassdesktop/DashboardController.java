@@ -60,6 +60,11 @@ public class DashboardController {
         HelloApplication.getScreenManager().switchTo("login-view.fxml");
     }
 
+    @FXML
+    private void onRelatoriosClick() {
+        loadCenterView("relatorios-view.fxml");
+    }
+
     private void loadCenterView(String fxmlFile) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
