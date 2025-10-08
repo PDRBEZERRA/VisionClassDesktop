@@ -1,0 +1,85 @@
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15; /* Cantos arredondados */
+    -fx-padding: 30; /* Espaçamento interno */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 20, 0.5, 0, 0); /* Sombra */
+}
+
+/* Estilo para todos os campos de texto */
+.text-field, .password-field {
+    -fx-background-radius: 8;
+    -fx-font-size: 14px;
+}
+
+/* Estilo para o ComboBox (Tipo de usuário) */
+.combo-box {
+    -fx-background-radius: 8;
+}
+
+/* Estilo para o botão principal */
+.primary-button {
+    -fx-background-color: #3b82f6; /* Cor azul */
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Efeito ao passar o mouse por cima do botão */
+.primary-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+.stats-card {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0.2, 0, 0);
+    -fx-spacing: 8;
+}
+
+.stats-card .label:first-child {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555;
+}
+
+.stats-card .label:last-child {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111;
+}
+
+/* Estilo geral da barra lateral */
+.sidebar {
+    -fx-background-color: #f8fafc; /* Um cinza muito claro, quase branco */
+    -fx-padding: 8;
+}
+
+/* Estilo para todos os botões da barra lateral */
+.sidebar-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 48;
+    -fx-font-size: 14px;
+    -fx-text-fill: #334155; /* Cinza escuro para o texto */
+    -fx-font-weight: 500;
+    -fx-alignment: center-left;
+    -fx-background-radius: 8;
+}
+
+/* Efeito ao passar o rato por cima */
+.sidebar-button:hover {
+    -fx-background-color: #e2e8f0; /* Cinza um pouco mais escuro */
+    -fx-text-fill: #0f172a; /* Preto para o texto */
+}
+
+/* Estilo para o botão "ativo" (vamos aplicar isto no código mais tarde) */
+.sidebar-button:focused, .sidebar-button.active {
+    -fx-background-color: #3b82f6; /* Azul primário */
+    -fx-text-fill: white;
+}
+
+/* Estilo para os ícones dentro dos botões ativos */
+.sidebar-button:focused .ikonli-font-icon,
+.sidebar-button.active .ikonli-font-icon {
+    -fx-icon-color: white;
+}
