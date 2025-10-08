@@ -51,7 +51,7 @@
                         <Label styleClass="title-medium" text="Ações Rápidas" />
                         <HBox alignment="CENTER" spacing="20.0">
                             <children>
-                                <Button mnemonicParsing="false" styleClass="quick-action-button" text="Cadastrar Utilizador" />
+                                <Button mnemonicParsing="false" onAction="#onCadastrarUsuarioClick" styleClass="quick-action-button" text="Cadastrar Utilizador" />
                                 <Button mnemonicParsing="false" styleClass="quick-action-button" text="Criar Turma" />
                                 <Button mnemonicParsing="false" styleClass="quick-action-button" text="Ver Relatórios" />
                             </children>
