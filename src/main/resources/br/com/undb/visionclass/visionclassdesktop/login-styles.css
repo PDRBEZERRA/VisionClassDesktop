@@ -132,3 +132,17 @@
     -fx-border-color: #3b82f6; /* Azul ao passar o rato */
     -fx-background-color: #f9fafb;
 }
+
+/* --- ESTILOS PARA O CABEÇALHO DO DASHBOARD --- */
+
+.header {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 1 0; /* Apenas uma borda na parte inferior */
+}
+
+.text-username {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+}
