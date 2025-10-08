@@ -83,3 +83,52 @@
 .sidebar-button.active .ikonli-font-icon {
     -fx-icon-color: white;
 }
+
+/* --- ESTILOS PARA A PÁGINA PRINCIPAL DO DASHBOARD --- */
+
+/* Estilos para Títulos */
+.title-large {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827; /* Cor escura para o texto */
+}
+
+.title-medium {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+.text-muted {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+}
+
+/* Estilo para os cartões de conteúdo (como Atividades Recentes) */
+.card {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 15, 0.2, 0, 0);
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+/* Estilo para os botões de ação rápida */
+.quick-action-button {
+    -fx-pref-height: 80;
+    -fx-pref-width: 180;
+    -fx-background-color: white;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 10, 0.1, 0, 0);
+}
+
+.quick-action-button:hover {
+    -fx-border-color: #3b82f6; /* Azul ao passar o rato */
+    -fx-background-color: #f9fafb;
+}
