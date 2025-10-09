@@ -20,7 +20,7 @@
                     </font>
                 </Label>
                 <Pane HBox.hgrow="ALWAYS" />
-                <Button mnemonicParsing="false" styleClass="primary-button" text="Adicionar Nova Turma" />
+                <Button mnemonicParsing="false" styleClass="primary-button" text="Adicionar Nova Turma" onAction="#onAdicionarButtonClick" />
             </children>
         </HBox>
 

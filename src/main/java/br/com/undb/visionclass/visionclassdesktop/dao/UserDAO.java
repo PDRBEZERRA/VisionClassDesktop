@@ -153,4 +153,28 @@ public class UserDAO {
 
         return count;
     }
+
+    public List<User> findByRole(UserRole role) {
+        String sql = "SELECT * FROM users WHERE role = ? ORDER BY nome";
+        List<User> users = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, role.name());
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setNome(rs.getString("nome"));
+                // (outros campos podem ser preenchidos se necessário)
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar utilizadores por função: " + role.name());
+            e.printStackTrace();
+        }
+        return users;
+    }
 }
