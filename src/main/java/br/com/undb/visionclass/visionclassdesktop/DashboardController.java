@@ -32,7 +32,6 @@ public class DashboardController {
 
     /**
      * Atualiza o nome de utilizador e a imagem do avatar no cabeçalho.
-     * Este método é público para poder ser chamado por outros controladores.
      */
     public void refreshUserProfile() {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
@@ -43,23 +42,29 @@ public class DashboardController {
     }
 
     /**
-     * Carrega a imagem do avatar no ImageView, com uma imagem padrão caso falhe.
-     * @param photoPath O caminho para o ficheiro da imagem do utilizador.
+     * Carrega a imagem do avatar no ImageView a partir do nome do ficheiro,
+     * procurando na pasta 'user_photos'.
+     * @param photoFileName O nome do ficheiro da imagem (e não o caminho completo).
      */
-    private void loadUserAvatar(String photoPath) {
+    private void loadUserAvatar(String photoFileName) {
         try {
-            if (photoPath != null && !photoPath.isEmpty()) {
-                File file = new File(photoPath);
+            Image image;
+            if (photoFileName != null && !photoFileName.isEmpty()) {
+                // Constrói o caminho para o ficheiro dentro da pasta 'user_photos'
+                File file = new File("user_photos/" + photoFileName);
                 if (file.exists()) {
-                    userAvatar.setImage(new Image(file.toURI().toString()));
-                    return;
+                    image = new Image(file.toURI().toString());
+                } else {
+                    // Se o ficheiro não for encontrado, usa a imagem padrão
+                    image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
+            } else {
+                // Se não houver nome de ficheiro, usa a imagem padrão
+                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
-            // Carrega a imagem padrão se o caminho for nulo, vazio ou o ficheiro não existir.
-            Image defaultImage = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
-            userAvatar.setImage(defaultImage);
+            userAvatar.setImage(image);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do avatar: " + photoPath);
+            System.err.println("Erro ao carregar a imagem do avatar no dashboard.");
             e.printStackTrace();
         }
     }
@@ -70,7 +75,7 @@ public class DashboardController {
     }
 
     @FXML
-    public void onGerirUsuariosClick() { // Mantido como public
+    public void onGerirUsuariosClick() {
         loadCenterView("usuarios-view.fxml");
     }
 
@@ -99,7 +104,6 @@ public class DashboardController {
             if (controller instanceof DashboardHomeController) {
                 ((DashboardHomeController) controller).setMainController(this);
             } else if (controller instanceof UsuariosController) {
-                // Passa a referência deste DashboardController para o UsuariosController
                 ((UsuariosController) controller).setMainDashboardController(this);
             }
 

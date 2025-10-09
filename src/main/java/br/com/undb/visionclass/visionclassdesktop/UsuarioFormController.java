@@ -123,31 +123,53 @@ public class UsuarioFormController {
         closeWindow();
     }
 
+    /**
+     * Guarda a foto selecionada numa pasta 'user_photos' na raiz do projeto e retorna apenas o nome do ficheiro.
+     * @param photoFile O ficheiro da foto a ser guardado.
+     * @return O nome do ficheiro da foto guardada.
+     */
     private String savePhotoToFileSystem(File photoFile) {
         try {
-            Path targetDir = Paths.get(System.getProperty("user.home"), "visionclass_data", "user_photos");
-            Files.createDirectories(targetDir);
+            // Cria uma pasta 'user_photos' na raiz do projeto, se não existir
+            Path targetDir = Paths.get("user_photos");
+            if (!Files.exists(targetDir)) {
+                Files.createDirectories(targetDir);
+            }
+
+            // Cria um nome de ficheiro único para evitar conflitos
             String fileName = UUID.randomUUID().toString() + "_" + photoFile.getName();
             Path targetPath = targetDir.resolve(fileName);
+
+            // Copia o ficheiro selecionado para o novo local
             Files.copy(photoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            return targetPath.toAbsolutePath().toString();
+
+            // Retorna APENAS o nome do ficheiro para ser guardado na base de dados
+            return fileName;
+
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
+            return null; // Retorna nulo em caso de erro
         }
     }
 
-    private void loadAvatarImage(String photoPath) {
+    /**
+     * Carrega a imagem do avatar no ImageView a partir de um nome de ficheiro.
+     * @param photoFileName O nome do ficheiro da imagem (e não o caminho completo).
+     */
+    private void loadAvatarImage(String photoFileName) {
         try {
             Image image;
-            if (photoPath != null && !photoPath.isEmpty()) {
-                File file = new File(photoPath);
+            if (photoFileName != null && !photoFileName.isEmpty()) {
+                // Constrói o caminho para o ficheiro dentro da pasta 'user_photos'
+                File file = new File("user_photos/" + photoFileName);
                 if (file.exists()) {
                     image = new Image(file.toURI().toString());
                 } else {
+                    // Se o ficheiro não for encontrado, usa a imagem padrão
                     image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
             } else {
+                // Se não houver nome de ficheiro, usa a imagem padrão
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
             avatarImageView.setImage(image);
