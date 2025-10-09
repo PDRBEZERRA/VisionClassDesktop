@@ -34,14 +34,14 @@ public class UsuariosController {
     private TableColumn<User, String> matriculaColumn;
     @FXML
     private TableColumn<User, UserRole> roleColumn;
-    @FXML
-    private Button adicionarButton;
-    @FXML
-    private Button editarButton;
-    @FXML
-    private Button excluirButton;
 
     private UserDAO userDAO = new UserDAO();
+    private DashboardController mainDashboardController; // Variável para guardar a referência
+
+    // Método para o DashboardController se "apresentar"
+    public void setMainDashboardController(DashboardController controller) {
+        this.mainDashboardController = controller;
+    }
 
     @FXML
     public void initialize() {
@@ -52,7 +52,8 @@ public class UsuariosController {
         loadUsersData();
     }
 
-    private void loadUsersData() {
+    // Renomeado para ser público e poder ser chamado de fora (se necessário)
+    public void loadUsersData() {
         List<User> userList = userDAO.findAll();
         ObservableList<User> observableUserList = FXCollections.observableArrayList(userList);
         usersTableView.setItems(observableUserList);
@@ -60,7 +61,7 @@ public class UsuariosController {
 
     @FXML
     private void onAdicionarButtonClick() {
-        showUserForm(null); // Passa null para indicar que é um novo utilizador
+        showUserForm(null);
     }
 
     @FXML
@@ -70,7 +71,7 @@ public class UsuariosController {
             showAlert(Alert.AlertType.WARNING, "Nenhuma Seleção", "Por favor, selecione um utilizador para editar.");
             return;
         }
-        showUserForm(selectedUser); // Passa o utilizador selecionado para o formulário
+        showUserForm(selectedUser);
     }
 
     private void showUserForm(User user) {
@@ -78,12 +79,12 @@ public class UsuariosController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("usuario-form-view.fxml"));
             Parent root = loader.load();
 
-            // Pega o controlador do formulário ANTES de mostrar a janela
             UsuarioFormController controller = loader.getController();
             if (user != null) {
-                // Se estiver a editar, chama o método para preencher os dados
                 controller.setUserToEdit(user);
             }
+            // Passa a referência do DashboardController para o formulário
+            controller.setMainDashboardController(this.mainDashboardController);
 
             Stage stage = new Stage();
             stage.setTitle(user == null ? "Adicionar Novo Utilizador" : "Editar Utilizador");
@@ -92,7 +93,7 @@ public class UsuariosController {
             stage.setResizable(false);
             stage.showAndWait();
 
-            loadUsersData(); // Atualiza a tabela após fechar
+            loadUsersData();
 
         } catch (IOException e) {
             System.err.println("Erro ao abrir o formulário de utilizador.");

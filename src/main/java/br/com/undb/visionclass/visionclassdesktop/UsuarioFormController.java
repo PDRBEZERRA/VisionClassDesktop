@@ -3,8 +3,8 @@ package br.com.undb.visionclass.visionclassdesktop;
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
+import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
@@ -24,7 +24,6 @@ import java.util.UUID;
 
 public class UsuarioFormController {
 
-    // --- Componentes FXML existentes ---
     @FXML
     private TextField nomeTextField;
     @FXML
@@ -38,24 +37,23 @@ public class UsuarioFormController {
     @FXML
     private ComboBox<UserRole> roleComboBox;
     @FXML
-    private Button salvarButton;
-    @FXML
-    private Button cancelarButton;
-
-    // --- Novos componentes FXML para a foto ---
-    @FXML
     private ImageView avatarImageView;
     @FXML
-    private Button anexarFotoButton;
+    private Button salvarButton;
 
     private UserDAO userDAO = new UserDAO();
     private User userToEdit;
-    private File selectedPhotoFile; // Guarda o ficheiro da foto selecionada
+    private File selectedPhotoFile;
+    private DashboardController mainDashboardController; // Referência ao controlador principal
+
+    // Método para receber a referência
+    public void setMainDashboardController(DashboardController controller) {
+        this.mainDashboardController = controller;
+    }
 
     @FXML
     public void initialize() {
         roleComboBox.getItems().setAll(UserRole.values());
-        // Define uma imagem padrão
         loadAvatarImage(null);
     }
 
@@ -66,32 +64,20 @@ public class UsuarioFormController {
         matriculaTextField.setText(user.getMatricula());
         cpfTextField.setText(user.getCpf());
         roleComboBox.setValue(user.getRole());
-
         senhaPasswordField.setDisable(true);
         senhaPasswordField.setPromptText("Senha não pode ser alterada aqui");
-
-        // Carrega a foto de perfil existente do utilizador
         loadAvatarImage(user.getFoto());
     }
 
-    /**
-     * Chamado quando o botão "Anexar Foto" é clicado.
-     */
     @FXML
     private void onAnexarFotoClick() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Selecionar Foto de Perfil");
-        // Filtra para mostrar apenas ficheiros de imagem
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Imagens", "*.png", "*.jpg", "*.jpeg")
-        );
-
-        // Abre a janela de seleção de ficheiro
-        File file = fileChooser.showOpenDialog(anexarFotoButton.getScene().getWindow());
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Imagens", "*.png", "*.jpg", "*.jpeg"));
+        File file = fileChooser.showOpenDialog(salvarButton.getScene().getWindow());
 
         if (file != null) {
             selectedPhotoFile = file;
-            // Mostra a imagem selecionada no ImageView
             Image image = new Image(file.toURI().toString());
             avatarImageView.setImage(image);
         }
@@ -99,13 +85,9 @@ public class UsuarioFormController {
 
     @FXML
     private void onSalvarButtonClick() {
-        // ... (validações)
-
-        String photoPath = null;
+        String photoPath = (userToEdit != null) ? userToEdit.getFoto() : null;
         if (selectedPhotoFile != null) {
             photoPath = savePhotoToFileSystem(selectedPhotoFile);
-        } else if (userToEdit != null) {
-            photoPath = userToEdit.getFoto(); // Mantém a foto antiga se nenhuma nova for selecionada
         }
 
         if (userToEdit == null) { // Modo Criação
@@ -117,7 +99,7 @@ public class UsuarioFormController {
             newUser.setMatricula(matriculaTextField.getText());
             newUser.setCpf(cpfTextField.getText());
             newUser.setRole(roleComboBox.getValue());
-            newUser.setFoto(photoPath); // Guarda o caminho da foto
+            newUser.setFoto(photoPath);
             userDAO.save(newUser);
         } else { // Modo Edição
             userToEdit.setNome(nomeTextField.getText());
@@ -125,60 +107,52 @@ public class UsuarioFormController {
             userToEdit.setMatricula(matriculaTextField.getText());
             userToEdit.setCpf(cpfTextField.getText());
             userToEdit.setRole(roleComboBox.getValue());
-            userToEdit.setFoto(photoPath); // Guarda o novo caminho da foto
+            userToEdit.setFoto(photoPath);
             userDAO.update(userToEdit);
-        }
 
+            // Se o utilizador editado for o mesmo que está logado...
+            if (userToEdit.getId().equals(UserSession.getInstance().getLoggedInUser().getId())) {
+                // Atualiza a sessão
+                UserSession.getInstance().setLoggedInUser(userToEdit);
+                // E notifica o Dashboard para refrescar o perfil
+                if (mainDashboardController != null) {
+                    mainDashboardController.refreshUserProfile();
+                }
+            }
+        }
         closeWindow();
     }
 
-    /**
-     * Carrega a imagem do avatar no ImageView.
-     * @param photoPath O caminho para o ficheiro da imagem.
-     */
-    private void loadAvatarImage(String photoPath) {
+    private String savePhotoToFileSystem(File photoFile) {
         try {
-            if (photoPath != null && !photoPath.isEmpty()) {
-                File file = new File(photoPath);
-                if (file.exists()) {
-                    avatarImageView.setImage(new Image(file.toURI().toString()));
-                    return;
-                }
-            }
-            // Se não houver foto ou o ficheiro não for encontrado, carrega a imagem padrão
-            Image defaultImage = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
-            avatarImageView.setImage(defaultImage);
-        } catch (Exception e) {
-            // Em caso de erro, carrega a imagem padrão
-            Image defaultImage = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
-            avatarImageView.setImage(defaultImage);
+            Path targetDir = Paths.get(System.getProperty("user.home"), "visionclass_data", "user_photos");
+            Files.createDirectories(targetDir);
+            String fileName = UUID.randomUUID().toString() + "_" + photoFile.getName();
+            Path targetPath = targetDir.resolve(fileName);
+            Files.copy(photoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            return targetPath.toAbsolutePath().toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
-    /**
-     * Guarda a foto selecionada numa pasta 'user_photos' e retorna o caminho.
-     * @param photoFile O ficheiro da foto a ser guardado.
-     * @return O caminho absoluto para a foto guardada.
-     */
-    private String savePhotoToFileSystem(File photoFile) {
+    private void loadAvatarImage(String photoPath) {
         try {
-            // Cria uma pasta 'user_photos' no diretório home do utilizador, se não existir
-            Path targetDir = Paths.get(System.getProperty("user.home"), "visionclass_data", "user_photos");
-            Files.createDirectories(targetDir);
-
-            // Cria um nome de ficheiro único para evitar conflitos
-            String fileName = UUID.randomUUID().toString() + "_" + photoFile.getName();
-            Path targetPath = targetDir.resolve(fileName);
-
-            // Copia o ficheiro selecionado para o novo local
-            Files.copy(photoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-            // Retorna o caminho absoluto do ficheiro guardado
-            return targetPath.toAbsolutePath().toString();
-
-        } catch (IOException e) {
+            Image image;
+            if (photoPath != null && !photoPath.isEmpty()) {
+                File file = new File(photoPath);
+                if (file.exists()) {
+                    image = new Image(file.toURI().toString());
+                } else {
+                    image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                }
+            } else {
+                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+            }
+            avatarImageView.setImage(image);
+        } catch (Exception e) {
             e.printStackTrace();
-            return null; // Retorna nulo em caso de erro
         }
     }
 
@@ -191,6 +165,4 @@ public class UsuarioFormController {
         Stage stage = (Stage) salvarButton.getScene().getWindow();
         stage.close();
     }
-
-    // (Pode adicionar o método showAlert aqui se precisar)
 }
