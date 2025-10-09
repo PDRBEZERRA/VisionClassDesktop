@@ -1,5 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
+import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
 import javafx.fxml.FXML;
@@ -9,27 +10,26 @@ public class DashboardHomeController {
 
     @FXML
     private Label totalAlunosLabel;
-
     @FXML
     private Label totalProfessoresLabel;
-
     @FXML
     private Label totalTurmasLabel;
-
     @FXML
     private Label totalSimuladosLabel;
 
     private UserDAO userDAO = new UserDAO();
+    private TurmaDAO turmaDAO = new TurmaDAO();
     private DashboardController mainController;
 
     @FXML
     public void initialize() {
         int numAlunos = userDAO.countByRole(UserRole.ALUNO);
         int numProfessores = userDAO.countByRole(UserRole.PROFESSOR);
+        int numTurmas = turmaDAO.countAll();
 
         totalAlunosLabel.setText(String.valueOf(numAlunos));
         totalProfessoresLabel.setText(String.valueOf(numProfessores));
-        totalTurmasLabel.setText("0");
+        totalTurmasLabel.setText(String.valueOf(numTurmas));
         totalSimuladosLabel.setText("0");
     }
 
@@ -41,6 +41,13 @@ public class DashboardHomeController {
     private void onCadastrarUsuarioClick() {
         if (mainController != null) {
             mainController.onGerirUsuariosClick();
+        }
+    }
+
+    @FXML
+    private void onCriarTurmaClick() {
+        if (mainController != null) {
+            mainController.onGerirTurmasClick();
         }
     }
 }

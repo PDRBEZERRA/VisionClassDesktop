@@ -30,9 +30,6 @@ public class DashboardController {
         loadCenterView("dashboard-home-view.fxml");
     }
 
-    /**
-     * Atualiza o nome de utilizador e a imagem do avatar no cabeçalho.
-     */
     public void refreshUserProfile() {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         if (loggedInUser != null) {
@@ -41,25 +38,17 @@ public class DashboardController {
         }
     }
 
-    /**
-     * Carrega a imagem do avatar no ImageView a partir do nome do ficheiro,
-     * procurando na pasta 'user_photos'.
-     * @param photoFileName O nome do ficheiro da imagem (e não o caminho completo).
-     */
     private void loadUserAvatar(String photoFileName) {
         try {
             Image image;
             if (photoFileName != null && !photoFileName.isEmpty()) {
-                // Constrói o caminho para o ficheiro dentro da pasta 'user_photos'
                 File file = new File("user_photos/" + photoFileName);
                 if (file.exists()) {
                     image = new Image(file.toURI().toString());
                 } else {
-                    // Se o ficheiro não for encontrado, usa a imagem padrão
                     image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
             } else {
-                // Se não houver nome de ficheiro, usa a imagem padrão
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
             userAvatar.setImage(image);
@@ -80,7 +69,7 @@ public class DashboardController {
     }
 
     @FXML
-    private void onGerirTurmasClick() {
+    public void onGerirTurmasClick() { // Alterado para public
         loadCenterView("turmas-view.fxml");
     }
 

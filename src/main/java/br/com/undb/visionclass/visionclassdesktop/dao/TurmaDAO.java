@@ -67,5 +67,31 @@ public class TurmaDAO {
         }
     }
 
+    // Dentro da classe TurmaDAO.java
+
+    /**
+     * Conta o número total de turmas no banco de dados.
+     * @return O número de turmas encontradas.
+     */
+    public int countAll() {
+        String sql = "SELECT COUNT(*) FROM turmas";
+        int count = 0;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao contar as turmas.");
+            e.printStackTrace();
+        }
+
+        return count;
+    }
+
     // Adicionaremos os métodos update() e delete() mais tarde.
 }
