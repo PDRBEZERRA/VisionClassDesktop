@@ -2,16 +2,23 @@ package br.com.undb.visionclass.visionclassdesktop;
 
 import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
+import br.com.undb.visionclass.visionclassdesktop.model.User;
+import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
+import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public class TurmasController {
@@ -19,35 +26,46 @@ public class TurmasController {
     @FXML
     private TilePane turmasTilePane;
 
+    @FXML
+    private Button adicionarTurmaButton; // Ligação ao botão do FXML
+
     private TurmaDAO turmaDAO = new TurmaDAO();
 
     @FXML
     public void initialize() {
+        User loggedInUser = UserSession.getInstance().getLoggedInUser();
+        if (loggedInUser != null) {
+            // Lógica para esconder o botão se o utilizador não for ADMIN
+            boolean isAdmin = (loggedInUser.getRole() == UserRole.ADMIN);
+            adicionarTurmaButton.setVisible(isAdmin);
+            adicionarTurmaButton.setManaged(isAdmin);
+        }
+
         loadTurmasData();
     }
 
     private void loadTurmasData() {
-        // Limpa quaisquer cards que já existam para evitar duplicação
         turmasTilePane.getChildren().clear();
 
-        // Busca todas as turmas do banco de dados
-        List<Turma> turmas = turmaDAO.findAll();
+        User loggedInUser = UserSession.getInstance().getLoggedInUser();
+        if (loggedInUser == null) return;
 
-        // Para cada turma na lista, cria e adiciona um card
+        List<Turma> turmas;
+        if (loggedInUser.getRole() == UserRole.ADMIN) {
+            turmas = turmaDAO.findAll();
+        } else if (loggedInUser.getRole() == UserRole.PROFESSOR) {
+            turmas = turmaDAO.findByProfessorId(loggedInUser.getId());
+        } else {
+            turmas = Collections.emptyList();
+        }
+
         for (Turma turma : turmas) {
             try {
-                // Carrega o FXML do "molde" do card
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("turma-card-view.fxml"));
                 VBox cardNode = loader.load();
-
-                // Pega o controlador do card que acabamos de carregar
                 TurmaCardController cardController = loader.getController();
-                // Envia os dados da turma atual para o controlador do card preenchê-lo
                 cardController.setData(turma);
-
-                // Adiciona o card preenchido ao TilePane
                 turmasTilePane.getChildren().add(cardNode);
-
             } catch (IOException e) {
                 System.err.println("Erro ao carregar o card da turma: " + turma.getNome());
                 e.printStackTrace();
@@ -55,10 +73,6 @@ public class TurmasController {
         }
     }
 
-    /**
-     * Chamado quando o botão "Adicionar Nova Turma" é clicado.
-     * Abre uma nova janela modal com o formulário de turma.
-     */
     @FXML
     private void onAdicionarButtonClick() {
         try {
@@ -68,11 +82,10 @@ public class TurmasController {
             Stage stage = new Stage();
             stage.setTitle("Adicionar Nova Turma");
             stage.setScene(new Scene(root));
-            stage.initModality(Modality.APPLICATION_MODAL); // Bloqueia a janela principal
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
-            stage.showAndWait(); // Mostra a janela e espera que ela seja fechada
+            stage.showAndWait();
 
-            // Após o formulário ser fechado, atualiza a lista de cards
             loadTurmasData();
 
         } catch (IOException e) {

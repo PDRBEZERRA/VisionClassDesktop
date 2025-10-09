@@ -93,5 +93,39 @@ public class TurmaDAO {
         return count;
     }
 
+    // Dentro da classe TurmaDAO.java
+
+    /**
+     * Busca todas as turmas de um professor específico.
+     * @param professorId O ID do professor.
+     * @return uma Lista de objetos Turma.
+     */
+    public List<Turma> findByProfessorId(String professorId) {
+        String sql = "SELECT * FROM turmas WHERE professorId = ? ORDER BY nome";
+        List<Turma> turmas = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, professorId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Turma turma = new Turma();
+                turma.setId(rs.getString("id"));
+                turma.setNome(rs.getString("nome"));
+                turma.setAno(rs.getString("ano"));
+                turma.setPeriodo(rs.getString("periodo"));
+                turma.setProfessorId(rs.getString("professorId"));
+                turma.setDesempenho(rs.getDouble("desempenho"));
+                turmas.add(turma);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar turmas por professorId.");
+            e.printStackTrace();
+        }
+        return turmas;
+    }
+
     // Adicionaremos os métodos update() e delete() mais tarde.
 }
