@@ -5,21 +5,24 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="450.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.UsuarioFormController">
+<AnchorPane prefHeight="500.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.UsuarioFormController">
     <children>
         <Label layoutX="30.0" layoutY="30.0" text="Formulário de Utilizador">
             <font>
                 <Font name="System Bold" size="24.0" />
             </font>
         </Label>
-        <GridPane hgap="10.0" layoutX="30.0" layoutY="90.0" prefWidth="440.0" vgap="15.0">
+        <GridPane hgap="10.0" layoutX="30.0" layoutY="160.0" prefWidth="540.0" vgap="15.0">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="150.0" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -47,11 +50,21 @@
                 <PasswordField fx:id="senhaPasswordField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             </children>
         </GridPane>
-        <HBox alignment="CENTER_RIGHT" layoutX="30.0" prefHeight="40.0" prefWidth="440.0" spacing="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
+        <HBox alignment="CENTER_RIGHT" prefHeight="40.0" prefWidth="540.0" spacing="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
             <children>
                 <Button fx:id="cancelarButton" mnemonicParsing="false" onAction="#onCancelarButtonClick" style="-fx-background-color: #e2e8f0;" text="Cancelar" />
                 <Button fx:id="salvarButton" mnemonicParsing="false" onAction="#onSalvarButtonClick" style="-fx-background-color: #2563eb; -fx-text-fill: white;" text="Guardar" />
             </children>
         </HBox>
+        <VBox alignment="CENTER" layoutX="470.0" layoutY="30.0" spacing="10.0">
+            <children>
+                <ImageView fx:id="avatarImageView" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
+                    <clip>
+                        <Circle radius="40.0" centerX="40.0" centerY="40.0" />
+                    </clip>
+                </ImageView>
+                <Button fx:id="anexarFotoButton" mnemonicParsing="false" onAction="#onAnexarFotoClick" text="Anexar Foto" />
+            </children>
+        </VBox>
     </children>
 </AnchorPane>
