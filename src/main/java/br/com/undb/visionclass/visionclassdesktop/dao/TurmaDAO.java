@@ -1,0 +1,71 @@
+package br.com.undb.visionclass.visionclassdesktop.dao;
+
+import br.com.undb.visionclass.visionclassdesktop.database.ConnectionFactory;
+import br.com.undb.visionclass.visionclassdesktop.model.Turma;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TurmaDAO {
+
+    /**
+     * Busca todas as turmas registadas no banco de dados.
+     * @return uma Lista de objetos Turma.
+     */
+    public List<Turma> findAll() {
+        String sql = "SELECT * FROM turmas ORDER BY nome";
+        List<Turma> turmas = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Turma turma = new Turma();
+                turma.setId(rs.getString("id"));
+                turma.setNome(rs.getString("nome"));
+                turma.setAno(rs.getString("ano"));
+                turma.setPeriodo(rs.getString("periodo"));
+                turma.setProfessorId(rs.getString("professorId"));
+                turma.setDesempenho(rs.getDouble("desempenho"));
+                // Nota: A lista de alunos será tratada separadamente numa tabela de associação.
+                turmas.add(turma);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar todas as turmas.");
+            e.printStackTrace();
+        }
+        return turmas;
+    }
+
+    /**
+     * Guarda uma nova turma no banco de dados.
+     * @param turma O objeto Turma a ser guardado.
+     */
+    public void save(Turma turma) {
+        String sql = "INSERT INTO turmas (id, nome, ano, periodo, professorId, desempenho) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, turma.getId());
+            stmt.setString(2, turma.getNome());
+            stmt.setString(3, turma.getAno());
+            stmt.setString(4, turma.getPeriodo());
+            stmt.setString(5, turma.getProfessorId());
+            stmt.setDouble(6, turma.getDesempenho());
+
+            stmt.executeUpdate();
+            System.out.println("Turma guardada com sucesso!");
+        } catch (SQLException e) {
+            System.err.println("Erro ao guardar a turma.");
+            e.printStackTrace();
+        }
+    }
+
+    // Adicionaremos os métodos update() e delete() mais tarde.
+}

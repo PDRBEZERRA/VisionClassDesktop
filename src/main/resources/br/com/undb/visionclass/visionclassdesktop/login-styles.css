@@ -146,3 +146,41 @@
     -fx-font-weight: bold;
     -fx-text-fill: #334155;
 }
+
+/* --- ESTILOS PARA O CARD DA TURMA --- */
+
+.turma-card {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-background-radius: 12;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0.1, 0, 0);
+    -fx-spacing: 5;
+    -fx-pref-height: 200;
+}
+
+.turma-card:hover {
+    -fx-border-color: #3b82f6;
+}
+
+.turma-card-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.turma-card-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+}
+
+.turma-card-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #374151;
+}
+
+.turma-card .progress-bar > .bar {
+    -fx-background-color: #3b82f6; /* Cor da barra de progresso */
+}
