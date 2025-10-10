@@ -19,7 +19,7 @@
             <children>
                 <Label fx:id="totalAlunosLabel" styleClass="turma-card-text" text="X Alunos" />
                 <Pane HBox.hgrow="ALWAYS" />
-                <Button fx:id="verTurmaButton" mnemonicParsing="false" styleClass="primary-button" text="Ver Turma" />
+                <Button fx:id="verTurmaButton" mnemonicParsing="false" styleClass="primary-button" text="Ver Turma" onAction="#handleVerTurma" />
             </children>
             <VBox.margin>
                 <Insets top="10.0" />

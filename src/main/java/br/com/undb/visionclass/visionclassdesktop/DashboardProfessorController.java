@@ -1,5 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
+import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.fxml.FXML;
@@ -15,6 +16,10 @@ import java.io.IOException;
 
 public class DashboardProfessorController {
 
+    // --- INÍCIO DAS ALTERAÇÕES ---
+    private static DashboardProfessorController instance;
+    // --- FIM DAS ALTERAÇÕES ---
+
     @FXML
     private BorderPane mainBorderPane;
     @FXML
@@ -24,10 +29,35 @@ public class DashboardProfessorController {
 
     @FXML
     public void initialize() {
+        // --- INÍCIO DAS ALTERAÇÕES ---
+        instance = this; // Salva a instância atual para ser acessada globalmente
+        // --- FIM DAS ALTERAÇÕES ---
+
         refreshUserProfile();
-        // A tela inicial do professor agora é o seu dashboard home
         loadCenterView("dashboard-professor-home-view.fxml");
     }
+
+    // --- INÍCIO DAS ALTERAÇÕES ---
+    public static DashboardProfessorController getInstance() {
+        return instance;
+    }
+
+    public void showDetalhesTurma(Turma turma) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("detalhes-turma-view.fxml"));
+            Parent view = loader.load();
+
+            // Pega o controller da tela de detalhes
+            DetalhesTurmaController detalhesController = loader.getController();
+            detalhesController.setTurma(turma); // Passa o objeto da turma
+            detalhesController.setDashboardController(this); // Passa a si mesmo para o botão "voltar" funcionar
+
+            mainBorderPane.setCenter(view); // Coloca a nova tela no centro
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    // --- FIM DAS ALTERAÇÕES ---
 
     public void refreshUserProfile() {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
@@ -57,35 +87,29 @@ public class DashboardProfessorController {
         }
     }
 
-    // --- Métodos de Navegação do Professor ---
-
     @FXML
     private void onDashboardButtonClick() {
-        // O botão Dashboard agora carrega a tela inicial do professor
         loadCenterView("dashboard-professor-home-view.fxml");
     }
 
     @FXML
-    private void onMinhasTurmasClick() {
+    public void onMinhasTurmasClick() { // Mudei para public para poder chamar de fora
         loadCenterView("turmas-view.fxml");
     }
 
     @FXML
     private void onCarometroClick() {
         System.out.println("Navegar para Carômetro");
-        // loadCenterView("carometro-view.fxml");
     }
 
     @FXML
     private void onBancoQuestoesClick() {
         System.out.println("Navegar para Banco de Questões");
-        // loadCenterView("banco-questoes-view.fxml");
     }
 
     @FXML
     private void onSimuladosClick() {
         System.out.println("Navegar para Simulados");
-        // loadCenterView("simulados-view.fxml");
     }
 
     @FXML

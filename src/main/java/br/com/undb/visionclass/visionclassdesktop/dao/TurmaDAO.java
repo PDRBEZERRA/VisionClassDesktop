@@ -127,5 +127,64 @@ public class TurmaDAO {
         return turmas;
     }
 
+    // Dentro da classe TurmaDAO.java
+
+    /**
+     * Adiciona um aluno a uma turma.
+     */
+    public void addAlunoToTurma(String turmaId, String alunoId) {
+        String sql = "INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            stmt.setString(2, alunoId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Busca todos os IDs de alunos de uma turma específica.
+     */
+    public List<String> findAlunosIdsByTurmaId(String turmaId) {
+        String sql = "SELECT aluno_id FROM turma_alunos WHERE turma_id = ?";
+        List<String> alunoIds = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                alunoIds.add(rs.getString("aluno_id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return alunoIds;
+    }
+
+    // Adicione também um método para buscar uma turma pelo seu ID
+    public Turma findById(String turmaId) {
+        String sql = "SELECT * FROM turmas WHERE id = ?";
+        Turma turma = null;
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                turma = new Turma();
+                turma.setId(rs.getString("id"));
+                turma.setNome(rs.getString("nome"));
+                turma.setAno(rs.getString("ano"));
+                turma.setPeriodo(rs.getString("periodo"));
+                turma.setProfessorId(rs.getString("professorId"));
+                turma.setDesempenho(rs.getDouble("desempenho"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return turma;
+    }
+
     // Adicionaremos os métodos update() e delete() mais tarde.
 }

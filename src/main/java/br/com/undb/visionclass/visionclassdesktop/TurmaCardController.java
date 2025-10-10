@@ -1,6 +1,9 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
+import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
+import br.com.undb.visionclass.visionclassdesktop.model.User;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -19,10 +22,30 @@ public class TurmaCardController {
     @FXML
     private Button verTurmaButton;
 
+    private Turma turma;
+    private UserDAO userDAO = new UserDAO(); // Instância do DAO
+
     public void setData(Turma turma) {
+        this.turma = turma;
         nomeTurmaLabel.setText(turma.getNome());
-        nomeProfessorLabel.setText("Prof. ID: " + turma.getProfessorId());
         desempenhoProgressBar.setProgress(turma.getDesempenho() / 100.0);
         totalAlunosLabel.setText("0 Alunos"); // Placeholder
+
+        // --- LÓGICA ATUALIZADA ---
+        if (turma.getProfessorId() != null && !turma.getProfessorId().isEmpty()) {
+            User professor = userDAO.findById(turma.getProfessorId());
+            if (professor != null) {
+                nomeProfessorLabel.setText("Prof. " + professor.getNome());
+            } else {
+                nomeProfessorLabel.setText("Professor não encontrado");
+            }
+        } else {
+            nomeProfessorLabel.setText("Professor não atribuído");
+        }
+    }
+
+    @FXML
+    void handleVerTurma(ActionEvent event) {
+        DashboardProfessorController.getInstance().showDetalhesTurma(this.turma);
     }
 }

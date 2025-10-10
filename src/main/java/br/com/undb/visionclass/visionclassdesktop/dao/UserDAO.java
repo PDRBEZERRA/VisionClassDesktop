@@ -127,11 +127,6 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Conta o número de utilizadores com uma determinada função.
-     * @param role A função a ser contada (ADMIN, PROFESSOR, ALUNO).
-     * @return O número de utilizadores encontrados.
-     */
     public int countByRole(UserRole role) {
         String sql = "SELECT COUNT(*) FROM users WHERE role = ?";
         int count = 0;
@@ -168,7 +163,6 @@ public class UserDAO {
                 User user = new User();
                 user.setId(rs.getString("id"));
                 user.setNome(rs.getString("nome"));
-                // (outros campos podem ser preenchidos se necessário)
                 users.add(user);
             }
         } catch (SQLException e) {
@@ -176,5 +170,33 @@ public class UserDAO {
             e.printStackTrace();
         }
         return users;
+    }
+
+    // --- NOVO MÉTODO ADICIONADO AQUI ---
+    public User findById(String userId) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        User user = null;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                user = new User();
+                user.setId(rs.getString("id"));
+                user.setNome(rs.getString("nome"));
+                user.setEmail(rs.getString("email"));
+                user.setMatricula(rs.getString("matricula"));
+                user.setRole(UserRole.valueOf(rs.getString("role")));
+                user.setCpf(rs.getString("cpf"));
+                user.setFoto(rs.getString("foto"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar utilizador por ID.");
+            e.printStackTrace();
+        }
+        return user;
     }
 }

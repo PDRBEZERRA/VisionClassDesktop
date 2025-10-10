@@ -184,3 +184,13 @@
 .turma-card .progress-bar > .bar {
     -fx-background-color: #3b82f6; /* Cor da barra de progresso */
 }
+
+.stats-card-simple {
+    -fx-spacing: 5;
+}
+
+.stats-card-number {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111;
+}
