@@ -8,8 +8,6 @@ import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
@@ -29,7 +27,6 @@ public class CarometroController {
 
     @FXML
     public void initialize() {
-        // --- INÍCIO DA CORREÇÃO ---
         // Configura o ComboBox para exibir o nome da Turma
         turmaComboBox.setConverter(new StringConverter<Turma>() {
             @Override
@@ -42,7 +39,6 @@ public class CarometroController {
                 return null; // Não precisamos converter de String para Turma
             }
         });
-        // --- FIM DA CORREÇÃO ---
 
         carregarTurmasDoProfessor();
 
@@ -71,7 +67,11 @@ public class CarometroController {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("aluno-card-view.fxml"));
                 VBox alunoCard = loader.load();
                 AlunoCardController controller = loader.getController();
-                controller.setData(aluno);
+
+                // --- ESTA É A LINHA QUE MUDOU ---
+                controller.setData(aluno, turma); // Agora passa a turma junto com o aluno
+                // --- FIM DA ALTERAÇÃO ---
+
                 alunosTilePane.getChildren().add(alunoCard);
             } catch (IOException e) {
                 e.printStackTrace();

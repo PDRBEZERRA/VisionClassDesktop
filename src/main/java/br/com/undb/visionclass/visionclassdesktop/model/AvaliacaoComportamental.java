@@ -3,9 +3,11 @@ package br.com.undb.visionclass.visionclassdesktop.model;
 import java.time.LocalDate;
 
 public class AvaliacaoComportamental {
+
     private String id;
     private String alunoId;
     private String professorId;
+    private String turmaId; // Adicionamos este campo
     private LocalDate data;
     private int assiduidade;
     private int participacao;
@@ -13,20 +15,7 @@ public class AvaliacaoComportamental {
     private int sociabilidade;
     private String observacoes;
 
-    public AvaliacaoComportamental() {
-    }
-
-    public AvaliacaoComportamental(String id, String alunoId, String professorId, LocalDate data, int assiduidade, int participacao, int responsabilidade, int sociabilidade, String observacoes) {
-        this.id = id;
-        this.alunoId = alunoId;
-        this.professorId = professorId;
-        this.data = data;
-        this.assiduidade = assiduidade;
-        this.participacao = participacao;
-        this.responsabilidade = responsabilidade;
-        this.sociabilidade = sociabilidade;
-        this.observacoes = observacoes;
-    }
+    // Getters e Setters
 
     public String getId() {
         return id;
@@ -50,6 +39,14 @@ public class AvaliacaoComportamental {
 
     public void setProfessorId(String professorId) {
         this.professorId = professorId;
+    }
+
+    public String getTurmaId() {
+        return turmaId;
+    }
+
+    public void setTurmaId(String turmaId) {
+        this.turmaId = turmaId;
     }
 
     public LocalDate getData() {

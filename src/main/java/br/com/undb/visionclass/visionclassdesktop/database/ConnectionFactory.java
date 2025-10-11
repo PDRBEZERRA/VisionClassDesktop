@@ -39,13 +39,29 @@ public class ConnectionFactory {
                 + " desempenho NUMERIC(5, 2)"
                 + ");";
 
-        // --- NOVA TABELA ADICIONADA AQUI ---
         String createTurmaAlunosTableSql = "CREATE TABLE IF NOT EXISTS turma_alunos ("
                 + " turma_id TEXT NOT NULL,"
                 + " aluno_id TEXT NOT NULL,"
                 + " PRIMARY KEY (turma_id, aluno_id),"
                 + " FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,"
                 + " FOREIGN KEY (aluno_id) REFERENCES users(id) ON DELETE CASCADE"
+                + ");";
+
+        // --- NOVA TABELA ADICIONADA AQUI ---
+        String createAvaliacaoTableSql = "CREATE TABLE IF NOT EXISTS avaliacoes_comportamentais ("
+                + " id TEXT PRIMARY KEY,"
+                + " aluno_id TEXT NOT NULL,"
+                + " professor_id TEXT NOT NULL,"
+                + " turma_id TEXT NOT NULL,"
+                + " data TEXT NOT NULL,"
+                + " assiduidade INTEGER,"
+                + " participacao INTEGER,"
+                + " responsabilidade INTEGER,"
+                + " sociabilidade INTEGER,"
+                + " observacoes TEXT,"
+                + " FOREIGN KEY (aluno_id) REFERENCES users(id) ON DELETE CASCADE,"
+                + " FOREIGN KEY (professor_id) REFERENCES users(id) ON DELETE CASCADE,"
+                + " FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE"
                 + ");";
 
         String countUsersSql = "SELECT COUNT(*) FROM users;";
@@ -56,8 +72,9 @@ public class ConnectionFactory {
 
             stmt.execute(createUserTableSql);
             stmt.execute(createTurmaTableSql);
-            stmt.execute(createTurmaAlunosTableSql); // Executa a criação da nova tabela
-            System.out.println("Tabelas 'users', 'turmas' e 'turma_alunos' prontas.");
+            stmt.execute(createTurmaAlunosTableSql);
+            stmt.execute(createAvaliacaoTableSql); // Executa a criação da nova tabela
+            System.out.println("Tabelas prontas.");
 
             ResultSet rs = stmt.executeQuery(countUsersSql);
             if (rs.next() && rs.getInt(1) == 0) {
