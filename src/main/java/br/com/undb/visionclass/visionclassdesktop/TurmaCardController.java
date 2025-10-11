@@ -1,5 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
+import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO; // Importar TurmaDAO
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
@@ -23,15 +24,21 @@ public class TurmaCardController {
     private Button verTurmaButton;
 
     private Turma turma;
-    private UserDAO userDAO = new UserDAO(); // Instância do DAO
+    private UserDAO userDAO = new UserDAO();
+    // --- INÍCIO DA ALTERAÇÃO ---
+    private TurmaDAO turmaDAO = new TurmaDAO(); // Instância do TurmaDAO
+    // --- FIM DA ALTERAÇÃO ---
 
     public void setData(Turma turma) {
         this.turma = turma;
         nomeTurmaLabel.setText(turma.getNome());
         desempenhoProgressBar.setProgress(turma.getDesempenho() / 100.0);
-        totalAlunosLabel.setText("0 Alunos"); // Placeholder
 
         // --- LÓGICA ATUALIZADA ---
+        // Contar e exibir o total de alunos
+        int total = turmaDAO.countAlunosByTurmaId(turma.getId());
+        totalAlunosLabel.setText(total + (total == 1 ? " Aluno" : " Alunos"));
+
         if (turma.getProfessorId() != null && !turma.getProfessorId().isEmpty()) {
             User professor = userDAO.findById(turma.getProfessorId());
             if (professor != null) {

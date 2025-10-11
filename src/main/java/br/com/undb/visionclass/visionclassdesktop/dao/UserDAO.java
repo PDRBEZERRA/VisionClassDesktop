@@ -172,7 +172,6 @@ public class UserDAO {
         return users;
     }
 
-    // --- NOVO MÉTODO ADICIONADO AQUI ---
     public User findById(String userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
         User user = null;
@@ -198,5 +197,65 @@ public class UserDAO {
             e.printStackTrace();
         }
         return user;
+    }
+
+    // --- NOVO MÉTODO PARA BUSCAR ALUNOS ---
+    public List<User> findAlunosNotInTurmaByName(String nome, String turmaId) {
+        String sql = "SELECT * FROM users " +
+                "WHERE role = 'ALUNO' AND nome LIKE ? AND id NOT IN (" +
+                "  SELECT aluno_id FROM turma_alunos WHERE turma_id = ?" +
+                ") ORDER BY nome";
+
+        List<User> users = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + nome + "%"); // O '%' permite buscar por partes do nome
+            stmt.setString(2, turmaId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setNome(rs.getString("nome"));
+                user.setMatricula(rs.getString("matricula"));
+                // Preencha outros campos se necessário para a exibição
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar alunos por nome fora da turma.");
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    // Adicione este método dentro da classe UserDAO
+
+    public List<User> findAlunosByTurmaId(String turmaId) {
+        String sql = "SELECT u.* FROM users u " +
+                "INNER JOIN turma_alunos ta ON u.id = ta.aluno_id " +
+                "WHERE ta.turma_id = ? ORDER BY u.nome";
+
+        List<User> alunos = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, turmaId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setNome(rs.getString("nome"));
+                user.setMatricula(rs.getString("matricula"));
+                user.setEmail(rs.getString("email"));
+                // Preencha outros campos se forem necessários na tabela
+                alunos.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar alunos da turma.");
+            e.printStackTrace();
+        }
+        return alunos;
     }
 }

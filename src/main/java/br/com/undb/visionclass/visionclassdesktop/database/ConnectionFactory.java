@@ -7,14 +7,10 @@ import java.util.UUID;
 
 public class ConnectionFactory {
 
-    // 1. URL alterada para SQLite. O ficheiro visionclass.db será criado na raiz do projeto.
     private static final String DB_URL = "jdbc:sqlite:visionclass.db";
-
-    // 2. Utilizador e senha REMOVIDOS, não são necessários para o SQLite.
 
     public static Connection getConnection() {
         try {
-            // 3. Conexão simplificada, sem utilizador/senha.
             return DriverManager.getConnection(DB_URL);
         } catch (SQLException e) {
             System.err.println("Erro ao conectar ao banco de dados SQLite.");
@@ -22,10 +18,6 @@ public class ConnectionFactory {
         }
     }
 
-    /**
-     * Inicializa a base de dados: cria as tabelas se não existirem
-     * e adiciona um utilizador administrador padrão se a tabela de utilizadores estiver vazia.
-     */
     public static void initializeDatabase() {
         String createUserTableSql = "CREATE TABLE IF NOT EXISTS users ("
                 + " id TEXT PRIMARY KEY,"
@@ -47,18 +39,26 @@ public class ConnectionFactory {
                 + " desempenho NUMERIC(5, 2)"
                 + ");";
 
+        // --- NOVA TABELA ADICIONADA AQUI ---
+        String createTurmaAlunosTableSql = "CREATE TABLE IF NOT EXISTS turma_alunos ("
+                + " turma_id TEXT NOT NULL,"
+                + " aluno_id TEXT NOT NULL,"
+                + " PRIMARY KEY (turma_id, aluno_id),"
+                + " FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,"
+                + " FOREIGN KEY (aluno_id) REFERENCES users(id) ON DELETE CASCADE"
+                + ");";
+
         String countUsersSql = "SELECT COUNT(*) FROM users;";
         String insertAdminSql = "INSERT INTO users (id, nome, email, senha, matricula, role, cpf) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Garante que ambas as tabelas existem
             stmt.execute(createUserTableSql);
             stmt.execute(createTurmaTableSql);
-            System.out.println("Tabelas 'users' e 'turmas' prontas.");
+            stmt.execute(createTurmaAlunosTableSql); // Executa a criação da nova tabela
+            System.out.println("Tabelas 'users', 'turmas' e 'turma_alunos' prontas.");
 
-            // Verifica se a tabela de utilizadores está vazia e cria o admin se necessário
             ResultSet rs = stmt.executeQuery(countUsersSql);
             if (rs.next() && rs.getInt(1) == 0) {
                 System.out.println("Tabela de utilizadores vazia. A criar utilizador admin padrão...");

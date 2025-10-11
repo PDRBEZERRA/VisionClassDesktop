@@ -33,7 +33,7 @@
                             </children>
                         </VBox>
                         <Pane HBox.hgrow="ALWAYS" />
-                        <Button mnemonicParsing="false" styleClass="primary-button" text="Adicionar Aluno" />
+                        <Button mnemonicParsing="false" styleClass="primary-button" text="Adicionar Aluno" onAction="#handleAdicionarAluno"/>
                     </children>
                 </HBox>
                 <HBox spacing="30.0">
