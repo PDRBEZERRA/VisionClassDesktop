@@ -7,6 +7,9 @@ import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -14,9 +17,12 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -44,7 +50,7 @@ public class AvaliacaoComportamentalController {
     private User aluno;
     private Turma turma;
     private AvaliacaoComportamentalDAO avaliacaoDAO = new AvaliacaoComportamentalDAO();
-    private AvaliacaoComportamental avaliacaoExistente; // Guarda a avaliação carregada
+    private AvaliacaoComportamental avaliacaoExistente;
 
     public void setData(User aluno, Turma turma) {
         this.aluno = aluno;
@@ -76,19 +82,17 @@ public class AvaliacaoComportamentalController {
     @FXML
     private void handleSalvar(ActionEvent event) {
         if (avaliacaoExistente != null) {
-            // --- LÓGICA DE ATUALIZAÇÃO ---
             avaliacaoExistente.setAssiduidade(getToggleGroupValue(assiduidadeGroup));
             avaliacaoExistente.setParticipacao(getToggleGroupValue(participacaoGroup));
             avaliacaoExistente.setResponsabilidade(getToggleGroupValue(responsabilidadeGroup));
             avaliacaoExistente.setSociabilidade(getToggleGroupValue(sociabilidadeGroup));
             avaliacaoExistente.setObservacoes(observacoesTextArea.getText());
-            avaliacaoExistente.setData(LocalDate.now()); // Atualiza a data da modificação
+            avaliacaoExistente.setData(LocalDate.now());
             avaliacaoExistente.setProfessorId(UserSession.getInstance().getLoggedInUser().getId());
 
             avaliacaoDAO.update(avaliacaoExistente);
             mostrarAlerta("Avaliação Atualizada", "A avaliação de " + aluno.getNome() + " foi atualizada.");
         } else {
-            // --- LÓGICA DE CRIAÇÃO (COMO ANTES) ---
             AvaliacaoComportamental novaAvaliacao = new AvaliacaoComportamental();
             novaAvaliacao.setId(UUID.randomUUID().toString());
             novaAvaliacao.setAlunoId(aluno.getId());
@@ -112,16 +116,29 @@ public class AvaliacaoComportamentalController {
         closeWindow();
     }
 
+    // --- MÉTODO ATUALIZADO ---
     @FXML
     private void handleVerHistorico(ActionEvent event) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Em Breve");
-        alert.setHeaderText("Funcionalidade em desenvolvimento.");
-        alert.setContentText("O histórico de avaliações estará disponível em breve.");
-        alert.showAndWait();
-    }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("historico-avaliacao-view.fxml"));
+            Parent root = loader.load();
 
-    // --- MÉTODOS AUXILIARES ---
+            // Pega o controller da nova janela de histórico
+            HistoricoAvaliacaoController controller = loader.getController();
+            controller.setData(aluno, turma); // Passa os dados do aluno e da turma
+
+            Stage modalStage = new Stage();
+            modalStage.initStyle(StageStyle.DECORATED);
+            modalStage.setTitle("Histórico de " + aluno.getNome());
+            modalStage.initModality(Modality.APPLICATION_MODAL);
+            modalStage.setScene(new Scene(root));
+            modalStage.showAndWait();
+
+        } catch (IOException e) {
+            System.err.println("Erro ao abrir o histórico de avaliações.");
+            e.printStackTrace();
+        }
+    }
 
     private void mostrarAlerta(String titulo, String mensagem) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -137,7 +154,6 @@ public class AvaliacaoComportamentalController {
         return group.getToggles().indexOf(selected) + 1;
     }
 
-    // Novo método para selecionar o emoji com base no valor salvo
     private void setToggleGroupValue(ToggleGroup group, int value) {
         if (value > 0 && value <= group.getToggles().size()) {
             group.selectToggle(group.getToggles().get(value - 1));

@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AvaliacaoComportamentalDAO {
 
@@ -38,11 +40,6 @@ public class AvaliacaoComportamentalDAO {
         }
     }
 
-    // --- NOVOS MÉTODOS ADICIONADOS AQUI ---
-
-    /**
-     * Busca a avaliação mais recente de um aluno em uma turma específica.
-     */
     public AvaliacaoComportamental findLatestByAlunoAndTurma(String alunoId, String turmaId) {
         String sql = "SELECT * FROM avaliacoes_comportamentais WHERE aluno_id = ? AND turma_id = ? ORDER BY data DESC LIMIT 1";
         AvaliacaoComportamental avaliacao = null;
@@ -74,9 +71,6 @@ public class AvaliacaoComportamentalDAO {
         return avaliacao;
     }
 
-    /**
-     * Atualiza uma avaliação comportamental existente.
-     */
     public void update(AvaliacaoComportamental avaliacao) {
         String sql = "UPDATE avaliacoes_comportamentais SET " +
                 "data = ?, assiduidade = ?, participacao = ?, responsabilidade = ?, sociabilidade = ?, observacoes = ?, professor_id = ? " +
@@ -101,5 +95,41 @@ public class AvaliacaoComportamentalDAO {
             System.err.println("Erro ao atualizar a avaliação comportamental.");
             e.printStackTrace();
         }
+    }
+
+    // --- NOVO MÉTODO PARA O HISTÓRICO ---
+    /**
+     * Busca todo o histórico de avaliações de um aluno em uma turma.
+     */
+    public List<AvaliacaoComportamental> findAllByAlunoAndTurma(String alunoId, String turmaId) {
+        String sql = "SELECT * FROM avaliacoes_comportamentais WHERE aluno_id = ? AND turma_id = ? ORDER BY data DESC";
+        List<AvaliacaoComportamental> historico = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, alunoId);
+            stmt.setString(2, turmaId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                AvaliacaoComportamental avaliacao = new AvaliacaoComportamental();
+                avaliacao.setId(rs.getString("id"));
+                avaliacao.setAlunoId(rs.getString("aluno_id"));
+                avaliacao.setProfessorId(rs.getString("professor_id"));
+                avaliacao.setTurmaId(rs.getString("turma_id"));
+                avaliacao.setData(LocalDate.parse(rs.getString("data")));
+                avaliacao.setAssiduidade(rs.getInt("assiduidade"));
+                avaliacao.setParticipacao(rs.getInt("participacao"));
+                avaliacao.setResponsabilidade(rs.getInt("responsabilidade"));
+                avaliacao.setSociabilidade(rs.getInt("sociabilidade"));
+                avaliacao.setObservacoes(rs.getString("observacoes"));
+                historico.add(avaliacao);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar o histórico de avaliações.");
+            e.printStackTrace();
+        }
+        return historico;
     }
 }

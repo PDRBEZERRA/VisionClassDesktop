@@ -1,5 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop.model;
 
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 
 public class AvaliacaoComportamental {
@@ -7,7 +8,7 @@ public class AvaliacaoComportamental {
     private String id;
     private String alunoId;
     private String professorId;
-    private String turmaId; // Adicionamos este campo
+    private String turmaId;
     private LocalDate data;
     private int assiduidade;
     private int participacao;
@@ -95,5 +96,17 @@ public class AvaliacaoComportamental {
 
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+
+    // --- NOVO MÉTODO PARA CALCULAR A MÉDIA ---
+    /**
+     * Calcula a média das quatro notas comportamentais.
+     * @return A média formatada como uma String com uma casa decimal.
+     */
+    public String getMediaComportamental() {
+        double media = (assiduidade + participacao + responsabilidade + sociabilidade) / 4.0;
+        // Formata para ter apenas uma casa decimal
+        DecimalFormat df = new DecimalFormat("#.#");
+        return df.format(media);
     }
 }
