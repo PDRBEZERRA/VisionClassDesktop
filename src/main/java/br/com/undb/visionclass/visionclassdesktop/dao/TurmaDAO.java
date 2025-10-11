@@ -14,7 +14,6 @@ public class TurmaDAO {
 
     /**
      * Busca todas as turmas registadas no banco de dados.
-     * @return uma Lista de objetos Turma.
      */
     public List<Turma> findAll() {
         String sql = "SELECT * FROM turmas ORDER BY nome";
@@ -43,7 +42,6 @@ public class TurmaDAO {
 
     /**
      * Guarda uma nova turma no banco de dados.
-     * @param turma O objeto Turma a ser guardado.
      */
     public void save(Turma turma) {
         String sql = "INSERT INTO turmas (id, nome, ano, periodo, professorId, desempenho) VALUES (?, ?, ?, ?, ?, ?)";
@@ -68,7 +66,6 @@ public class TurmaDAO {
 
     /**
      * Conta o número total de turmas no banco de dados.
-     * @return O número de turmas encontradas.
      */
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM turmas";
@@ -81,19 +78,15 @@ public class TurmaDAO {
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-
         } catch (SQLException e) {
             System.err.println("Erro ao contar as turmas.");
             e.printStackTrace();
         }
-
         return count;
     }
 
     /**
      * Busca todas as turmas de um professor específico.
-     * @param professorId O ID do professor.
-     * @return uma Lista de objetos Turma.
      */
     public List<Turma> findByProfessorId(String professorId) {
         String sql = "SELECT * FROM turmas WHERE professorId = ? ORDER BY nome";
@@ -124,8 +117,6 @@ public class TurmaDAO {
 
     /**
      * Busca uma turma pelo seu ID.
-     * @param turmaId O ID da turma.
-     * @return um objeto Turma, ou null se não for encontrada.
      */
     public Turma findById(String turmaId) {
         String sql = "SELECT * FROM turmas WHERE id = ?";
@@ -151,8 +142,6 @@ public class TurmaDAO {
 
     /**
      * Adiciona um aluno a uma turma na tabela de associação.
-     * @param turmaId O ID da turma.
-     * @param alunoId O ID do aluno.
      */
     public void addAlunoToTurma(String turmaId, String alunoId) {
         String sql = "INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)";
@@ -162,8 +151,7 @@ public class TurmaDAO {
             stmt.setString(2, alunoId);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            // É bom tratar a exceção de chave duplicada (aluno já na turma)
-            if (e.getErrorCode() == 19) { // Código de erro do SQLite para UNIQUE constraint failed
+            if (e.getErrorCode() == 19) { // UNIQUE constraint failed
                 System.out.println("Aluno já está matriculado nesta turma.");
             } else {
                 System.err.println("Erro ao adicionar aluno à turma.");
@@ -172,8 +160,9 @@ public class TurmaDAO {
         }
     }
 
-    // Adicione este método dentro da classe TurmaDAO
-
+    /**
+     * Conta o número de alunos em uma turma específica.
+     */
     public int countAlunosByTurmaId(String turmaId) {
         String sql = "SELECT COUNT(*) FROM turma_alunos WHERE turma_id = ?";
         int count = 0;
@@ -189,5 +178,23 @@ public class TurmaDAO {
             e.printStackTrace();
         }
         return count;
+    }
+
+    // --- NOVO MÉTODO PARA REMOVER ALUNO ---
+    /**
+     * Remove um aluno de uma turma na tabela de associação.
+     */
+    public void removeAlunoFromTurma(String turmaId, String alunoId) {
+        String sql = "DELETE FROM turma_alunos WHERE turma_id = ? AND aluno_id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            stmt.setString(2, alunoId);
+            stmt.executeUpdate();
+            System.out.println("Aluno removido da turma com sucesso!");
+        } catch (SQLException e) {
+            System.err.println("Erro ao remover aluno da turma.");
+            e.printStackTrace();
+        }
     }
 }

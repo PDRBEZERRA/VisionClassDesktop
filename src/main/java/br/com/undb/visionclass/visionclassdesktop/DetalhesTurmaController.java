@@ -9,26 +9,25 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Callback;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class DetalhesTurmaController {
 
     private DashboardProfessorController dashboardController;
     private UserDAO userDAO = new UserDAO();
-    // --- INÍCIO DAS ALTERAÇÕES ---
-    private TurmaDAO turmaDAO = new TurmaDAO(); // Instanciar TurmaDAO
-    // --- FIM DAS ALTERAÇÕES ---
+    private TurmaDAO turmaDAO = new TurmaDAO();
 
     @FXML
     private Label nomeTurmaLabel;
@@ -38,9 +37,6 @@ public class DetalhesTurmaController {
     private Label totalAlunosLabel;
     @FXML
     private Label professorResponsavelLabel;
-
-    // --- INÍCIO DAS ALTERAÇÕES ---
-    // A tabela agora espera objetos do tipo User
     @FXML
     private TableView<User> alunosTableView;
     @FXML
@@ -53,7 +49,6 @@ public class DetalhesTurmaController {
     private TableColumn<User, Double> mediaColumn;
     @FXML
     private TableColumn<User, Void> acoesColumn;
-    // --- FIM DAS ALTERAÇÕES ---
 
     private Turma turmaAtual;
     private ObservableList<User> alunosDaTurma = FXCollections.observableArrayList();
@@ -77,36 +72,70 @@ public class DetalhesTurmaController {
         } else {
             professorResponsavelLabel.setText("Não atribuído");
         }
-
-        // --- INÍCIO DAS ALTERAÇÕES ---
-        // Carrega os dados da turma assim que a tela é definida
         refreshDetalhes();
-        // --- FIM DAS ALTERAÇÕES ---
     }
 
     @FXML
     public void initialize() {
-        // --- INÍCIO DAS ALTERAÇÕES ---
-        // Configura as colunas da tabela para saberem de onde pegar os dados do objeto User
         matriculaColumn.setCellValueFactory(new PropertyValueFactory<>("matricula"));
         nomeColumn.setCellValueFactory(new PropertyValueFactory<>("nome"));
         emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
-        // A média e ações serão implementadas no futuro
-
-        // Liga a lista de alunos à tabela
         alunosTableView.setItems(alunosDaTurma);
-        // --- FIM DAS ALTERAÇÕES ---
+
+        // --- INÍCIO DA LÓGICA DE REMOÇÃO ---
+        // Configura a coluna de ações para ter um botão "Remover"
+        setupAcoesColumn();
+        // --- FIM DA LÓGICA DE REMOÇÃO ---
     }
 
-    // --- NOVO MÉTODO PARA ATUALIZAR A TELA ---
+    private void setupAcoesColumn() {
+        Callback<TableColumn<User, Void>, TableCell<User, Void>> cellFactory = new Callback<>() {
+            @Override
+            public TableCell<User, Void> call(final TableColumn<User, Void> param) {
+                return new TableCell<>() {
+                    private final Button btnRemover = new Button("Remover");
+
+                    {
+                        btnRemover.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;"); // Estilo do botão
+                        btnRemover.setOnAction(event -> {
+                            User alunoParaRemover = getTableView().getItems().get(getIndex());
+                            confirmarRemocao(alunoParaRemover);
+                        });
+                    }
+
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(btnRemover);
+                            setAlignment(Pos.CENTER);
+                        }
+                    }
+                };
+            }
+        };
+        acoesColumn.setCellFactory(cellFactory);
+    }
+
+    private void confirmarRemocao(User aluno) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar Remoção");
+        alert.setHeaderText("Remover aluno da turma");
+        alert.setContentText("Tem a certeza de que deseja remover " + aluno.getNome() + " desta turma?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            turmaDAO.removeAlunoFromTurma(turmaAtual.getId(), aluno.getId());
+            refreshDetalhes(); // Atualiza a tabela e os contadores
+        }
+    }
+
     private void refreshDetalhes() {
         if (turmaAtual == null) return;
-
-        // 1. Atualizar a contagem de alunos
         int total = turmaDAO.countAlunosByTurmaId(turmaAtual.getId());
         totalAlunosLabel.setText(String.valueOf(total));
-
-        // 2. Atualizar a lista de alunos na tabela
         List<User> alunos = userDAO.findAlunosByTurmaId(turmaAtual.getId());
         alunosDaTurma.setAll(alunos);
     }
@@ -116,22 +145,15 @@ public class DetalhesTurmaController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("adicionar-aluno-view.fxml"));
             Parent root = loader.load();
-
             AdicionarAlunoController controller = loader.getController();
             controller.setTurma(turmaAtual);
-
             Stage modalStage = new Stage();
             modalStage.initStyle(StageStyle.DECORATED);
             modalStage.setTitle("Adicionar Aluno à Turma");
             modalStage.initModality(Modality.APPLICATION_MODAL);
             modalStage.setScene(new Scene(root));
-            modalStage.showAndWait(); // O código para aqui até a janela ser fechada
-
-            // --- INÍCIO DA ALTERAÇÃO ---
-            // Assim que a janela é fechada, o código continua daqui e atualiza a tela!
+            modalStage.showAndWait();
             refreshDetalhes();
-            // --- FIM DA ALTERAÇÃO ---
-
         } catch (IOException e) {
             e.printStackTrace();
         }
