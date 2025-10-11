@@ -16,9 +16,7 @@ import java.io.IOException;
 
 public class DashboardProfessorController {
 
-    // --- INÍCIO DAS ALTERAÇÕES ---
     private static DashboardProfessorController instance;
-    // --- FIM DAS ALTERAÇÕES ---
 
     @FXML
     private BorderPane mainBorderPane;
@@ -29,15 +27,11 @@ public class DashboardProfessorController {
 
     @FXML
     public void initialize() {
-        // --- INÍCIO DAS ALTERAÇÕES ---
-        instance = this; // Salva a instância atual para ser acessada globalmente
-        // --- FIM DAS ALTERAÇÕES ---
-
+        instance = this;
         refreshUserProfile();
         loadCenterView("dashboard-professor-home-view.fxml");
     }
 
-    // --- INÍCIO DAS ALTERAÇÕES ---
     public static DashboardProfessorController getInstance() {
         return instance;
     }
@@ -47,17 +41,15 @@ public class DashboardProfessorController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("detalhes-turma-view.fxml"));
             Parent view = loader.load();
 
-            // Pega o controller da tela de detalhes
             DetalhesTurmaController detalhesController = loader.getController();
-            detalhesController.setTurma(turma); // Passa o objeto da turma
-            detalhesController.setDashboardController(this); // Passa a si mesmo para o botão "voltar" funcionar
+            detalhesController.setTurma(turma);
+            detalhesController.setDashboardController(this);
 
-            mainBorderPane.setCenter(view); // Coloca a nova tela no centro
+            mainBorderPane.setCenter(view);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    // --- FIM DAS ALTERAÇÕES ---
 
     public void refreshUserProfile() {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
@@ -93,14 +85,16 @@ public class DashboardProfessorController {
     }
 
     @FXML
-    public void onMinhasTurmasClick() { // Mudei para public para poder chamar de fora
+    public void onMinhasTurmasClick() {
         loadCenterView("turmas-view.fxml");
     }
 
+    // --- INÍCIO DA ALTERAÇÃO ---
     @FXML
     private void onCarometroClick() {
-        System.out.println("Navegar para Carômetro");
+        loadCenterView("carometro-view.fxml"); // Carrega a nova tela do Carômetro
     }
+    // --- FIM DA ALTERAÇÃO ---
 
     @FXML
     private void onBancoQuestoesClick() {
