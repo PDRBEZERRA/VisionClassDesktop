@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="650.0" prefWidth="800.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.ExportarRelatorioController">
+    <children>
+        <VBox spacing="20.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="30.0">
+            <children>
+                <Button fx:id="voltarButton" mnemonicParsing="false" onAction="#handleVoltar" styleClass="sidebar-button" text="← Voltar para Relatórios">
+                    <font>
+                        <Font name="System Bold" size="14.0" />
+                    </font>
+                </Button>
+
+                <VBox spacing="5.0">
+                    <Label styleClass="title-large" text="Exportar Relatório" />
+                    <Label styleClass="text-muted" text="Selecione o formato e configure o escopo da exportação." />
+                </VBox>
+
+                <VBox styleClass="card" spacing="20.0">
+                    <Label styleClass="title-medium" text="1. Escopo da Exportação" />
+                    <Label styleClass="text-muted" text="Defina quais dados serão incluídos no arquivo exportado." />
+                    <FlowPane hgap="30.0" vgap="20.0">
+                        <VBox spacing="5.0" prefWidth="150.0">
+                            <Label text="Período" styleClass="text-muted" />
+                            <ComboBox fx:id="periodoComboBox" prefWidth="150.0" promptText="Último Mês" />
+                        </VBox>
+                        <VBox spacing="5.0" prefWidth="150.0">
+                            <Label text="Turma" styleClass="text-muted" />
+                            <ComboBox fx:id="turmaComboBox" prefWidth="150.0" promptText="Todas as Turmas" />
+                        </VBox>
+                        <VBox spacing="5.0" prefWidth="250.0">
+                            <Label text="Aluno Específico" styleClass="text-muted" />
+                            <TextField fx:id="alunoEspecificoTextField" promptText="Buscar aluno por nome ou matrícula..." />
+                            <Label text="Todos os Alunos" styleClass="text-muted" style="-fx-font-size: 11px; -fx-cursor: hand;" />
+                        </VBox>
+                        <VBox spacing="5.0" prefWidth="120.0">
+                            <Label text="Data Inicial" styleClass="text-muted" />
+                            <DatePicker fx:id="dataInicialPicker" prefWidth="120.0" promptText="dd/mm/aaaa" />
+                        </VBox>
+                        <VBox spacing="5.0" prefWidth="120.0">
+                            <Label text="Data Final" styleClass="text-muted" />
+                            <DatePicker fx:id="dataFinalPicker" prefWidth="120.0" promptText="dd/mm/aaaa" />
+                        </VBox>
+                        <VBox spacing="5.0" prefWidth="300.0">
+                            <Label text="Conteúdo do Relatório" styleClass="text-muted" />
+                            <ComboBox fx:id="conteudoRelatorioComboBox" prefWidth="300.0" promptText="Consolidado (Comportamental + Simulados)" />
+                        </VBox>
+                    </FlowPane>
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button fx:id="prepararDadosButton" mnemonicParsing="false" onAction="#handlePrepararDados" styleClass="primary-button" text="Preparar Dados" style="-fx-font-size: 14px;" />
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="card" spacing="15.0">
+                    <Label styleClass="title-medium" text="2. Formato de Saída" />
+                    <Label styleClass="text-muted" text="Escolha o formato ideal para o seu uso." />
+                    <HBox spacing="20.0">
+                        <VBox alignment="CENTER" spacing="5.0" styleClass="quick-action-button" prefWidth="240.0" style="-fx-padding: 15px;">
+                            <Label text="Relatório PDF" style="-fx-font-weight: bold;" />
+                            <Label text="Ideal para impressão, visualização e compartilhamento em alta fidelidade." styleClass="text-muted" wrapText="true" alignment="CENTER" />
+                            <Pane VBox.vgrow="ALWAYS" />
+                            <Button fx:id="exportarPDFButton" mnemonicParsing="false" onAction="#handleExportarPDF" text="Exportar" styleClass="primary-button" />
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="5.0" styleClass="quick-action-button" prefWidth="240.0" style="-fx-padding: 15px;">
+                            <Label text="Dados Brutos CSV" style="-fx-font-weight: bold;" />
+                            <Label text="Exportação em formato de texto para importação em outros sistemas." styleClass="text-muted" wrapText="true" alignment="CENTER" />
+                            <Pane VBox.vgrow="ALWAYS" />
+                            <Button fx:id="exportarCSVButton" mnemonicParsing="false" onAction="#handleExportarCSV" text="Exportar" styleClass="primary-button" />
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="5.0" styleClass="quick-action-button" prefWidth="240.0" style="-fx-padding: 15px;">
+                            <Label text="Planilha Excel" style="-fx-font-weight: bold;" />
+                            <Label text="Dados formatados em colunas para análise avançada e edição no Excel." styleClass="text-muted" wrapText="true" alignment="CENTER" />
+                            <Pane VBox.vgrow="ALWAYS" />
+                            <Button fx:id="exportarExcelButton" mnemonicParsing="false" onAction="#handleExportarExcel" text="Exportar" styleClass="primary-button" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

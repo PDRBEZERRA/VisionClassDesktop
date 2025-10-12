@@ -140,7 +140,8 @@ public class DashboardProfessorController {
 
     @FXML
     private void onRelatoriosClick(ActionEvent event) {
-        loadCenterView("relatorios-view.fxml");
+        // ALTERAÇÃO: Carrega a view de relatórios específica do professor.
+        loadCenterView("relatorios-professor-view.fxml");
         setActiveButton(relatoriosButton);
     }
 

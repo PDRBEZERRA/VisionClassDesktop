@@ -131,6 +131,42 @@ public class AvaliacaoComportamentalDAO {
     }
 
     /**
+     * NOVO MÉTODO: Conta o número de avaliações comportamentais para um grupo de alunos.
+     * @param alunosIds Lista de IDs dos alunos no escopo.
+     * @return O número total de avaliações.
+     */
+    public int countByAlunosIds(List<String> alunosIds) {
+        if (alunosIds == null || alunosIds.isEmpty()) {
+            return 0;
+        }
+
+        // Cria a string de placeholders (?, ?, ?) para a cláusula IN
+        String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
+
+        // Query para contar o total de registros para os alunos selecionados
+        String sql = "SELECT COUNT(*) FROM avaliacoes_comportamentais WHERE aluno_id IN (" + placeholders + ")";
+        int count = 0;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // Seta os IDs dos alunos como parâmetros
+            for (int i = 0; i < alunosIds.size(); i++) {
+                stmt.setString(i + 1, alunosIds.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao contar avaliações comportamentais por grupo de alunos.");
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    /**
      * Calcula a média de uma dimensão comportamental específica para um aluno.
      * @param alunoId O ID do aluno.
      * @param dimensao O nome da coluna (ex: 'assiduidade', 'participacao', etc.).

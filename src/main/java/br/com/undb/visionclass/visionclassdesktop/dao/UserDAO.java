@@ -96,15 +96,57 @@ public class UserDAO {
     }
 
     public void delete(String userId) {
-        String sql = "DELETE FROM users WHERE id = ?";
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            stmt.executeUpdate();
+        // Sequência de operações para garantir que nenhuma chave estrangeira falhe
+        String sqlDeleteSimulados = "DELETE FROM simulados WHERE professor_criador_id = ?";
+        String sqlDeleteQuestoes = "DELETE FROM questoes WHERE professor_criador_id = ?";
+        String sqlDeleteAvaliacoes = "DELETE FROM avaliacoes_comportamentais WHERE professor_id = ?";
+        // Professor é desassociado da turma (a turma permanece, mas o campo professorId é NULL)
+        String sqlUpdateTurmas = "UPDATE turmas SET professorId = NULL WHERE professorId = ?";
+        String sqlDeleteUser = "DELETE FROM users WHERE id = ?";
+
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.getConnection();
+            conn.setAutoCommit(false); // Inicia transação
+
+            // 1. Exclui Simulados (e suas dependências por CASCADE)
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteSimulados)) {
+                stmt.setString(1, userId);
+                stmt.executeUpdate();
+            }
+
+            // 2. Exclui Questões (e suas dependências por CASCADE)
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteQuestoes)) {
+                stmt.setString(1, userId);
+                stmt.executeUpdate();
+            }
+
+            // 3. Exclui Avaliações Comportamentais criadas pelo professor
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAvaliacoes)) {
+                stmt.setString(1, userId);
+                stmt.executeUpdate();
+            }
+
+            // 4. Desassocia o professor das Turmas (define como NULL)
+            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateTurmas)) {
+                stmt.setString(1, userId);
+                stmt.executeUpdate();
+            }
+
+            // 5. Exclui o utilizador
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteUser)) {
+                stmt.setString(1, userId);
+                stmt.executeUpdate();
+            }
+
+            conn.commit(); // Confirma todas as operações
             System.out.println("Utilizador excluído com sucesso!");
         } catch (SQLException e) {
-            System.err.println("Erro ao excluir o utilizador.");
+            System.err.println("Erro ao excluir o utilizador. Realizando rollback.");
             e.printStackTrace();
+            if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); } }
         }
     }
 

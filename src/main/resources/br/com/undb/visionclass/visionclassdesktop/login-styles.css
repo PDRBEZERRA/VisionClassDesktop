@@ -194,3 +194,14 @@
     -fx-font-weight: bold;
     -fx-text-fill: #111;
 }
+
+.secondary-tab {
+    -fx-background-color: transparent;
+    -fx-text-fill: #334155; /* Cor cinza/escura */
+    -fx-font-weight: normal;
+    -fx-border-color: transparent;
+}
+
+/* Opcional: Adicione um hover para as abas inativas */
+.secondary-tab:hover {
+    -fx-background-color: #e2e8f0; /* Fundo cinza claro ao passar o mouse */

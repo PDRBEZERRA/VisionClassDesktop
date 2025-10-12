@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="700.0" prefWidth="850.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.RelatoriosController">
+<AnchorPane prefHeight="700.0" prefWidth="850.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.RelatoriosProfessorController">
     <children>
         <VBox spacing="20.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="30.0">
             <children>
@@ -27,38 +27,32 @@
                     </children>
                 </HBox>
 
-                <VBox styleClass="card" spacing="15.0">
+                <VBox spacing="15.0" styleClass="card">
                     <children>
                         <Label styleClass="title-medium" text="Filtros" />
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <children>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label text="Período" styleClass="text-muted"/>
+                                        <Label styleClass="text-muted" text="Período" />
                                         <ComboBox fx:id="periodoComboBox" prefWidth="150.0" promptText="Último Mês" />
                                     </children>
                                 </VBox>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label text="Turma" styleClass="text-muted"/>
+                                        <Label styleClass="text-muted" text="Turma" />
                                         <ComboBox fx:id="turmaComboBox" prefWidth="150.0" promptText="Todas as Turmas" />
                                     </children>
                                 </VBox>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label text="Professor" styleClass="text-muted"/>
-                                        <ComboBox fx:id="professorComboBox" prefWidth="150.0" promptText="Todos os Professores" />
-                                    </children>
-                                </VBox>
-                                <VBox spacing="5.0">
-                                    <children>
-                                        <Label text="Data Inicial" styleClass="text-muted"/>
+                                        <Label styleClass="text-muted" text="Data Inicial" />
                                         <DatePicker fx:id="dataInicialPicker" prefWidth="120.0" promptText="dd/mm/aaaa" />
                                     </children>
                                 </VBox>
                                 <VBox spacing="5.0">
                                     <children>
-                                        <Label text="Data Final" styleClass="text-muted"/>
+                                        <Label styleClass="text-muted" text="Data Final" />
                                         <DatePicker fx:id="dataFinalPicker" prefWidth="120.0" promptText="dd/mm/aaaa" />
                                     </children>
                                 </VBox>
@@ -68,38 +62,38 @@
                 </VBox>
 
                 <HBox spacing="10.0">
-                    <Button fx:id="comportamentalButton" mnemonicParsing="false" onAction="#handleMudarAbaComportamental" text="Comportamental" styleClass="primary-button"/>
-                    <Button fx:id="simuladosButton" mnemonicParsing="false" onAction="#handleMudarAbaSimulados" text="Simulados" style="-fx-background-color: transparent; -fx-text-fill: #334155;"/>
-                    <Button fx:id="consolidadoButton" mnemonicParsing="false" onAction="#handleMudarAbaConsolidado" text="Consolidado" style="-fx-background-color: transparent; -fx-text-fill: #334155;"/>
+                    <Button fx:id="comportamentalButton" mnemonicParsing="false" onAction="#handleMudarAbaComportamental" styleClass="primary-button" text="Comportamental" />
+                    <Button fx:id="simuladosButton" mnemonicParsing="false" onAction="#handleMudarAbaSimulados" styleClass="secondary-tab" text="Simulados" />
+                    <Button fx:id="consolidadoButton" mnemonicParsing="false" onAction="#handleMudarAbaConsolidado" styleClass="secondary-tab" text="Consolidado" />
                 </HBox>
 
-                <FlowPane hgap="20.0" vgap="20.0">
-                    <VBox prefWidth="180.0" styleClass="stats-card">
-                        <Label text="Média Geral" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="mediaGeralLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;" text="4.2/5.0"/>
-                        <Label fx:id="mediaGeralStatusLabel" styleClass="text-muted" text="+0.2 vs mês anterior"/>
+                <FlowPane alignment="CENTER" hgap="20.0" vgap="20.0">
+                    <VBox prefWidth="200.0" styleClass="stats-card">
+                        <Label style="-fx-font-weight: bold;" text="Média Geral" />
+                        <Label fx:id="mediaGeralLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;" text="4.2/5.0" />
+                        <Label fx:id="mediaGeralStatusLabel" styleClass="text-muted" text="Visão da Turma/Escopo" wrapText="true" />
                     </VBox>
-                    <VBox prefWidth="180.0" styleClass="stats-card">
-                        <Label text="Assiduidade" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="assiduidadeLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.5/5.0"/>
-                        <Label fx:id="assiduidadeStatusLabel" styleClass="text-muted" text="Melhor critério"/>
+                    <VBox prefWidth="200.0" styleClass="stats-card">
+                        <Label style="-fx-font-weight: bold;" text="Assiduidade" />
+                        <Label fx:id="assiduidadeLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.5/5.0" />
+                        <Label fx:id="assiduidadeStatusLabel" styleClass="text-muted" text="Foco de Avaliação" wrapText="true" />
                     </VBox>
-                    <VBox prefWidth="180.0" styleClass="stats-card">
-                        <Label text="Participação" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="participacaoLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.0/5.0"/>
-                        <Label fx:id="participacaoStatusLabel" styleClass="text-muted" text="Em alta"/>
+                    <VBox prefWidth="200.0" styleClass="stats-card">
+                        <Label style="-fx-font-weight: bold;" text="Participação" />
+                        <Label fx:id="participacaoLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.0/5.0" />
+                        <Label fx:id="participacaoStatusLabel" styleClass="text-muted" text="Em Análise" wrapText="true" />
                     </VBox>
-                    <VBox prefWidth="180.0" styleClass="stats-card">
-                        <Label text="Avaliações" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="avaliacoesCountLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="156"/>
-                        <Label fx:id="avaliacoesCountStatusLabel" styleClass="text-muted" text="No período"/>
+                    <VBox prefWidth="200.0" styleClass="stats-card">
+                        <Label style="-fx-font-weight: bold;" text="Avaliações" />
+                        <Label fx:id="avaliacoesCountLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="156" />
+                        <Label fx:id="avaliacoesCountStatusLabel" styleClass="text-muted" text="Avaliações Encontradas" wrapText="true" />
                     </VBox>
                 </FlowPane>
 
                 <VBox styleClass="card" VBox.vgrow="ALWAYS">
                     <Label styleClass="title-medium" text="Evolução dos Critérios Comportamentais" />
                     <VBox fx:id="evolucaoGraficoContainer" alignment="CENTER" VBox.vgrow="ALWAYS">
-                        <Label text="Gráfico de evolução temporal será exibido aqui" styleClass="text-muted"/>
+                        <Label styleClass="text-muted" text="Gráfico de evolução temporal será exibido aqui" />
                     </VBox>
                 </VBox>
             </children>
