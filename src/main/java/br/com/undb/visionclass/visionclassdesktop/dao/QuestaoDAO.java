@@ -97,8 +97,6 @@ public class QuestaoDAO {
                 q.setDisciplinaId(rs.getInt("disciplina_id"));
                 q.setAssuntoId(rs.getInt("assunto_id"));
                 q.setProfessorCriadorId(rs.getString("professor_criador_id"));
-
-                // Futuramente, podemos carregar as alternativas aqui também se necessário
                 questoes.add(q);
             }
         } catch (SQLException e) {
@@ -108,5 +106,21 @@ public class QuestaoDAO {
         return questoes;
     }
 
-    // Métodos para update e delete serão adicionados futuramente.
+    // --- NOVO MÉTODO PARA DELETAR ---
+    /**
+     * Deleta uma questão do banco de dados.
+     * @param questaoId O ID da questão a ser deletada.
+     */
+    public void delete(int questaoId) {
+        String sql = "DELETE FROM questoes WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, questaoId);
+            stmt.executeUpdate();
+            System.out.println("Questão ID " + questaoId + " deletada com sucesso.");
+        } catch (SQLException e) {
+            System.err.println("Erro ao deletar a questão.");
+            e.printStackTrace();
+        }
+    }
 }

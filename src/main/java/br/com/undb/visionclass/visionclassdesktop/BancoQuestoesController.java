@@ -11,17 +11,18 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class BancoQuestoesController {
@@ -87,6 +88,54 @@ public class BancoQuestoesController {
                     .orElse("Não encontrado");
             return new SimpleStringProperty(nomeAssunto);
         });
+
+        // --- INÍCIO DA LÓGICA DE REMOÇÃO ---
+        setupAcoesColumn();
+        // --- FIM DA LÓGICA DE REMOÇÃO ---
+    }
+
+    private void setupAcoesColumn() {
+        Callback<TableColumn<Questao, Void>, TableCell<Questao, Void>> cellFactory = new Callback<>() {
+            @Override
+            public TableCell<Questao, Void> call(final TableColumn<Questao, Void> param) {
+                return new TableCell<>() {
+                    private final Button btnRemover = new Button("Remover");
+
+                    {
+                        btnRemover.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
+                        btnRemover.setOnAction(event -> {
+                            Questao questao = getTableView().getItems().get(getIndex());
+                            confirmarRemocao(questao);
+                        });
+                    }
+
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(btnRemover);
+                            setAlignment(Pos.CENTER);
+                        }
+                    }
+                };
+            }
+        };
+        acoesColumn.setCellFactory(cellFactory);
+    }
+
+    private void confirmarRemocao(Questao questao) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmar Remoção");
+        alert.setHeaderText("Remover Questão ID: " + questao.getId());
+        alert.setContentText("Tem a certeza de que deseja remover esta questão permanentemente?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            questaoDAO.delete(questao.getId());
+            refreshTable(); // Atualiza a tabela para refletir a remoção
+        }
     }
 
     private void loadInitialData() {
@@ -102,7 +151,6 @@ public class BancoQuestoesController {
         refreshTable();
     }
 
-    // Método para recarregar apenas os dados da tabela
     private void refreshTable() {
         todasAsQuestoes.setAll(questaoDAO.findAll());
     }
@@ -117,7 +165,6 @@ public class BancoQuestoesController {
         });
     }
 
-    // --- LÓGICA ATUALIZADA AQUI ---
     @FXML
     private void handleNovaQuestao() {
         try {
@@ -130,10 +177,8 @@ public class BancoQuestoesController {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
 
-            // Mostra a janela e espera ela ser fechada
             stage.showAndWait();
 
-            // Após fechar, atualiza a tabela para mostrar a nova questão
             refreshTable();
 
         } catch (IOException e) {
