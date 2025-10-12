@@ -20,13 +20,15 @@ public class DashboardAlunoController {
     @FXML
     private BorderPane mainBorderPane;
     @FXML
-    private Label userNameLabel;
+    private Label userNameLabel; // Agora na sidebar
     @FXML
-    private ImageView userAvatar;
+    private ImageView userAvatar; // Agora na sidebar
     @FXML
     private Button dashboardButton;
     @FXML
-    private Button simuladosButton; // Botão para a futura tela de simulados
+    private Button simuladosButton;
+    @FXML
+    private Button sairButton; // Adicionado do FXML
 
     private Button activeButton;
 
@@ -50,9 +52,7 @@ public class DashboardAlunoController {
     public void refreshUserProfile() {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         if (loggedInUser != null) {
-            // Exibe apenas o primeiro nome
-            String firstName = loggedInUser.getNome().split(" ")[0];
-            userNameLabel.setText(firstName);
+            userNameLabel.setText(loggedInUser.getNome());
             loadUserAvatar(loggedInUser.getFoto());
         }
     }
@@ -65,9 +65,11 @@ public class DashboardAlunoController {
                 if (file.exists()) {
                     image = new Image(file.toURI().toString());
                 } else {
+                    // Usar a imagem padrão se o arquivo não for encontrado
                     image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
             } else {
+                // Usar a imagem padrão se não houver nome de arquivo
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
             userAvatar.setImage(image);
@@ -79,15 +81,15 @@ public class DashboardAlunoController {
 
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
-        // Carrega o dashboard-aluno-home-view.fxml (que já existe e tem a lógica de stats)
+        // Carrega o dashboard-aluno-home-view.fxml (tela de estatísticas)
         loadCenterView("dashboard-aluno-home-view.fxml");
         setActiveButton(dashboardButton);
     }
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        // Implementação futura da tela de simulados para o aluno
-        loadCenterView("relatorios-view.fxml"); // Usando relatorios-view.fxml como placeholder temporário
+        // Usando relatorios-view.fxml como placeholder
+        loadCenterView("relatorios-view.fxml");
         setActiveButton(simuladosButton);
     }
 
