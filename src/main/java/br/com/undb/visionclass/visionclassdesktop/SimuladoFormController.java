@@ -6,6 +6,7 @@ import br.com.undb.visionclass.visionclassdesktop.dao.SimuladoDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.*;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -16,13 +17,15 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 public class SimuladoFormController {
 
+    @FXML
+    private Label titleLabel; // Adicionado para mudar o título
     @FXML
     private TextField tituloTextField;
     @FXML
@@ -50,10 +53,9 @@ public class SimuladoFormController {
     private ObservableList<Questao> questoesList = FXCollections.observableArrayList();
     private ObservableList<Turma> turmasList = FXCollections.observableArrayList();
 
-    // --- LÓGICA DE SELEÇÃO CORRIGIDA ---
-    // Usaremos Sets para armazenar os itens selecionados de forma confiável
     private final Set<Questao> questoesSelecionadas = new HashSet<>();
     private final Set<Turma> turmasSelecionadas = new HashSet<>();
+    private Simulado simuladoParaEditar; // Armazena o simulado em modo de edição
 
     @FXML
     public void initialize() {
@@ -62,33 +64,40 @@ public class SimuladoFormController {
         loadData();
     }
 
+    // --- NOVO MÉTODO PARA ENTRAR EM MODO DE EDIÇÃO ---
+    public void setSimuladoParaEditar(Simulado simulado) {
+        this.simuladoParaEditar = simulado;
+        titleLabel.setText("Editar Simulado");
+        tituloTextField.setText(simulado.getTitulo());
+
+        // Pré-seleciona as questões e turmas
+        questoesSelecionadas.addAll(simulado.getQuestoes());
+        turmasSelecionadas.addAll(simulado.getTurmas());
+    }
+
     private void setupQuestoesTable() {
-        // Usamos CellFactory para ter controle sobre a célula e adicionar um listener
-        selecionarQuestaoColumn.setCellFactory(new Callback<>() {
+        selecionarQuestaoColumn.setCellFactory(param -> new TableCell<>() {
+            private final CheckBox checkBox = new CheckBox();
+            {
+                checkBox.setOnAction(event -> {
+                    Questao questao = getTableView().getItems().get(getIndex());
+                    if (checkBox.isSelected()) {
+                        questoesSelecionadas.add(questao);
+                    } else {
+                        questoesSelecionadas.remove(questao);
+                    }
+                });
+            }
             @Override
-            public TableCell<Questao, CheckBox> call(TableColumn<Questao, CheckBox> param) {
-                return new TableCell<>() {
-                    private final CheckBox checkBox = new CheckBox();
-                    {
-                        checkBox.setOnAction(event -> {
-                            Questao questao = getTableView().getItems().get(getIndex());
-                            if (checkBox.isSelected()) {
-                                questoesSelecionadas.add(questao);
-                            } else {
-                                questoesSelecionadas.remove(questao);
-                            }
-                        });
-                    }
-                    @Override
-                    protected void updateItem(CheckBox item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            setGraphic(checkBox);
-                        }
-                    }
-                };
+            protected void updateItem(CheckBox item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    Questao questao = getTableView().getItems().get(getIndex());
+                    checkBox.setSelected(questoesSelecionadas.contains(questao));
+                    setGraphic(checkBox);
+                }
             }
         });
 
@@ -99,9 +108,7 @@ public class SimuladoFormController {
         disciplinaColumn.setCellValueFactory(cellData -> {
             String nome = disciplinas.stream()
                     .filter(d -> d.getId() == cellData.getValue().getDisciplinaId())
-                    .findFirst()
-                    .map(Disciplina::getNome)
-                    .orElse("N/A");
+                    .findFirst().map(Disciplina::getNome).orElse("N/A");
             return new SimpleStringProperty(nome);
         });
 
@@ -109,33 +116,31 @@ public class SimuladoFormController {
     }
 
     private void setupTurmasTable() {
-        selecionarTurmaColumn.setCellFactory(new Callback<>() {
+        selecionarTurmaColumn.setCellFactory(param -> new TableCell<>() {
+            private final CheckBox checkBox = new CheckBox();
+            {
+                checkBox.setOnAction(event -> {
+                    Turma turma = getTableView().getItems().get(getIndex());
+                    if (checkBox.isSelected()) {
+                        turmasSelecionadas.add(turma);
+                    } else {
+                        turmasSelecionadas.remove(turma);
+                    }
+                });
+            }
             @Override
-            public TableCell<Turma, CheckBox> call(TableColumn<Turma, CheckBox> param) {
-                return new TableCell<>() {
-                    private final CheckBox checkBox = new CheckBox();
-                    {
-                        checkBox.setOnAction(event -> {
-                            Turma turma = getTableView().getItems().get(getIndex());
-                            if (checkBox.isSelected()) {
-                                turmasSelecionadas.add(turma);
-                            } else {
-                                turmasSelecionadas.remove(turma);
-                            }
-                        });
-                    }
-                    @Override
-                    protected void updateItem(CheckBox item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            setGraphic(checkBox);
-                        }
-                    }
-                };
+            protected void updateItem(CheckBox item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    Turma turma = getTableView().getItems().get(getIndex());
+                    checkBox.setSelected(turmasSelecionadas.contains(turma));
+                    setGraphic(checkBox);
+                }
             }
         });
+
         nomeTurmaColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getNome()));
         turmasTableView.setItems(turmasList);
     }
@@ -164,17 +169,29 @@ public class SimuladoFormController {
             return;
         }
 
-        Simulado novoSimulado = new Simulado();
-        novoSimulado.setTitulo(titulo);
-        novoSimulado.setDataCriacao(LocalDate.now());
-        novoSimulado.setStatus(StatusSimulado.RASCUNHO);
-        novoSimulado.setProfessorCriadorId(UserSession.getInstance().getLoggedInUser().getId());
-        novoSimulado.setQuestoes(new ArrayList<>(questoesSelecionadas));
-        novoSimulado.setTurmas(new ArrayList<>(turmasSelecionadas));
+        if (simuladoParaEditar != null) {
+            // --- LÓGICA DE ATUALIZAÇÃO ---
+            simuladoParaEditar.setTitulo(titulo);
+            simuladoParaEditar.setQuestoes(new ArrayList<>(questoesSelecionadas));
+            simuladoParaEditar.setTurmas(new ArrayList<>(turmasSelecionadas));
+            // O status pode ser gerenciado aqui também se necessário
 
-        simuladoDAO.save(novoSimulado);
+            simuladoDAO.update(simuladoParaEditar);
+            showAlert(Alert.AlertType.INFORMATION, "Sucesso!", "Simulado \"" + titulo + "\" atualizado com sucesso.");
+        } else {
+            // --- LÓGICA DE CRIAÇÃO ---
+            Simulado novoSimulado = new Simulado();
+            novoSimulado.setTitulo(titulo);
+            novoSimulado.setDataCriacao(LocalDate.now());
+            novoSimulado.setStatus(StatusSimulado.RASCUNHO);
+            novoSimulado.setProfessorCriadorId(UserSession.getInstance().getLoggedInUser().getId());
+            novoSimulado.setQuestoes(new ArrayList<>(questoesSelecionadas));
+            novoSimulado.setTurmas(new ArrayList<>(turmasSelecionadas));
 
-        showAlert(Alert.AlertType.INFORMATION, "Sucesso!", "Simulado \"" + titulo + "\" criado com sucesso.");
+            simuladoDAO.save(novoSimulado);
+            showAlert(Alert.AlertType.INFORMATION, "Sucesso!", "Simulado \"" + titulo + "\" criado com sucesso.");
+        }
+
         handleCancelar();
     }
 

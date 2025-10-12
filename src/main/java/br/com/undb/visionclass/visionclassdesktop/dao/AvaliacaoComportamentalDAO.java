@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,10 +98,6 @@ public class AvaliacaoComportamentalDAO {
         }
     }
 
-    // --- NOVO MÉTODO PARA O HISTÓRICO ---
-    /**
-     * Busca todo o histórico de avaliações de um aluno em uma turma.
-     */
     public List<AvaliacaoComportamental> findAllByAlunoAndTurma(String alunoId, String turmaId) {
         String sql = "SELECT * FROM avaliacoes_comportamentais WHERE aluno_id = ? AND turma_id = ? ORDER BY data DESC";
         List<AvaliacaoComportamental> historico = new ArrayList<>();
@@ -131,5 +128,36 @@ public class AvaliacaoComportamentalDAO {
             e.printStackTrace();
         }
         return historico;
+    }
+
+    // --- NOVO MÉTODO PARA O DASHBOARD DO ALUNO ---
+    /**
+     * Calcula a média geral comportamental de um aluno.
+     * @param alunoId O ID do aluno.
+     * @return A média formatada como uma String, ou "-" se não houver avaliações.
+     */
+    public String getMediaGeralByAlunoId(String alunoId) {
+        // Esta query calcula a média de todas as notas de uma vez
+        String sql = "SELECT AVG((assiduidade + participacao + responsabilidade + sociabilidade) / 4.0) as media_geral FROM avaliacoes_comportamentais WHERE aluno_id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, alunoId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                double media = rs.getDouble("media_geral");
+                if (rs.wasNull()) { // Se não houver avaliações, a média será NULL
+                    return "-";
+                }
+                DecimalFormat df = new DecimalFormat("#.#");
+                return df.format(media);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao calcular a média geral comportamental.");
+            e.printStackTrace();
+        }
+        return "-";
     }
 }

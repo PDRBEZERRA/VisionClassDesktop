@@ -105,7 +105,6 @@ public class SimuladoDAO {
         }
     }
 
-    // --- NOVO MÉTODO PARA CONTAR QUESTÕES ---
     public int countQuestoesBySimuladoId(int simuladoId) {
         String sql = "SELECT COUNT(*) FROM simulado_questoes WHERE simulado_id = ?";
         int count = 0;
@@ -118,6 +117,49 @@ public class SimuladoDAO {
             }
         } catch (SQLException e) {
             System.err.println("Erro ao contar questões do simulado.");
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    // --- NOVOS MÉTODOS PARA O DASHBOARD DO ALUNO ---
+
+    /**
+     * Conta quantos simulados foram atribuídos a uma turma.
+     */
+    public int countByTurmaId(String turmaId) {
+        String sql = "SELECT COUNT(*) FROM simulado_turmas WHERE turma_id = ?";
+        int count = 0;
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao contar simulados por turma.");
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    /**
+     * Conta quantos simulados distintos um aluno já respondeu.
+     */
+    public int countRealizadosByAlunoId(String alunoId) {
+        // Usamos COUNT(DISTINCT simulado_id) para não contar o mesmo simulado várias vezes
+        String sql = "SELECT COUNT(DISTINCT simulado_id) FROM aluno_respostas WHERE aluno_id = ?";
+        int count = 0;
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, alunoId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao contar simulados realizados pelo aluno.");
             e.printStackTrace();
         }
         return count;

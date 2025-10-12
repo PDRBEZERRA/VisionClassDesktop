@@ -12,9 +12,6 @@ import java.util.List;
 
 public class TurmaDAO {
 
-    /**
-     * Busca todas as turmas registadas no banco de dados.
-     */
     public List<Turma> findAll() {
         String sql = "SELECT * FROM turmas ORDER BY nome";
         List<Turma> turmas = new ArrayList<>();
@@ -40,9 +37,6 @@ public class TurmaDAO {
         return turmas;
     }
 
-    /**
-     * Guarda uma nova turma no banco de dados.
-     */
     public void save(Turma turma) {
         String sql = "INSERT INTO turmas (id, nome, ano, periodo, professorId, desempenho) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -64,9 +58,6 @@ public class TurmaDAO {
         }
     }
 
-    /**
-     * Conta o número total de turmas no banco de dados.
-     */
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM turmas";
         int count = 0;
@@ -85,9 +76,6 @@ public class TurmaDAO {
         return count;
     }
 
-    /**
-     * Busca todas as turmas de um professor específico.
-     */
     public List<Turma> findByProfessorId(String professorId) {
         String sql = "SELECT * FROM turmas WHERE professorId = ? ORDER BY nome";
         List<Turma> turmas = new ArrayList<>();
@@ -115,9 +103,6 @@ public class TurmaDAO {
         return turmas;
     }
 
-    /**
-     * Busca uma turma pelo seu ID.
-     */
     public Turma findById(String turmaId) {
         String sql = "SELECT * FROM turmas WHERE id = ?";
         Turma turma = null;
@@ -140,9 +125,38 @@ public class TurmaDAO {
         return turma;
     }
 
+    // --- NOVO MÉTODO PARA O DASHBOARD DO ALUNO ---
     /**
-     * Adiciona um aluno a uma turma na tabela de associação.
+     * Busca a turma na qual um aluno está matriculado.
+     * @param alunoId O ID do aluno.
+     * @return O objeto Turma, ou null se o aluno não estiver em nenhuma turma.
      */
+    public Turma findByAlunoId(String alunoId) {
+        // Esta query junta a tabela de associação com a tabela de turmas
+        String sql = "SELECT t.* FROM turmas t " +
+                "INNER JOIN turma_alunos ta ON t.id = ta.turma_id " +
+                "WHERE ta.aluno_id = ?";
+        Turma turma = null;
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, alunoId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                turma = new Turma();
+                turma.setId(rs.getString("id"));
+                turma.setNome(rs.getString("nome"));
+                turma.setAno(rs.getString("ano"));
+                turma.setPeriodo(rs.getString("periodo"));
+                turma.setProfessorId(rs.getString("professorId"));
+                turma.setDesempenho(rs.getDouble("desempenho"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar turma por alunoId.");
+            e.printStackTrace();
+        }
+        return turma;
+    }
+
     public void addAlunoToTurma(String turmaId, String alunoId) {
         String sql = "INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -160,9 +174,6 @@ public class TurmaDAO {
         }
     }
 
-    /**
-     * Conta o número de alunos em uma turma específica.
-     */
     public int countAlunosByTurmaId(String turmaId) {
         String sql = "SELECT COUNT(*) FROM turma_alunos WHERE turma_id = ?";
         int count = 0;
@@ -180,9 +191,6 @@ public class TurmaDAO {
         return count;
     }
 
-    /**
-     * Remove um aluno de uma turma na tabela de associação.
-     */
     public void removeAlunoFromTurma(String turmaId, String alunoId) {
         String sql = "DELETE FROM turma_alunos WHERE turma_id = ? AND aluno_id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -197,11 +205,6 @@ public class TurmaDAO {
         }
     }
 
-    // --- NOVO MÉTODO PARA EXCLUIR TURMA ---
-    /**
-     * Exclui uma turma do banco de dados.
-     * @param turmaId O ID da turma a ser excluída.
-     */
     public void delete(String turmaId) {
         String sql = "DELETE FROM turmas WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
