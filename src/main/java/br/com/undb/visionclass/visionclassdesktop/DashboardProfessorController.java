@@ -124,16 +124,16 @@ public class DashboardProfessorController {
         setActiveButton(carometroButton);
     }
 
-    // --- CORREÇÃO APLICADA AQUI ---
     @FXML
     private void onBancoQuestoesClick(ActionEvent event) {
-        loadCenterView("banco-questoes-view.fxml"); // Linha adicionada
+        loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
     }
 
+    // --- CORREÇÃO APLICADA AQUI ---
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        // System.out.println("Navegar para Simulados");
+        loadCenterView("simulados-view.fxml"); // Linha adicionada
         setActiveButton(simuladosButton);
     }
 
