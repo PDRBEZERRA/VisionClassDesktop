@@ -91,12 +91,12 @@ public class SimuladosController {
                         btnExcluir.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
 
                         btnCorrigir.setOnAction(event -> {
-                            Simulado simulado = getTableView().getItems().get(getIndex());
+                            Simulado simulado = getTableRow().getItem();
                             handleCorrigirSimulado(simulado);
                         });
 
                         btnExcluir.setOnAction(event -> {
-                            Simulado simulado = getTableView().getItems().get(getIndex());
+                            Simulado simulado = getTableRow().getItem();
                             confirmarExclusao(simulado);
                         });
                     }
@@ -109,10 +109,8 @@ public class SimuladosController {
                         } else {
                             Simulado simulado = getTableRow().getItem();
 
-                            // O botão "Corrigir" aparece se:
-                            // 1. O simulado está PUBLICADO, E
-                            // 2. Há pelo menos 1 submissão
-                            boolean isPublicado = simulado.getStatus().toString().equals("PUBLICADO");
+                            // CORREÇÃO CRÍTICA: Compara o objeto enum diretamente.
+                            boolean isPublicado = simulado.getStatus() == br.com.undb.visionclass.visionclassdesktop.model.StatusSimulado.PUBLICADO;
                             int submissoes = alunoRespostaDAO.countSubmissoesBySimuladoId(simulado.getId());
 
                             boolean showCorrigir = isPublicado && submissoes > 0;
@@ -129,7 +127,6 @@ public class SimuladosController {
         };
         acoesColumn.setCellFactory(cellFactory);
     }
-
     private void confirmarExclusao(Simulado simulado) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar Exclusão");

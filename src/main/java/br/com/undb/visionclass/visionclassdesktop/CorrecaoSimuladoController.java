@@ -10,13 +10,19 @@ import br.com.undb.visionclass.visionclassdesktop.model.User;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -91,8 +97,61 @@ public class CorrecaoSimuladoController {
             }
         });
 
+        // --- NOVO: Listener de Duplo Clique na Lista de Questões ---
+        questoesDiscursivasListView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                QuestaoResposta questaoResposta = questoesDiscursivasListView.getSelectionModel().getSelectedItem();
+                if (questaoResposta != null) {
+                    // Obtém o aluno selecionado (necessário para o modal)
+                    User alunoSelecionado = alunosListView.getSelectionModel().getSelectedItem();
+                    if (alunoSelecionado != null) {
+                        handleAbrirCorrecaoDetalhada(questaoResposta, alunoSelecionado);
+                    }
+                }
+            }
+        });
+        // --- FIM DO NOVO LISTENER ---
+
         // Desabilita o painel de detalhes por padrão
         setDetalhesPanelDisabled(true);
+    }
+
+    // --- NOVO MÉTODO PARA ABRIR O MODAL DE CORREÇÃO ---
+    private void handleAbrirCorrecaoDetalhada(QuestaoResposta qr, User aluno) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("correcao-detalhe-view.fxml"));
+            Parent root = loader.load();
+
+            CorrecaoDetalheController controller = loader.getController();
+
+            // Passa TODOS os dados necessários para o modal
+            controller.setDadosCorrecao(simuladoAtual, aluno, qr.questao, qr.respostaDiscursiva);
+
+            Stage modalStage = new Stage();
+            modalStage.setTitle("Corrigir Questão " + qr.questao.getId());
+            modalStage.setScene(new Scene(root));
+            modalStage.initModality(Modality.APPLICATION_MODAL);
+            modalStage.setResizable(false);
+
+            modalStage.showAndWait();
+
+            // Atualiza o painel de correção após o modal fechar
+            // Isso garante que a nota parcial seja recalculada.
+            carregarDetalhesCorrecao(aluno);
+
+        } catch (IOException e) {
+            System.err.println("Erro ao abrir o formulário de correção detalhada.");
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível carregar o formulário de correção.");
+        }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     public void setSimulado(Simulado simulado) {
