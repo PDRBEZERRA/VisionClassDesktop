@@ -130,7 +130,37 @@ public class AvaliacaoComportamentalDAO {
         return historico;
     }
 
-    // --- NOVO MÉTODO PARA O DASHBOARD DO ALUNO ---
+    /**
+     * Calcula a média de uma dimensão comportamental específica para um aluno.
+     * @param alunoId O ID do aluno.
+     * @param dimensao O nome da coluna (ex: 'assiduidade', 'participacao', etc.).
+     * @return A média formatada como uma String, ou "-" se não houver avaliações.
+     */
+    public String getMediaPorDimensao(String alunoId, String dimensao) {
+        String sql = "SELECT AVG(" + dimensao + ") as media FROM avaliacoes_comportamentais WHERE aluno_id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, alunoId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                double media = rs.getDouble("media");
+                if (rs.wasNull()) { // Se não houver avaliações, a média será NULL
+                    return "-";
+                }
+                DecimalFormat df = new DecimalFormat("#.#");
+                return df.format(media);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao calcular a média para a dimensão " + dimensao + ".");
+            e.printStackTrace();
+        }
+        return "-";
+    }
+
+    // --- NOVO MÉTODO PARA O DASHBOARD DO ALUNO (ANTIGO) ---
     /**
      * Calcula a média geral comportamental de um aluno.
      * @param alunoId O ID do aluno.

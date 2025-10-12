@@ -1,6 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
-import br.com.undb.visionclass.visionclassdesktop.dao.*; // Importação Coringa
+import br.com.undb.visionclass.visionclassdesktop.dao.*;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
@@ -14,8 +14,17 @@ public class DashboardAlunoHomeController {
 
     @FXML
     private Label welcomeLabel;
+
+    // NOVOS LABELS PARA DESEMPENHO COMPORTAMENTAL DETALHADO
     @FXML
-    private Label desempenhoComportamentalLabel;
+    private Label assiduidadeMediaLabel;
+    @FXML
+    private Label participacaoMediaLabel;
+    @FXML
+    private Label responsabilidadeMediaLabel;
+    @FXML
+    private Label sociabilidadeMediaLabel;
+
     @FXML
     private Label simuladosDisponiveisLabel;
     @FXML
@@ -30,7 +39,7 @@ public class DashboardAlunoHomeController {
     private TurmaDAO turmaDAO = new TurmaDAO();
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
     private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO();
-    private UserDAO userDAO = new UserDAO(); // Novo DAO
+    private UserDAO userDAO = new UserDAO();
     private User alunoLogado;
 
     @FXML
@@ -46,11 +55,14 @@ public class DashboardAlunoHomeController {
     private void loadDashboardData() {
         if (alunoLogado == null) return;
 
-        // --- Desempenho Comportamental ---
-        String mediaComportamental = avaliacaoDAO.getMediaGeralByAlunoId(alunoLogado.getId());
-        desempenhoComportamentalLabel.setText(mediaComportamental);
+        // --- Desempenho Comportamental Detalhado ---
+        assiduidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "assiduidade"));
+        participacaoMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "participacao"));
+        responsabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "responsabilidade"));
+        sociabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "sociabilidade"));
+        // O card de média geral (comportamental) foi removido do FXML para replicar o design web
 
-        // --- Simulados Realizados ---
+        // --- Simulados Realizados (Finalizados) ---
         int simuladosFeitos = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId()).size();
         simuladosRealizadosLabel.setText(String.valueOf(simuladosFeitos));
 
@@ -60,7 +72,7 @@ public class DashboardAlunoHomeController {
             DecimalFormat df = new DecimalFormat("#.##");
             mediaGeralLabel.setText(df.format(minhaMedia));
         } else {
-            mediaGeralLabel.setText("N/A");
+            mediaGeralLabel.setText("-");
         }
 
         // --- Posição na Turma e Simulados Disponíveis ---
@@ -68,7 +80,9 @@ public class DashboardAlunoHomeController {
         if (turmaDoAluno != null) {
             // Simulados Disponíveis
             int totalSimuladosNaTurma = simuladoDAO.countByTurmaId(turmaDoAluno.getId());
-            simuladosDisponiveisLabel.setText(String.valueOf(totalSimuladosNaTurma));
+            // Subtrai os realizados dos disponíveis (Disponíveis - Finalizados)
+            int disponiveis = Math.max(0, totalSimuladosNaTurma - simuladosFeitos);
+            simuladosDisponiveisLabel.setText(String.valueOf(disponiveis));
 
             // Lógica de Ranking
             List<User> colegasDeTurma = userDAO.findAlunosByTurmaId(turmaDoAluno.getId());
