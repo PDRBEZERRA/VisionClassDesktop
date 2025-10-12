@@ -23,6 +23,8 @@ public class CorrecaoDetalheController {
     private TextField notaTextField;
     @FXML
     private TextArea feedbackTextArea;
+    @FXML
+    private Label notaAtribuidaLabel; // NOVO: Para exibir a pontuação máxima
 
     private User aluno;
     private Simulado simulado;
@@ -44,7 +46,18 @@ public class CorrecaoDetalheController {
         enunciadoLabel.setText(questao.getEnunciado());
         respostaAlunoTextArea.setText(respostaAluno);
 
-        // Se houver lógica de carregar nota salva, ela viria aqui.
+        // NOVO: Atualiza a label para mostrar a pontuação máxima da questão
+        String maxPontos = String.format("%.2f", questao.getNotaPontuacao()).replace(".", ",");
+        notaAtribuidaLabel.setText("Nota Atribuída (Max: " + maxPontos + " pontos):");
+
+        // NOVO: Carrega a nota já atribuída, se existir
+        Double notaSalva = alunoRespostaDAO.findNotaAtribuida(aluno.getId(), simulado.getId(), questao.getId());
+        if (notaSalva != null) {
+            // Formata a nota e preenche o campo
+            notaTextField.setText(String.format("%.2f", notaSalva).replace(".", ","));
+        } else {
+            notaTextField.setText("0");
+        }
     }
 
     @FXML
@@ -54,13 +67,15 @@ public class CorrecaoDetalheController {
             double nota = Double.parseDouble(notaTextField.getText().replace(",", "."));
             String feedback = feedbackTextArea.getText();
 
-            if (nota < 0 || nota > 10) {
-                showAlert(Alert.AlertType.ERROR, "Erro de Validação", "A nota deve ser entre 0.0 e 10.0.");
+            // Lógica de validação atualizada: compara com a notaPontuacao da questão
+            if (nota < 0 || nota > questao.getNotaPontuacao()) {
+                String maxPontos = String.format("%.2f", questao.getNotaPontuacao()).replace(".", ",");
+                showAlert(Alert.AlertType.ERROR, "Erro de Validação", "A nota deve ser entre 0.0 e " + maxPontos + ".");
                 return;
             }
 
             // 1. Salvar a nota e feedback no banco de dados
-            // NOTA: Assumimos que você adicionará as colunas 'nota_atribuida' e 'feedback_professor' na tabela 'aluno_respostas'
+            // A nota atribuída é o valor do ponto (número inteiro ou decimal), conforme solicitado.
             alunoRespostaDAO.updateCorrecaoDiscursiva(aluno.getId(), simulado.getId(), questao.getId(), nota, feedback);
 
             // 2. Fechar o modal

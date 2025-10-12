@@ -54,7 +54,7 @@ public class AlunoRespostaDAO {
         }
     }
 
-    // NOVO MÉTODO: Adicionado para salvar a nota da correção manual
+    // MÉTODO EXISTENTE: Salva a nota da correção manual
     public void updateCorrecaoDiscursiva(String alunoId, int simuladoId, int questaoId, double nota, String feedback) {
         String sql = "UPDATE aluno_respostas SET nota_atribuida = ?, feedback_professor = ? WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
 
@@ -76,49 +76,102 @@ public class AlunoRespostaDAO {
         }
     }
 
-
-    /**
-     * Calcula a nota final de um aluno em um simulado, combinando MC e discursivas corrigidas.
-     */
-    public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId) {
-
-        // 1. A query agora seleciona a soma total dos pontos (MC=1 ponto, Discursiva=nota/10)
-        String sql = "SELECT " +
-                // Se for MC (alternativa selecionada), soma 1 se correta, senão 0.
-                "  CAST(SUM(CASE WHEN ar.alternativa_selecionada_id IS NOT NULL AND a.correta = 1 THEN 1 ELSE 0 END) AS REAL) as acertos_mc, " +
-                // Se for discursiva, usa a nota_atribuida (normaliza para 0 a 1)
-                "  CAST(SUM(CASE WHEN ar.resposta_discursiva IS NOT NULL THEN ar.nota_atribuida / 10.0 ELSE 0 END) AS REAL) as soma_notas_discursivas " +
-                "FROM aluno_respostas ar " +
-                // Usamos LEFT JOIN para incluir todas as respostas (MC e Discursivas)
-                "LEFT JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
-                "WHERE ar.aluno_id = ? AND ar.simulado_id = ?";
-
-        // 2. Busca o número total de questões para normalizar a nota (o QuestaoDAO tem o método)
-        int totalQuestoesSimulado = new QuestaoDAO().findQuestoesBySimuladoId(simuladoId).size();
-
-        if (totalQuestoesSimulado == 0) return -1;
+    // NOVO MÉTODO: Para encontrar a nota atribuída em questões discursivas
+    public Double findNotaAtribuida(String alunoId, int simuladoId, int questaoId) {
+        String sql = "SELECT nota_atribuida FROM aluno_respostas WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
+        Double nota = null;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, alunoId);
             stmt.setInt(2, simuladoId);
+            stmt.setInt(3, questaoId);
+
             ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                double result = rs.getDouble("nota_atribuida");
+                if (!rs.wasNull()) {
+                    nota = result;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar nota atribuída.");
+            e.printStackTrace();
+        }
+        return nota;
+    }
+
+
+    /**
+     * Calcula a nota final de um aluno em um simulado, somando os pontos obtidos
+     * em cada questão (baseado na notaPontuacao).
+     *
+     * @param alunoId O ID do aluno.
+     * @param simuladoId O ID do simulado.
+     * @return A nota absoluta (soma dos pontos), -1 se não houver respostas, ou -2 se houver correção manual pendente.
+     */
+    public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId) {
+
+        // Query para somar os pontos obtidos:
+        String sqlSomaObtida = "SELECT " +
+                // 1. Multipla Escolha (MC): Soma a nota_pontuacao da questao (q) se a alternativa selecionada (a) estiver correta
+                "  CAST(SUM(CASE WHEN ar.alternativa_selecionada_id IS NOT NULL AND a.correta = 1 THEN q.nota_pontuacao ELSE 0 END) AS REAL) as obtido_mc, " +
+                // 2. Discursiva: Soma a nota_atribuida (que é o ponto concedido pelo professor)
+                "  CAST(SUM(CASE WHEN ar.resposta_discursiva IS NOT NULL THEN ar.nota_atribuida ELSE 0 END) AS REAL) as obtido_discursiva " +
+                "FROM aluno_respostas ar " +
+                "JOIN questoes q ON ar.questao_id = q.id " +
+                "LEFT JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
+                "WHERE ar.aluno_id = ? AND ar.simulado_id = ?";
+
+        double notaObtidaTotal = -1;
+        boolean hasResult = false;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmtSoma = conn.prepareStatement(sqlSomaObtida)) {
+
+            stmtSoma.setString(1, alunoId);
+            stmtSoma.setInt(2, simuladoId);
+            ResultSet rs = stmtSoma.executeQuery();
 
             if (rs.next()) {
-                double acertosMC = rs.getDouble("acertos_mc");
-                double somaNotasDiscursivas = rs.getDouble("soma_notas_discursivas");
+                double obtidoMc = rs.getDouble("obtido_mc");
+                double obtidoDiscursiva = rs.getDouble("obtido_discursiva");
 
-                double notaSomaTotal = acertosMC + somaNotasDiscursivas;
-
-                // Normaliza para 100%
-                return (notaSomaTotal / totalQuestoesSimulado) * 100.0;
+                if (!rs.wasNull()) { // Se pelo menos uma das somas tem valor (i.e., há respostas)
+                    notaObtidaTotal = obtidoMc + obtidoDiscursiva;
+                    hasResult = true;
+                }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao calcular a nota do simulado para o aluno.");
             e.printStackTrace();
+            return -1;
         }
-        return -1;
+
+        if (hasResult) {
+            // VERIFICAÇÃO CRÍTICA: Contar questões discursivas que o aluno respondeu e que não foram corrigidas
+            String sqlDiscursivasNaoCorrigidas = "SELECT COUNT(ar.id) FROM aluno_respostas ar " +
+                    "JOIN questoes q ON ar.questao_id = q.id " +
+                    "WHERE ar.aluno_id = ? AND ar.simulado_id = ? AND q.tipo = 'DISCURSIVA' AND ar.nota_atribuida IS NULL AND ar.resposta_discursiva IS NOT NULL";
+
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement stmtCount = conn.prepareStatement(sqlDiscursivasNaoCorrigidas)) {
+                stmtCount.setString(1, alunoId);
+                stmtCount.setInt(2, simuladoId);
+                ResultSet rs = stmtCount.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return -2; // Retorna código de erro: Aguardando correção manual
+                }
+            } catch (SQLException e) {
+                System.err.println("Erro ao verificar correção manual pendente.");
+            }
+
+            // O retorno é a nota absoluta (soma dos pontos), se não houver pendências
+            return notaObtidaTotal;
+        }
+
+        return -1; // Sem respostas (notaObtidaTotal continua -1)
     }
 
     public List<Integer> findSimuladosRealizadosIdsByAluno(String alunoId) {
@@ -138,32 +191,41 @@ public class AlunoRespostaDAO {
         return ids;
     }
 
-    // --- NOVO MÉTODO REUTILIZÁVEL ---
     /**
      * Calcula a média geral de um aluno em todos os simulados que ele realizou.
+     * A nota do simulado (soma dos pontos) é normalizada para a escala de 0 a 10.
      * @param alunoId O ID do aluno.
-     * @return A média geral (0 a 100), ou -1 se não houver simulados realizados.
+     * @return A média geral (0 a 10), ou -1 se não houver simulados realizados.
      */
     public double getMediaGeralSimulados(String alunoId) {
         List<Integer> simuladosRealizadosIds = findSimuladosRealizadosIdsByAluno(alunoId);
+        QuestaoDAO questaoDAO = new QuestaoDAO();
 
         if (simuladosRealizadosIds.isEmpty()) {
-            return -1; // Retorna -1 para indicar que o aluno não fez simulados
+            return -1;
         }
 
-        double somaDasNotas = 0;
+        double somaDasNotasFinal = 0;
         int countValidos = 0;
 
         for (Integer simuladoId : simuladosRealizadosIds) {
-            double nota = getNotaByAlunoAndSimulado(alunoId, simuladoId);
-            if (nota >= 0) {
-                somaDasNotas += nota;
-                countValidos++;
+            double notaAbsoluta = getNotaByAlunoAndSimulado(alunoId, simuladoId);
+
+            // Ignora simulados sem respostas (-1) ou aguardando correção (-2)
+            if (notaAbsoluta >= 0) {
+                double maxPontos = questaoDAO.getTotalPontuacaoBySimuladoId(simuladoId);
+
+                if (maxPontos > 0) {
+                    // Normaliza a nota para a escala de 0 a 10 para o cálculo da média
+                    double notaFinal = (notaAbsoluta / maxPontos) * 10.0;
+                    somaDasNotasFinal += notaFinal;
+                    countValidos++;
+                }
             }
         }
 
         if (countValidos > 0) {
-            return somaDasNotas / countValidos;
+            return somaDasNotasFinal / countValidos;
         }
 
         return -1;

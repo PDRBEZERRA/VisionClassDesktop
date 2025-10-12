@@ -12,6 +12,7 @@ public class Questao {
     private int assuntoId;
     private String professorCriadorId;
     private List<Alternativa> alternativas = new ArrayList<>();
+    private double notaPontuacao; // NOVO CAMPO: Pontuação atribuída a esta questão.
 
     // Getters e Setters
     public int getId() {
@@ -76,5 +77,14 @@ public class Questao {
 
     public void setAlternativas(List<Alternativa> alternativas) {
         this.alternativas = alternativas;
+    }
+
+    // NOVO: Getters e Setters para notaPontuacao
+    public double getNotaPontuacao() {
+        return notaPontuacao;
+    }
+
+    public void setNotaPontuacao(double notaPontuacao) {
+        this.notaPontuacao = notaPontuacao;
     }
 }

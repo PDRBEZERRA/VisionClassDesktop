@@ -10,7 +10,8 @@ import java.util.List;
 public class QuestaoDAO {
 
     public void save(Questao questao) {
-        String sqlQuestao = "INSERT INTO questoes (enunciado, tipo, nivel_dificuldade, disciplina_id, assunto_id, professor_criador_id) VALUES (?, ?, ?, ?, ?, ?)";
+        // SQL atualizado para incluir a coluna nota_pontuacao
+        String sqlQuestao = "INSERT INTO questoes (enunciado, tipo, nivel_dificuldade, disciplina_id, assunto_id, professor_criador_id, nota_pontuacao) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlAlternativa = "INSERT INTO alternativas (texto, correta, questao_id) VALUES (?, ?, ?)";
 
         Connection conn = null;
@@ -25,6 +26,7 @@ public class QuestaoDAO {
                 stmtQuestao.setInt(4, questao.getDisciplinaId());
                 stmtQuestao.setInt(5, questao.getAssuntoId());
                 stmtQuestao.setString(6, questao.getProfessorCriadorId());
+                stmtQuestao.setDouble(7, questao.getNotaPontuacao()); // NOVO: Seta a pontuação
                 stmtQuestao.executeUpdate();
 
                 ResultSet rs = stmtQuestao.getGeneratedKeys();
@@ -59,7 +61,8 @@ public class QuestaoDAO {
 
     // --- NOVO MÉTODO DE UPDATE ---
     public void update(Questao questao) {
-        String sqlUpdateQuestao = "UPDATE questoes SET enunciado = ?, tipo = ?, nivel_dificuldade = ?, disciplina_id = ?, assunto_id = ? WHERE id = ?";
+        // SQL atualizado para incluir a coluna nota_pontuacao
+        String sqlUpdateQuestao = "UPDATE questoes SET enunciado = ?, tipo = ?, nivel_dificuldade = ?, disciplina_id = ?, assunto_id = ?, nota_pontuacao = ? WHERE id = ?";
         String sqlDeleteAlternativas = "DELETE FROM alternativas WHERE questao_id = ?";
         String sqlInsertAlternativa = "INSERT INTO alternativas (texto, correta, questao_id) VALUES (?, ?, ?)";
 
@@ -75,7 +78,8 @@ public class QuestaoDAO {
                 stmt.setString(3, questao.getNivelDificuldade().name());
                 stmt.setInt(4, questao.getDisciplinaId());
                 stmt.setInt(5, questao.getAssuntoId());
-                stmt.setInt(6, questao.getId());
+                stmt.setDouble(6, questao.getNotaPontuacao()); // NOVO: Seta a pontuação
+                stmt.setInt(7, questao.getId());
                 stmt.executeUpdate();
             }
 
@@ -130,6 +134,7 @@ public class QuestaoDAO {
                     questao.setDisciplinaId(rs.getInt("disciplina_id"));
                     questao.setAssuntoId(rs.getInt("assunto_id"));
                     questao.setProfessorCriadorId(rs.getString("professor_criador_id"));
+                    questao.setNotaPontuacao(rs.getDouble("nota_pontuacao")); // NOVO: Leitura da pontuação
                 }
             }
 
@@ -157,12 +162,27 @@ public class QuestaoDAO {
         return questao;
     }
 
-    // --- NOVO MÉTODO: BUSCA QUESTÕES COMPLETAS DE UM SIMULADO ---
-    /**
-     * Busca todas as questões completas (incluindo alternativas) associadas a um Simulado.
-     * @param simuladoId O ID do simulado.
-     * @return Uma lista de objetos Questao completos.
-     */
+    // --- NOVO MÉTODO: Calcula a pontuação máxima de um simulado ---
+    public double getTotalPontuacaoBySimuladoId(int simuladoId) {
+        String sql = "SELECT SUM(q.nota_pontuacao) FROM questoes q " +
+                "INNER JOIN simulado_questoes sq ON q.id = sq.questao_id " +
+                "WHERE sq.simulado_id = ?";
+        double total = 0.0;
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, simuladoId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                total = rs.getDouble(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao calcular a pontuação total do simulado.");
+            e.printStackTrace();
+        }
+        return total;
+    }
+
+    // --- BUSCA QUESTÕES COMPLETAS DE UM SIMULADO (usa findById) ---
     public List<Questao> findQuestoesBySimuladoId(int simuladoId) {
         // 1. Primeiro, encontra os IDs das questões associadas ao simulado
         String sqlQuestaoIds = "SELECT questao_id FROM simulado_questoes WHERE simulado_id = ?";
@@ -195,9 +215,8 @@ public class QuestaoDAO {
         return questoesCompletas;
     }
 
-
     public List<Questao> findByFilters(Integer disciplinaId, Integer assuntoId) {
-        // ... (código existente sem alterações)
+        // ... (código para construir o SQL)
         StringBuilder sql = new StringBuilder("SELECT * FROM questoes");
         List<Object> params = new ArrayList<>();
 
@@ -234,6 +253,7 @@ public class QuestaoDAO {
                 q.setDisciplinaId(rs.getInt("disciplina_id"));
                 q.setAssuntoId(rs.getInt("assunto_id"));
                 q.setProfessorCriadorId(rs.getString("professor_criador_id"));
+                q.setNotaPontuacao(rs.getDouble("nota_pontuacao")); // NOVO: Leitura da pontuação
                 questoes.add(q);
             }
         } catch (SQLException e) {

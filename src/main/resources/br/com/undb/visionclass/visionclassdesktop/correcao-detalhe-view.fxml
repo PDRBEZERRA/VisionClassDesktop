@@ -38,9 +38,8 @@
 
                 <HBox alignment="CENTER_LEFT" spacing="15.0">
                     <children>
-                        <Label text="Nota Atribuída (0-10):" style="-fx-font-weight: bold;" />
-                        <TextField fx:id="notaTextField" prefWidth="80.0" promptText="0.0 - 10.0" />
-                        <Label text="Pontos" />
+                        <Label fx:id="notaAtribuidaLabel" text="Nota Atribuída (Max: Pontos)" style="-fx-font-weight: bold;" />
+                        <TextField fx:id="notaTextField" prefWidth="80.0" promptText="0.0" />
                     </children>
                 </HBox>
 

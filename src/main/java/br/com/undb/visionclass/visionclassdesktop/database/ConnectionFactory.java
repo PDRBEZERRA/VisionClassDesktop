@@ -35,7 +35,10 @@ public class ConnectionFactory {
             stmt.execute("CREATE TABLE IF NOT EXISTS avaliacoes_comportamentais (id TEXT PRIMARY KEY, aluno_id TEXT NOT NULL, professor_id TEXT NOT NULL, turma_id TEXT NOT NULL, data TEXT NOT NULL, assiduidade INTEGER, participacao INTEGER, responsabilidade INTEGER, sociabilidade INTEGER, observacoes TEXT, FOREIGN KEY (aluno_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (professor_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE);");
             stmt.execute("CREATE TABLE IF NOT EXISTS disciplinas (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL UNIQUE);");
             stmt.execute("CREATE TABLE IF NOT EXISTS assuntos (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, disciplina_id INTEGER NOT NULL, FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE);");
-            stmt.execute("CREATE TABLE IF NOT EXISTS questoes (id INTEGER PRIMARY KEY AUTOINCREMENT, enunciado TEXT NOT NULL, tipo TEXT NOT NULL, nivel_dificuldade TEXT NOT NULL, disciplina_id INTEGER NOT NULL, assunto_id INTEGER NOT NULL, professor_criador_id TEXT NOT NULL, FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE, FOREIGN KEY (assunto_id) REFERENCES assuntos(id) ON DELETE CASCADE, FOREIGN KEY (professor_criador_id) REFERENCES users(id));");
+
+            // ALTERAÇÃO CRÍTICA: Adição de nota_pontuacao com valor padrão de 1.0
+            stmt.execute("CREATE TABLE IF NOT EXISTS questoes (id INTEGER PRIMARY KEY AUTOINCREMENT, enunciado TEXT NOT NULL, tipo TEXT NOT NULL, nivel_dificuldade TEXT NOT NULL, disciplina_id INTEGER NOT NULL, assunto_id INTEGER NOT NULL, professor_criador_id TEXT NOT NULL, nota_pontuacao REAL NOT NULL DEFAULT 1.0, FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE, FOREIGN KEY (assunto_id) REFERENCES assuntos(id) ON DELETE CASCADE, FOREIGN KEY (professor_criador_id) REFERENCES users(id));");
+
             stmt.execute("CREATE TABLE IF NOT EXISTS alternativas (id INTEGER PRIMARY KEY AUTOINCREMENT, texto TEXT NOT NULL, correta BOOLEAN NOT NULL, questao_id INTEGER NOT NULL, FOREIGN KEY (questao_id) REFERENCES questoes(id) ON DELETE CASCADE);");
 
             String createSimuladosTableSql = "CREATE TABLE IF NOT EXISTS simulados (id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, data_criacao TEXT NOT NULL, status TEXT NOT NULL, professor_criador_id TEXT NOT NULL, FOREIGN KEY (professor_criador_id) REFERENCES users(id));";
@@ -48,7 +51,14 @@ public class ConnectionFactory {
             stmt.execute(createSimuladoTurmasTableSql);
             stmt.execute(createAlunoRespostasTableSql);
 
-            // --- MIGRAÇÃO CRÍTICA: ADICIONAR COLUNAS PARA CORREÇÃO MANUAL ---
+            // --- MIGRAÇÃO CRÍTICA: ADICIONAR NOVAS COLUNAS ---
+
+            // 1. Adicionar nota_pontuacao à tabela questoes (para migração de versões antigas)
+            try {
+                stmt.execute("ALTER TABLE questoes ADD COLUMN nota_pontuacao REAL NOT NULL DEFAULT 1.0;");
+            } catch (SQLException ignored) { /* Coluna já existe */ }
+
+            // 2. Colunas de correção manual (já existentes)
             try {
                 stmt.execute("ALTER TABLE aluno_respostas ADD COLUMN nota_atribuida NUMERIC(5, 2);");
             } catch (SQLException ignored) { /* Coluna já existe */ }

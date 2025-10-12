@@ -59,9 +59,18 @@ public class SimuladoAlunoViewOuExecController {
         rootContainer.getChildren().add(tituloSimuladoLabel);
 
         double nota = alunoRespostaDAO.getNotaByAlunoAndSimulado(alunoLogado.getId(), simuladoAtual.getId());
-        String notaTexto = (nota >= 0)
-                ? String.format("Sua Nota: %.2f%%", nota)
-                : "Simulado Aguardando Correção do Professor (Questões Discursivas).";
+
+        String notaTexto;
+        if (nota == -2) {
+            // Caso em que a nota ainda não foi totalmente corrigida (código de retorno -2)
+            notaTexto = "Simulado Aguardando Correção do Professor (Questões Discursivas).";
+        } else if (nota >= 0) {
+            // Nota final em pontos absolutos (formatação com vírgula)
+            notaTexto = String.format("Sua Nota: %.2f pontos", nota).replace(".", ",");
+        } else {
+            // Caso a nota seja -1 (sem respostas)
+            notaTexto = "Não há dados de nota disponíveis para este simulado.";
+        }
 
         Label notaLabel = new Label(notaTexto);
         notaLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;");
