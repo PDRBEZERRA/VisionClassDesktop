@@ -66,6 +66,74 @@ public class SimuladoDAO {
         }
     }
 
+    /**
+     * Atualiza um simulado existente (título, status, questões e turmas).
+     * @param simulado O simulado com os dados atualizados.
+     */
+    public void update(Simulado simulado) {
+        String sqlUpdateSimulado = "UPDATE simulados SET titulo = ?, status = ? WHERE id = ?";
+        String sqlDeleteQuestoes = "DELETE FROM simulado_questoes WHERE simulado_id = ?";
+        String sqlInsertQuestoes = "INSERT INTO simulado_questoes (simulado_id, questao_id) VALUES (?, ?)";
+        String sqlDeleteTurmas = "DELETE FROM simulado_turmas WHERE simulado_id = ?";
+        String sqlInsertTurmas = "INSERT INTO simulado_turmas (simulado_id, turma_id) VALUES (?, ?)";
+
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.getConnection();
+            conn.setAutoCommit(false); // Inicia transação
+
+            // 1. Atualiza o título e status do Simulado
+            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateSimulado)) {
+                stmt.setString(1, simulado.getTitulo());
+                stmt.setString(2, simulado.getStatus().name());
+                stmt.setInt(3, simulado.getId());
+                stmt.executeUpdate();
+            }
+
+            // 2. Deleta e insere as novas Questões
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteQuestoes)) {
+                stmt.setInt(1, simulado.getId());
+                stmt.executeUpdate();
+            }
+            if (!simulado.getQuestoes().isEmpty()) {
+                try (PreparedStatement stmt = conn.prepareStatement(sqlInsertQuestoes)) {
+                    for (Questao q : simulado.getQuestoes()) {
+                        stmt.setInt(1, simulado.getId());
+                        stmt.setInt(2, q.getId());
+                        stmt.addBatch();
+                    }
+                    stmt.executeBatch();
+                }
+            }
+
+            // 3. Deleta e insere as novas Turmas
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteTurmas)) {
+                stmt.setInt(1, simulado.getId());
+                stmt.executeUpdate();
+            }
+            if (!simulado.getTurmas().isEmpty()) {
+                try (PreparedStatement stmt = conn.prepareStatement(sqlInsertTurmas)) {
+                    for (Turma t : simulado.getTurmas()) {
+                        stmt.setInt(1, simulado.getId());
+                        stmt.setString(2, t.getId());
+                        stmt.addBatch();
+                    }
+                    stmt.executeBatch();
+                }
+            }
+
+            conn.commit(); // Confirma a transação
+            System.out.println("Simulado ID " + simulado.getId() + " atualizado com sucesso!");
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar o simulado. Realizando rollback.");
+            e.printStackTrace();
+            if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); } }
+        }
+    }
+
     public List<Simulado> findByProfessorId(String professorId) {
         String sql = "SELECT * FROM simulados WHERE professor_criador_id = ? ORDER BY data_criacao DESC";
         List<Simulado> simulados = new ArrayList<>();

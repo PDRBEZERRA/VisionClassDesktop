@@ -50,9 +50,8 @@ public class LoginController {
                     HelloApplication.getScreenManager().switchTo("dashboard-professor-view.fxml");
                     break;
                 case ALUNO:
-                    // Futuramente, pode redirecionar para "dashboard-aluno-view.fxml"
-                    // Por agora, pode mostrar uma mensagem ou ir para um dashboard genérico
-                    showAlert(Alert.AlertType.INFORMATION, "Login de Aluno", "O dashboard do aluno ainda não foi implementado.");
+                    // --- CORREÇÃO: Redireciona para o novo dashboard do aluno ---
+                    HelloApplication.getScreenManager().switchTo("dashboard-aluno-view.fxml");
                     break;
                 default:
                     showAlert(Alert.AlertType.ERROR, "Erro de Acesso", "Função de utilizador desconhecida.");
