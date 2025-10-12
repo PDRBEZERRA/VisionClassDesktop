@@ -1,5 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
+import br.com.undb.visionclass.visionclassdesktop.dao.AlunoRespostaDAO; // NOVO IMPORT
 import br.com.undb.visionclass.visionclassdesktop.dao.SimuladoDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Simulado;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
@@ -13,6 +14,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -34,9 +36,12 @@ public class SimuladosController {
     @FXML
     private TableColumn<Simulado, Number> questoesColumn;
     @FXML
+    private TableColumn<Simulado, Number> submissoesColumn; // NOVO CAMPO FXML
+    @FXML
     private TableColumn<Simulado, Void> acoesColumn;
 
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
+    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO(); // NOVO DAO
     private ObservableList<Simulado> simuladosList = FXCollections.observableArrayList();
 
     @FXML
@@ -52,15 +57,20 @@ public class SimuladosController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         dataCriacaoColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDataCriacao().format(formatter)));
 
-        // --- COLUNA DE QUESTÕES CORRIGIDA ---
         questoesColumn.setCellValueFactory(cellData -> {
             int count = simuladoDAO.countQuestoesBySimuladoId(cellData.getValue().getId());
             return new SimpleIntegerProperty(count);
         });
 
+        // NOVO: Coluna de Submissões
+        submissoesColumn.setCellValueFactory(cellData -> {
+            int count = alunoRespostaDAO.countSubmissoesBySimuladoId(cellData.getValue().getId());
+            return new SimpleIntegerProperty(count);
+        });
+
+
         simuladosTableView.setItems(simuladosList);
 
-        // --- LÓGICA DE EXCLUSÃO ---
         setupAcoesColumn();
     }
 
@@ -69,10 +79,22 @@ public class SimuladosController {
             @Override
             public TableCell<Simulado, Void> call(final TableColumn<Simulado, Void> param) {
                 return new TableCell<>() {
+
+                    private final Button btnCorrigir = new Button("Corrigir");
                     private final Button btnExcluir = new Button("Excluir");
+                    private final HBox pane = new HBox(5, btnCorrigir, btnExcluir);
 
                     {
+                        pane.setAlignment(Pos.CENTER);
+
+                        btnCorrigir.getStyleClass().add("primary-button");
                         btnExcluir.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
+
+                        btnCorrigir.setOnAction(event -> {
+                            Simulado simulado = getTableView().getItems().get(getIndex());
+                            handleCorrigirSimulado(simulado);
+                        });
+
                         btnExcluir.setOnAction(event -> {
                             Simulado simulado = getTableView().getItems().get(getIndex());
                             confirmarExclusao(simulado);
@@ -82,10 +104,23 @@ public class SimuladosController {
                     @Override
                     protected void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        if (empty) {
+                        if (empty || getTableRow().getItem() == null) {
                             setGraphic(null);
                         } else {
-                            setGraphic(btnExcluir);
+                            Simulado simulado = getTableRow().getItem();
+
+                            // O botão "Corrigir" aparece se:
+                            // 1. O simulado está PUBLICADO, E
+                            // 2. Há pelo menos 1 submissão
+                            boolean isPublicado = simulado.getStatus().toString().equals("PUBLICADO");
+                            int submissoes = alunoRespostaDAO.countSubmissoesBySimuladoId(simulado.getId());
+
+                            boolean showCorrigir = isPublicado && submissoes > 0;
+
+                            btnCorrigir.setManaged(showCorrigir);
+                            btnCorrigir.setVisible(showCorrigir);
+
+                            setGraphic(pane);
                             setAlignment(Pos.CENTER);
                         }
                     }
@@ -105,6 +140,29 @@ public class SimuladosController {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             simuladoDAO.delete(simulado.getId());
             loadSimulados(); // Atualiza a tabela
+        }
+    }
+
+    private void handleCorrigirSimulado(Simulado simulado) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("correcao-simulado-view.fxml"));
+            Parent root = loader.load();
+
+            CorrecaoSimuladoController controller = loader.getController();
+            controller.setSimulado(simulado);
+
+            Stage stage = new Stage();
+            stage.setTitle("Correção do Simulado: " + simulado.getTitulo());
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(true);
+
+            stage.showAndWait();
+
+            loadSimulados();
+        } catch (IOException e) {
+            System.err.println("Erro ao abrir a tela de correção do simulado.");
+            e.printStackTrace();
         }
     }
 

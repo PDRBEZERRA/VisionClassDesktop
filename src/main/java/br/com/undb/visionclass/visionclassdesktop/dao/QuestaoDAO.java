@@ -106,11 +106,11 @@ public class QuestaoDAO {
             e.printStackTrace();
             if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
         } finally {
-            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); } }
+            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); } }
         }
     }
 
-    // --- NOVO MÉTODO PARA BUSCAR QUESTÃO COMPLETA ---
+    // --- MÉTODO PARA BUSCAR QUESTÃO COMPLETA (existente) ---
     public Questao findById(int questaoId) {
         String sqlQuestao = "SELECT * FROM questoes WHERE id = ?";
         String sqlAlternativas = "SELECT * FROM alternativas WHERE questao_id = ?";
@@ -156,6 +156,45 @@ public class QuestaoDAO {
         }
         return questao;
     }
+
+    // --- NOVO MÉTODO: BUSCA QUESTÕES COMPLETAS DE UM SIMULADO ---
+    /**
+     * Busca todas as questões completas (incluindo alternativas) associadas a um Simulado.
+     * @param simuladoId O ID do simulado.
+     * @return Uma lista de objetos Questao completos.
+     */
+    public List<Questao> findQuestoesBySimuladoId(int simuladoId) {
+        // 1. Primeiro, encontra os IDs das questões associadas ao simulado
+        String sqlQuestaoIds = "SELECT questao_id FROM simulado_questoes WHERE simulado_id = ?";
+        List<Integer> questaoIds = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlQuestaoIds)) {
+
+            stmt.setInt(1, simuladoId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                questaoIds.add(rs.getInt("questao_id"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar IDs de questões do simulado.");
+            e.printStackTrace();
+            return new ArrayList<>(); // Retorna lista vazia em caso de erro
+        }
+
+        // 2. Agora, busca os detalhes completos de cada questão
+        List<Questao> questoesCompletas = new ArrayList<>();
+        // Reutilizamos a lógica existente do findById
+        for (int id : questaoIds) {
+            Questao questao = findById(id); // findById já cuida da conexão e alternativas
+            if (questao != null) {
+                questoesCompletas.add(questao);
+            }
+        }
+
+        return questoesCompletas;
+    }
+
 
     public List<Questao> findByFilters(Integer disciplinaId, Integer assuntoId) {
         // ... (código existente sem alterações)

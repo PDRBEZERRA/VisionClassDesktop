@@ -14,15 +14,20 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader; // Import adicionado
 import javafx.geometry.Pos;
+import javafx.scene.Parent; // Import adicionado
+import javafx.scene.Scene; // Import adicionado
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.stage.Modality; // Import adicionado
+import javafx.stage.Stage; // Import adicionado
 import javafx.util.Callback;
 
-import java.time.format.DateTimeFormatter;
+import java.io.IOException; // Import adicionado
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,10 +50,11 @@ public class SimuladosAlunoController {
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
     private TurmaDAO turmaDAO = new TurmaDAO();
     private UserDAO userDAO = new UserDAO();
+    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO(); // Adicionado para manter a lógica
 
     private User alunoLogado;
     private Turma turmaDoAluno;
-    private Map<String, String> professoresNomesCache; // Cache para nomes de professores
+    private Map<String, String> professoresNomesCache;
 
     private ObservableList<Simulado> simuladosList = FXCollections.observableArrayList();
 
@@ -83,13 +89,9 @@ public class SimuladosAlunoController {
 
     // Método para determinar o status do simulado (Disponível, Feito, etc.)
     private String getSimuladoStatus(Simulado simulado) {
-        // A lógica completa de Status (Em Andamento, Finalizado, etc.)
-        // requer a implementação do SimuladoAlunoRespostaDAO.
-        // Por enquanto, apenas checa se foi realizado.
-        List<Integer> realizados = new AlunoRespostaDAO().findSimuladosRealizadosIdsByAluno(alunoLogado.getId());
+        List<Integer> realizados = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId());
 
         if (realizados.contains(simulado.getId())) {
-            // Se foi realizado, precisa de lógica para saber se está 'Corrigido'/'Finalizado'
             return "Finalizado";
         } else if (simulado.getStatus() == StatusSimulado.PUBLICADO) {
             return "Disponível";
@@ -100,10 +102,12 @@ public class SimuladosAlunoController {
 
     private void setupAcoesColumn() {
         Callback<TableColumn<Simulado, Void>, TableCell<Simulado, Void>> cellFactory = param -> new TableCell<>() {
-            private final Button btnAcao = new Button("Iniciar / Ver Nota");
+            private final Button btnAcao = new Button(); // Remove o texto inicial
 
             {
                 btnAcao.getStyleClass().add("primary-button");
+
+                // Adiciona o listener da ação aqui, ele será sempre o mesmo
                 btnAcao.setOnAction(event -> {
                     Simulado simulado = getTableView().getItems().get(getIndex());
                     handleAcaoSimulado(simulado);
@@ -113,17 +117,26 @@ public class SimuladosAlunoController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
+
+                if (empty || getTableRow().getItem() == null) {
                     setGraphic(null);
                 } else {
+                    Simulado simulado = getTableRow().getItem();
                     setGraphic(btnAcao);
                     setAlignment(Pos.CENTER);
-                    // Lógica para mudar o texto do botão
-                    String status = getSimuladoStatus(getTableView().getItems().get(getIndex()));
-                    if (status.equals("Disponível")) {
-                        btnAcao.setText("Iniciar");
-                    } else {
+
+                    String status = getSimuladoStatus(simulado);
+
+                    if (status.equals("Finalizado")) {
                         btnAcao.setText("Ver Nota");
+                        btnAcao.setDisable(false);
+                    } else if (status.equals("Disponível")) {
+                        btnAcao.setText("Iniciar");
+                        btnAcao.setDisable(false);
+                    } else {
+                        // Trata "Em Rascunho" e quaisquer outros estados não esperados
+                        btnAcao.setText("...");
+                        btnAcao.setDisable(true); // Desabilita para rascunhos, etc.
                     }
                 }
             }
@@ -132,12 +145,30 @@ public class SimuladosAlunoController {
     }
 
     private void handleAcaoSimulado(Simulado simulado) {
-        // Alerta simples para simular a ação (a tela de execução do simulado não existe)
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Ação de Simulado");
-        alert.setHeaderText("Simulado: " + simulado.getTitulo());
-        alert.setContentText("A funcionalidade de Iniciar/Ver Nota para este simulado (ID: " + simulado.getId() + ") será implementada em breve.");
-        alert.showAndWait();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("simulado-aluno-acao-view.fxml"));
+            Parent root = loader.load();
+
+            // Passa o objeto Simulado para o novo controller
+            SimuladoAlunoViewOuExecController controller = loader.getController();
+            controller.setSimulado(simulado);
+
+            Stage modalStage = new Stage();
+            modalStage.setTitle("Ação de Simulado: " + simulado.getTitulo());
+            modalStage.setScene(new Scene(root));
+            modalStage.initModality(Modality.APPLICATION_MODAL);
+            modalStage.setResizable(false);
+
+            modalStage.showAndWait();
+
+            // Após fechar o modal, atualiza a lista (caso o status tenha mudado)
+            loadSimulados();
+
+        } catch (IOException e) {
+            System.err.println("Erro ao abrir a tela de ação do simulado: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível carregar a tela de ação do simulado.");
+        }
     }
 
     private void loadSimulados() {

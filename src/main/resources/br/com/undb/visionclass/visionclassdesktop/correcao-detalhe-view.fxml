@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="550.0" prefWidth="700.0" style="-fx-background-color: #f8fafc;"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="br.com.undb.visionclass.visionclassdesktop.CorrecaoDetalheController">
+    <children>
+        <VBox spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+            <children>
+                <Label fx:id="alunoQuestaoLabel" styleClass="title-large" text="Correção Detalhada - Aluno: [Nome]">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+
+                <Separator />
+
+                <VBox spacing="10.0" styleClass="card">
+                    <children>
+                        <Label text="Questão (Enunciado):" style="-fx-font-weight: bold;" />
+                        <Label fx:id="enunciadoLabel" text="[O enunciado completo da questão discursiva]" wrapText="true" />
+
+                        <Separator />
+
+                        <Label text="Resposta do Aluno:" style="-fx-font-weight: bold;" />
+                        <TextArea fx:id="respostaAlunoTextArea" editable="false" prefHeight="100.0" wrapText="true" />
+                    </children>
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="15.0">
+                    <children>
+                        <Label text="Nota Atribuída (0-10):" style="-fx-font-weight: bold;" />
+                        <TextField fx:id="notaTextField" prefWidth="80.0" promptText="0.0 - 10.0" />
+                        <Label text="Pontos" />
+                    </children>
+                </HBox>
+
+                <VBox spacing="5.0">
+                    <children>
+                        <Label text="Feedback/Observações (Opcional):" />
+                        <TextArea fx:id="feedbackTextArea" prefHeight="80.0" wrapText="true" />
+                    </children>
+                </VBox>
+
+                <Separator />
+
+                <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#handleCancelar" text="Cancelar" />
+                        <Button mnemonicParsing="false" onAction="#handleSalvarNota" styleClass="primary-button" text="Salvar e Fechar" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

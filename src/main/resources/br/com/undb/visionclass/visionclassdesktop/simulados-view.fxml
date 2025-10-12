@@ -37,6 +37,7 @@
                         <TableColumn fx:id="dataCriacaoColumn" prefWidth="150.0" text="Data de Criação" />
                         <TableColumn fx:id="statusColumn" prefWidth="120.0" text="Status" />
                         <TableColumn fx:id="questoesColumn" prefWidth="100.0" text="Nº Questões" />
+                        <TableColumn fx:id="submissoesColumn" prefWidth="100.0" text="Submissões" />
                         <TableColumn fx:id="acoesColumn" prefWidth="150.0" text="Ações" />
                     </columns>
                     <columnResizePolicy>

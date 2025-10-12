@@ -267,4 +267,22 @@ public class SimuladoDAO {
         }
         return count;
     }
+
+    // Código adicionado no SimuladoDAO.java
+    public List<Integer> findQuestaoIdsBySimuladoId(int simuladoId) {
+        String sql = "SELECT questao_id FROM simulado_questoes WHERE simulado_id = ?";
+        List<Integer> ids = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, simuladoId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                ids.add(rs.getInt("questao_id"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar IDs das questões por Simulado.");
+            e.printStackTrace();
+        }
+        return ids;
+    }
 }
