@@ -26,8 +26,6 @@ public class DashboardProfessorController {
     private Label userNameLabel;
     @FXML
     private ImageView userAvatar;
-
-    // --- CAMPOS @FXML PARA OS BOTÕES ---
     @FXML
     private Button dashboardButton;
     @FXML
@@ -41,19 +39,15 @@ public class DashboardProfessorController {
     @FXML
     private Button relatoriosButton;
 
-    // --- CAMPO PARA GERENCIAR O BOTÃO ATIVO ---
     private Button activeButton;
-
 
     @FXML
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        // Define "Minhas Turmas" como a tela e o botão inicial do professor
         onMinhasTurmasClick(null);
     }
 
-    // --- NOVO MÉTODO PARA GERENCIAR O ESTILO ---
     private void setActiveButton(Button button) {
         if (activeButton != null) {
             activeButton.getStyleClass().remove("active");
@@ -78,7 +72,6 @@ public class DashboardProfessorController {
             detalhesController.setDashboardController(this);
 
             mainBorderPane.setCenter(view);
-            // Ao navegar para detalhes, mantém o botão "Minhas Turmas" como ativo
             setActiveButton(minhasTurmasButton);
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,8 +106,6 @@ public class DashboardProfessorController {
         }
     }
 
-    // --- MÉTODOS DE CLIQUE ATUALIZADOS ---
-
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
         loadCenterView("dashboard-professor-home-view.fxml");
@@ -133,9 +124,10 @@ public class DashboardProfessorController {
         setActiveButton(carometroButton);
     }
 
+    // --- CORREÇÃO APLICADA AQUI ---
     @FXML
     private void onBancoQuestoesClick(ActionEvent event) {
-        // System.out.println("Navegar para Banco de Questões");
+        loadCenterView("banco-questoes-view.fxml"); // Linha adicionada
         setActiveButton(bancoQuestoesButton);
     }
 
