@@ -51,33 +51,114 @@ public class QuestaoDAO {
         } catch (SQLException e) {
             System.err.println("Erro ao salvar a questão. Realizando rollback.");
             e.printStackTrace();
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
         } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); } }
         }
     }
 
-    // --- MÉTODO FINDALL SUBSTITUÍDO POR FINDBYFILTERS ---
-    /**
-     * Busca questões com base nos filtros de disciplina e assunto.
-     * @param disciplinaId O ID da disciplina (pode ser nulo).
-     * @param assuntoId O ID do assunto (pode ser nulo).
-     * @return Uma lista de questões que correspondem aos filtros.
-     */
+    // --- NOVO MÉTODO DE UPDATE ---
+    public void update(Questao questao) {
+        String sqlUpdateQuestao = "UPDATE questoes SET enunciado = ?, tipo = ?, nivel_dificuldade = ?, disciplina_id = ?, assunto_id = ? WHERE id = ?";
+        String sqlDeleteAlternativas = "DELETE FROM alternativas WHERE questao_id = ?";
+        String sqlInsertAlternativa = "INSERT INTO alternativas (texto, correta, questao_id) VALUES (?, ?, ?)";
+
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.getConnection();
+            conn.setAutoCommit(false); // Inicia transação
+
+            // 1. Atualiza a questão principal
+            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateQuestao)) {
+                stmt.setString(1, questao.getEnunciado());
+                stmt.setString(2, questao.getTipo().name());
+                stmt.setString(3, questao.getNivelDificuldade().name());
+                stmt.setInt(4, questao.getDisciplinaId());
+                stmt.setInt(5, questao.getAssuntoId());
+                stmt.setInt(6, questao.getId());
+                stmt.executeUpdate();
+            }
+
+            // 2. Deleta as alternativas antigas
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAlternativas)) {
+                stmt.setInt(1, questao.getId());
+                stmt.executeUpdate();
+            }
+
+            // 3. Insere as novas alternativas (se houver)
+            if (questao.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA && !questao.getAlternativas().isEmpty()) {
+                try (PreparedStatement stmt = conn.prepareStatement(sqlInsertAlternativa)) {
+                    for (Alternativa alt : questao.getAlternativas()) {
+                        stmt.setString(1, alt.getTexto());
+                        stmt.setBoolean(2, alt.isCorreta());
+                        stmt.setInt(3, questao.getId());
+                        stmt.addBatch();
+                    }
+                    stmt.executeBatch();
+                }
+            }
+
+            conn.commit(); // Confirma a transação
+            System.out.println("Questão ID " + questao.getId() + " atualizada com sucesso!");
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar a questão. Realizando rollback.");
+            e.printStackTrace();
+            if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
+        } finally {
+            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); } }
+        }
+    }
+
+    // --- NOVO MÉTODO PARA BUSCAR QUESTÃO COMPLETA ---
+    public Questao findById(int questaoId) {
+        String sqlQuestao = "SELECT * FROM questoes WHERE id = ?";
+        String sqlAlternativas = "SELECT * FROM alternativas WHERE questao_id = ?";
+        Questao questao = null;
+
+        try (Connection conn = ConnectionFactory.getConnection()) {
+            // Busca a questão
+            try (PreparedStatement stmt = conn.prepareStatement(sqlQuestao)) {
+                stmt.setInt(1, questaoId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    questao = new Questao();
+                    questao.setId(rs.getInt("id"));
+                    questao.setEnunciado(rs.getString("enunciado"));
+                    questao.setTipo(TipoQuestao.valueOf(rs.getString("tipo")));
+                    questao.setNivelDificuldade(NivelDificuldade.valueOf(rs.getString("nivel_dificuldade")));
+                    questao.setDisciplinaId(rs.getInt("disciplina_id"));
+                    questao.setAssuntoId(rs.getInt("assunto_id"));
+                    questao.setProfessorCriadorId(rs.getString("professor_criador_id"));
+                }
+            }
+
+            // Se a questão foi encontrada e é de múltipla escolha, busca as alternativas
+            if (questao != null && questao.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA) {
+                try (PreparedStatement stmt = conn.prepareStatement(sqlAlternativas)) {
+                    stmt.setInt(1, questaoId);
+                    ResultSet rs = stmt.executeQuery();
+                    List<Alternativa> alternativas = new ArrayList<>();
+                    while (rs.next()) {
+                        Alternativa alt = new Alternativa();
+                        alt.setId(rs.getInt("id"));
+                        alt.setTexto(rs.getString("texto"));
+                        alt.setCorreta(rs.getBoolean("correta"));
+                        alt.setQuestaoId(rs.getInt("questao_id"));
+                        alternativas.add(alt);
+                    }
+                    questao.setAlternativas(alternativas);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar questão por ID.");
+            e.printStackTrace();
+        }
+        return questao;
+    }
+
     public List<Questao> findByFilters(Integer disciplinaId, Integer assuntoId) {
+        // ... (código existente sem alterações)
         StringBuilder sql = new StringBuilder("SELECT * FROM questoes");
         List<Object> params = new ArrayList<>();
 
@@ -100,7 +181,6 @@ public class QuestaoDAO {
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            // Define os parâmetros na consulta
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }

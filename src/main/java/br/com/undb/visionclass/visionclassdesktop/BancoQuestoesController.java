@@ -16,6 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -97,10 +98,22 @@ public class BancoQuestoesController {
             @Override
             public TableCell<Questao, Void> call(final TableColumn<Questao, Void> param) {
                 return new TableCell<>() {
+                    // --- BOTÕES DE AÇÃO ---
+                    private final Button btnEditar = new Button("Editar");
                     private final Button btnRemover = new Button("Remover");
+                    private final HBox pane = new HBox(btnEditar, btnRemover);
 
                     {
+                        pane.setSpacing(10);
+                        pane.setAlignment(Pos.CENTER);
+                        btnEditar.getStyleClass().add("primary-button");
                         btnRemover.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
+
+                        btnEditar.setOnAction(event -> {
+                            Questao questao = getTableView().getItems().get(getIndex());
+                            handleEditarQuestao(questao);
+                        });
+
                         btnRemover.setOnAction(event -> {
                             Questao questao = getTableView().getItems().get(getIndex());
                             confirmarRemocao(questao);
@@ -113,8 +126,7 @@ public class BancoQuestoesController {
                         if (empty) {
                             setGraphic(null);
                         } else {
-                            setGraphic(btnRemover);
-                            setAlignment(Pos.CENTER);
+                            setGraphic(pane);
                         }
                     }
                 };
@@ -149,8 +161,6 @@ public class BancoQuestoesController {
         applyFiltersAndRefreshTable();
     }
 
-    // --- LÓGICA DE FILTRAGEM ATUALIZADA ---
-
     private void applyFiltersAndRefreshTable() {
         Disciplina disciplinaSelecionada = disciplinaComboBox.getValue();
         Assunto assuntoSelecionado = assuntoComboBox.getValue();
@@ -162,34 +172,61 @@ public class BancoQuestoesController {
     }
 
     private void setupFilters() {
-        // Listener para o ComboBox de Disciplina
         disciplinaComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             assuntoComboBox.getItems().clear();
-            assuntoComboBox.setValue(null); // Limpa a seleção do assunto
+            assuntoComboBox.setValue(null);
             if (newVal != null) {
                 assuntoComboBox.getItems().add(null);
                 assuntoComboBox.getItems().addAll(assuntoDAO.findByDisciplinaId(newVal.getId()));
             }
-            applyFiltersAndRefreshTable(); // Aplica o filtro
+            applyFiltersAndRefreshTable();
         });
 
-        // Listener para o ComboBox de Assunto
         assuntoComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            applyFiltersAndRefreshTable(); // Aplica o filtro
+            applyFiltersAndRefreshTable();
         });
     }
 
     @FXML
     private void handleNovaQuestao() {
+        abrirFormularioQuestao(null); // Abre o formulário em modo de criação
+    }
+
+    // --- NOVO MÉTODO PARA ABRIR O FORMULÁRIO DE EDIÇÃO ---
+    private void handleEditarQuestao(Questao questao) {
+        // Busca a questão completa, com suas alternativas, antes de abrir o formulário
+        Questao questaoCompleta = questaoDAO.findById(questao.getId());
+        if (questaoCompleta != null) {
+            abrirFormularioQuestao(questaoCompleta); // Abre o formulário em modo de edição
+        } else {
+            // Mostra um erro se não conseguir encontrar a questão
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Não foi possível carregar a questão.");
+            alert.setContentText("A questão com ID " + questao.getId() + " não foi encontrada no banco de dados.");
+            alert.showAndWait();
+        }
+    }
+
+    private void abrirFormularioQuestao(Questao questaoParaEditar) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("questao-form-view.fxml"));
             Parent root = loader.load();
 
+            // Pega o controller do formulário
+            QuestaoFormController controller = loader.getController();
+
             Stage stage = new Stage();
-            stage.setTitle("Adicionar Nova Questão");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
+
+            if (questaoParaEditar != null) {
+                stage.setTitle("Editar Questão");
+                controller.setQuestaoParaEditar(questaoParaEditar); // Passa a questão para o formulário
+            } else {
+                stage.setTitle("Adicionar Nova Questão");
+            }
 
             stage.showAndWait();
 
@@ -197,7 +234,7 @@ public class BancoQuestoesController {
             loadInitialData();
 
         } catch (IOException e) {
-            System.err.println("Erro ao abrir o formulário de nova questão.");
+            System.err.println("Erro ao abrir o formulário de questão.");
             e.printStackTrace();
         }
     }

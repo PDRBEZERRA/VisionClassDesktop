@@ -18,7 +18,7 @@
     <children>
         <VBox spacing="20.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="30.0">
             <children>
-                <Label styleClass="title-large" text="Criar Nova Questão">
+                <Label styleClass="title-large" text="Criar Nova Questão" fx:id="titleLabel">
                     <font>
                         <Font name="System Bold" size="24.0" />
                     </font>
