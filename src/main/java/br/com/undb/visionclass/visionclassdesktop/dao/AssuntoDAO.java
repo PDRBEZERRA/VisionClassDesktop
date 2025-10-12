@@ -67,4 +67,21 @@ public class AssuntoDAO {
         }
         return assuntos;
     }
+
+    // --- NOVO MÉTODO PARA DELETAR ---
+    /**
+     * Deleta um assunto do banco de dados.
+     * @param assuntoId O ID do assunto a ser deletado.
+     */
+    public void delete(int assuntoId) {
+        String sql = "DELETE FROM assuntos WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, assuntoId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erro ao deletar o assunto.");
+            e.printStackTrace();
+        }
+    }
 }

@@ -18,6 +18,7 @@
                 <Button fx:id="dashboardButton" onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
                 <Button fx:id="gerirUsuariosButton" onAction="#onGerirUsuariosClick" styleClass="sidebar-button" text="Gerir Utilizadores" />
                 <Button fx:id="gerirTurmasButton" onAction="#onGerirTurmasClick" styleClass="sidebar-button" text="Gerir Turmas" />
+                <Button fx:id="gerirDisciplinasButton" onAction="#onGerirDisciplinasClick" styleClass="sidebar-button" text="Disciplinas/Assuntos" />
                 <Button fx:id="relatoriosButton" onAction="#onRelatoriosClick" styleClass="sidebar-button" text="Relatórios" />
                 <Button fx:id="carometroButton" onAction="#onCarometroClick" styleClass="sidebar-button" text="Carômetro" />
                 <Button fx:id="bancoQuestoesButton" onAction="#onBancoQuestoesClick" styleClass="sidebar-button" text="Banco de Questões" />

@@ -63,4 +63,21 @@ public class DisciplinaDAO {
         }
         return disciplinas;
     }
+
+    // --- NOVO MÉTODO PARA DELETAR ---
+    /**
+     * Deleta uma disciplina do banco de dados.
+     * @param disciplinaId O ID da disciplina a ser deletada.
+     */
+    public void delete(int disciplinaId) {
+        String sql = "DELETE FROM disciplinas WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, disciplinaId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erro ao deletar a disciplina.");
+            e.printStackTrace();
+        }
+    }
 }

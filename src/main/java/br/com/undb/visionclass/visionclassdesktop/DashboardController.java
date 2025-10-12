@@ -7,12 +7,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.Node;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +37,8 @@ public class DashboardController {
     @FXML
     private Button gerirTurmasButton;
     @FXML
+    private Button gerirDisciplinasButton; // Botão adicionado
+    @FXML
     private Button relatoriosButton;
     @FXML
     private Button carometroButton;
@@ -44,7 +49,6 @@ public class DashboardController {
     @FXML
     private Button sairButton;
 
-    // --- NOVO CAMPO PARA GERENCIAR O BOTÃO ATIVO ---
     private Button activeButton;
 
     @FXML
@@ -53,31 +57,27 @@ public class DashboardController {
         if (loggedInUser != null) {
             refreshUserProfile();
             configurarVisibilidadeMenu(loggedInUser.getRole());
-
-            // Define a tela e o botão inicial com base no perfil
             if (loggedInUser.getRole() == UserRole.ADMIN) {
-                onDashboardButtonClick(null); // Inicia na home do admin
+                onDashboardButtonClick(null);
             } else if (loggedInUser.getRole() == UserRole.PROFESSOR) {
-                // Para o professor, vamos unificar. O botão "Minhas Turmas" não existe no FXML principal.
-                // Assumiremos que "Gerir Turmas" se torna "Minhas Turmas" para ele.
                 onGerirTurmasClick(null);
             }
         }
     }
 
-    // --- NOVO MÉTODO PARA GERENCIAR O ESTILO DO BOTÃO ATIVO ---
     private void setActiveButton(Button button) {
         if (activeButton != null) {
-            activeButton.getStyleClass().remove("active"); // Remove a classe do botão antigo
+            activeButton.getStyleClass().remove("active");
         }
         if (button != null) {
-            button.getStyleClass().add("active"); // Adiciona a classe ao novo botão
-            activeButton = button; // Atualiza a referência
+            button.getStyleClass().add("active");
+            activeButton = button;
         }
     }
 
     private void configurarVisibilidadeMenu(UserRole role) {
-        List<Button> adminButtons = List.of(gerirUsuariosButton);
+        // Adiciona o novo botão à lista de botões do admin
+        List<Button> adminButtons = List.of(gerirUsuariosButton, gerirDisciplinasButton);
         List<Button> professorButtons = List.of(carometroButton, bancoQuestoesButton, simuladosButton);
 
         setNodesVisible(adminButtons, false);
@@ -87,7 +87,6 @@ public class DashboardController {
             setNodesVisible(adminButtons, true);
         } else if (role == UserRole.PROFESSOR) {
             setNodesVisible(professorButtons, true);
-            // Renomeia o botão para o professor
             gerirTurmasButton.setText("Minhas Turmas");
         }
     }
@@ -127,8 +126,6 @@ public class DashboardController {
         }
     }
 
-    // --- MÉTODOS DE CLIQUE ATUALIZADOS ---
-
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
         loadCenterView("dashboard-home-view.fxml");
@@ -145,11 +142,31 @@ public class DashboardController {
     public void onGerirTurmasClick(ActionEvent event) {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         if (loggedInUser.getRole() == UserRole.ADMIN) {
-            loadCenterView("turmas-view.fxml"); // Admin vê a tabela de gerenciamento
+            loadCenterView("turmas-view.fxml");
         } else if (loggedInUser.getRole() == UserRole.PROFESSOR) {
-            loadCenterView("minhas-turmas-view.fxml"); // Professor vê os cards
+            loadCenterView("minhas-turmas-view.fxml");
         }
         setActiveButton(gerirTurmasButton);
+    }
+
+    // --- NOVO MÉTODO PARA O BOTÃO DE DISCIPLINAS ---
+    @FXML
+    private void onGerirDisciplinasClick(ActionEvent event) {
+        // Abre a tela em uma nova janela modal, pois é uma ferramenta de configuração
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("gerenciar-disciplinas-assuntos-view.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("Gerenciar Disciplinas e Assuntos");
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(false);
+            stage.showAndWait();
+        } catch (IOException e) {
+            System.err.println("Erro ao abrir a tela de gerenciamento de disciplinas.");
+            e.printStackTrace();
+        }
+        // Não muda o botão ativo, pois é uma janela pop-up
     }
 
     @FXML
@@ -166,7 +183,7 @@ public class DashboardController {
 
     @FXML
     private void onBancoQuestoesClick(ActionEvent event) {
-        // loadCenterView("banco-questoes-view.fxml");
+        loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
     }
 

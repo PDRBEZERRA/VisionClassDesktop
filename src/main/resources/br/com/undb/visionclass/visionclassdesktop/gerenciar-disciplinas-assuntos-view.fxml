@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="500.0" prefWidth="700.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.GerenciarDisciplinasAssuntosController">
+    <children>
+        <VBox spacing="15.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+            <children>
+                <Label styleClass="title-large" text="Gerenciar Disciplinas e Assuntos">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+                <SplitPane dividerPositions="0.4" VBox.vgrow="ALWAYS">
+                    <items>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                            <children>
+                                <VBox spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <children>
+                                        <Label text="Disciplinas">
+                                            <font>
+                                                <Font name="System Bold" size="16.0" />
+                                            </font>
+                                        </Label>
+                                        <ListView fx:id="disciplinasListView" VBox.vgrow="ALWAYS" />
+                                        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#handleRemoverDisciplina" style="-fx-background-color: #ef4444;" text="Remover Selecionada" textFill="WHITE" />
+                                                <Button mnemonicParsing="false" onAction="#handleNovaDisciplina" styleClass="primary-button" text="+ Nova" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </AnchorPane>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                            <children>
+                                <VBox spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <children>
+                                        <Label fx:id="assuntosLabel" text="Assuntos">
+                                            <font>
+                                                <Font name="System Bold" size="16.0" />
+                                            </font>
+                                        </Label>
+                                        <ListView fx:id="assuntosListView" VBox.vgrow="ALWAYS" />
+                                        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#handleRemoverAssunto" style="-fx-background-color: #ef4444;" text="Remover Selecionado" textFill="WHITE" />
+                                                <Button fx:id="novoAssuntoButton" disable="true" mnemonicParsing="false" onAction="#handleNovoAssunto" styleClass="primary-button" text="+ Novo" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </AnchorPane>
+                    </items>
+                </SplitPane>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>
