@@ -15,13 +15,13 @@
     <left>
         <VBox prefWidth="220.0" styleClass="sidebar" BorderPane.alignment="CENTER">
             <children>
-                <Button onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
-                <Button onAction="#onMinhasTurmasClick" styleClass="sidebar-button" text="Minhas Turmas" />
-                <Button onAction="#onCarometroClick" styleClass="sidebar-button" text="Carômetro" />
-                <Button onAction="#onBancoQuestoesClick" styleClass="sidebar-button" text="Banco de Questões" />
-                <Button onAction="#onSimuladosClick" styleClass="sidebar-button" text="Simulados" />
-                <Button onAction="#onRelatoriosClick" styleClass="sidebar-button" text="Relatórios" />
-                <Button onAction="#onSairButtonClick" styleClass="sidebar-button" text="Sair" />
+                <Button fx:id="dashboardButton" onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
+                <Button fx:id="minhasTurmasButton" onAction="#onMinhasTurmasClick" styleClass="sidebar-button" text="Minhas Turmas" />
+                <Button fx:id="carometroButton" onAction="#onCarometroClick" styleClass="sidebar-button" text="Carômetro" />
+                <Button fx:id="bancoQuestoesButton" onAction="#onBancoQuestoesClick" styleClass="sidebar-button" text="Banco de Questões" />
+                <Button fx:id="simuladosButton" onAction="#onSimuladosClick" styleClass="sidebar-button" text="Simulados" />
+                <Button fx:id="relatoriosButton" onAction="#onRelatoriosClick" styleClass="sidebar-button" text="Relatórios" />
+                <Button fx:id="sairButton" onAction="#onSairButtonClick" styleClass="sidebar-button" text="Sair" />
             </children>
         </VBox>
     </left>

@@ -81,11 +81,7 @@ public class DetalhesTurmaController {
         nomeColumn.setCellValueFactory(new PropertyValueFactory<>("nome"));
         emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
         alunosTableView.setItems(alunosDaTurma);
-
-        // --- INÍCIO DA LÓGICA DE REMOÇÃO ---
-        // Configura a coluna de ações para ter um botão "Remover"
         setupAcoesColumn();
-        // --- FIM DA LÓGICA DE REMOÇÃO ---
     }
 
     private void setupAcoesColumn() {
@@ -96,7 +92,7 @@ public class DetalhesTurmaController {
                     private final Button btnRemover = new Button("Remover");
 
                     {
-                        btnRemover.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;"); // Estilo do botão
+                        btnRemover.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
                         btnRemover.setOnAction(event -> {
                             User alunoParaRemover = getTableView().getItems().get(getIndex());
                             confirmarRemocao(alunoParaRemover);
@@ -128,7 +124,7 @@ public class DetalhesTurmaController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             turmaDAO.removeAlunoFromTurma(turmaAtual.getId(), aluno.getId());
-            refreshDetalhes(); // Atualiza a tabela e os contadores
+            refreshDetalhes();
         }
     }
 
@@ -159,10 +155,12 @@ public class DetalhesTurmaController {
         }
     }
 
+    // --- MÉTODO CORRIGIDO ---
     @FXML
     void handleVoltarParaTurmas(ActionEvent event) {
         if (dashboardController != null) {
-            dashboardController.onMinhasTurmasClick();
+            // Passa null como argumento para a chamada do método
+            dashboardController.onMinhasTurmasClick(null);
         }
     }
 }

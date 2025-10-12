@@ -30,7 +30,7 @@ public class DashboardHomeController {
         totalAlunosLabel.setText(String.valueOf(numAlunos));
         totalProfessoresLabel.setText(String.valueOf(numProfessores));
         totalTurmasLabel.setText(String.valueOf(numTurmas));
-        totalSimuladosLabel.setText("0");
+        totalSimuladosLabel.setText("0"); // Placeholder
     }
 
     public void setMainController(DashboardController mainController) {
@@ -40,14 +40,16 @@ public class DashboardHomeController {
     @FXML
     private void onCadastrarUsuarioClick() {
         if (mainController != null) {
-            mainController.onGerirUsuariosClick();
+            // --- CORREÇÃO AQUI ---
+            mainController.onGerirUsuariosClick(null);
         }
     }
 
     @FXML
     private void onCriarTurmaClick() {
         if (mainController != null) {
-            mainController.onGerirTurmasClick();
+            // --- CORREÇÃO AQUI ---
+            mainController.onGerirTurmasClick(null);
         }
     }
 }

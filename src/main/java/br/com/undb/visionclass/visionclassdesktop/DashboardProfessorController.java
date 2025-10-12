@@ -3,9 +3,11 @@ package br.com.undb.visionclass.visionclassdesktop;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,11 +27,41 @@ public class DashboardProfessorController {
     @FXML
     private ImageView userAvatar;
 
+    // --- CAMPOS @FXML PARA OS BOTÕES ---
+    @FXML
+    private Button dashboardButton;
+    @FXML
+    private Button minhasTurmasButton;
+    @FXML
+    private Button carometroButton;
+    @FXML
+    private Button bancoQuestoesButton;
+    @FXML
+    private Button simuladosButton;
+    @FXML
+    private Button relatoriosButton;
+
+    // --- CAMPO PARA GERENCIAR O BOTÃO ATIVO ---
+    private Button activeButton;
+
+
     @FXML
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        loadCenterView("dashboard-professor-home-view.fxml");
+        // Define "Minhas Turmas" como a tela e o botão inicial do professor
+        onMinhasTurmasClick(null);
+    }
+
+    // --- NOVO MÉTODO PARA GERENCIAR O ESTILO ---
+    private void setActiveButton(Button button) {
+        if (activeButton != null) {
+            activeButton.getStyleClass().remove("active");
+        }
+        if (button != null) {
+            button.getStyleClass().add("active");
+            activeButton = button;
+        }
     }
 
     public static DashboardProfessorController getInstance() {
@@ -46,6 +78,8 @@ public class DashboardProfessorController {
             detalhesController.setDashboardController(this);
 
             mainBorderPane.setCenter(view);
+            // Ao navegar para detalhes, mantém o botão "Minhas Turmas" como ativo
+            setActiveButton(minhasTurmasButton);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,36 +113,42 @@ public class DashboardProfessorController {
         }
     }
 
+    // --- MÉTODOS DE CLIQUE ATUALIZADOS ---
+
     @FXML
-    private void onDashboardButtonClick() {
+    private void onDashboardButtonClick(ActionEvent event) {
         loadCenterView("dashboard-professor-home-view.fxml");
+        setActiveButton(dashboardButton);
     }
 
     @FXML
-    public void onMinhasTurmasClick() {
-        loadCenterView("turmas-view.fxml");
-    }
-
-    // --- INÍCIO DA ALTERAÇÃO ---
-    @FXML
-    private void onCarometroClick() {
-        loadCenterView("carometro-view.fxml"); // Carrega a nova tela do Carômetro
-    }
-    // --- FIM DA ALTERAÇÃO ---
-
-    @FXML
-    private void onBancoQuestoesClick() {
-        System.out.println("Navegar para Banco de Questões");
+    public void onMinhasTurmasClick(ActionEvent event) {
+        loadCenterView("minhas-turmas-view.fxml");
+        setActiveButton(minhasTurmasButton);
     }
 
     @FXML
-    private void onSimuladosClick() {
-        System.out.println("Navegar para Simulados");
+    private void onCarometroClick(ActionEvent event) {
+        loadCenterView("carometro-view.fxml");
+        setActiveButton(carometroButton);
     }
 
     @FXML
-    private void onRelatoriosClick() {
+    private void onBancoQuestoesClick(ActionEvent event) {
+        // System.out.println("Navegar para Banco de Questões");
+        setActiveButton(bancoQuestoesButton);
+    }
+
+    @FXML
+    private void onSimuladosClick(ActionEvent event) {
+        // System.out.println("Navegar para Simulados");
+        setActiveButton(simuladosButton);
+    }
+
+    @FXML
+    private void onRelatoriosClick(ActionEvent event) {
         loadCenterView("relatorios-view.fxml");
+        setActiveButton(relatoriosButton);
     }
 
     @FXML

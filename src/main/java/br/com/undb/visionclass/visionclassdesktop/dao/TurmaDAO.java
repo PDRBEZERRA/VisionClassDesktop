@@ -180,7 +180,6 @@ public class TurmaDAO {
         return count;
     }
 
-    // --- NOVO MÉTODO PARA REMOVER ALUNO ---
     /**
      * Remove um aluno de uma turma na tabela de associação.
      */
@@ -194,6 +193,24 @@ public class TurmaDAO {
             System.out.println("Aluno removido da turma com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao remover aluno da turma.");
+            e.printStackTrace();
+        }
+    }
+
+    // --- NOVO MÉTODO PARA EXCLUIR TURMA ---
+    /**
+     * Exclui uma turma do banco de dados.
+     * @param turmaId O ID da turma a ser excluída.
+     */
+    public void delete(String turmaId) {
+        String sql = "DELETE FROM turmas WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, turmaId);
+            stmt.executeUpdate();
+            System.out.println("Turma excluída com sucesso!");
+        } catch (SQLException e) {
+            System.err.println("Erro ao excluir a turma.");
             e.printStackTrace();
         }
     }
