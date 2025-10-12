@@ -50,7 +50,7 @@ public class BancoQuestoesController {
     private AssuntoDAO assuntoDAO = new AssuntoDAO();
     private QuestaoDAO questaoDAO = new QuestaoDAO();
 
-    private ObservableList<Questao> todasAsQuestoes = FXCollections.observableArrayList();
+    private ObservableList<Questao> questoesList = FXCollections.observableArrayList();
     private List<Disciplina> todasAsDisciplinas;
     private List<Assunto> todosOsAssuntos;
 
@@ -61,7 +61,7 @@ public class BancoQuestoesController {
         loadInitialData();
         setupFilters();
 
-        questoesTableView.setItems(todasAsQuestoes);
+        questoesTableView.setItems(questoesList);
     }
 
     private void setupTableColumns() {
@@ -89,9 +89,7 @@ public class BancoQuestoesController {
             return new SimpleStringProperty(nomeAssunto);
         });
 
-        // --- INÍCIO DA LÓGICA DE REMOÇÃO ---
         setupAcoesColumn();
-        // --- FIM DA LÓGICA DE REMOÇÃO ---
     }
 
     private void setupAcoesColumn() {
@@ -134,7 +132,7 @@ public class BancoQuestoesController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             questaoDAO.delete(questao.getId());
-            refreshTable(); // Atualiza a tabela para refletir a remoção
+            applyFiltersAndRefreshTable();
         }
     }
 
@@ -148,20 +146,36 @@ public class BancoQuestoesController {
         disciplinaComboBox.getItems().add(null);
         disciplinaComboBox.getItems().addAll(todasAsDisciplinas);
 
-        refreshTable();
+        applyFiltersAndRefreshTable();
     }
 
-    private void refreshTable() {
-        todasAsQuestoes.setAll(questaoDAO.findAll());
+    // --- LÓGICA DE FILTRAGEM ATUALIZADA ---
+
+    private void applyFiltersAndRefreshTable() {
+        Disciplina disciplinaSelecionada = disciplinaComboBox.getValue();
+        Assunto assuntoSelecionado = assuntoComboBox.getValue();
+
+        Integer disciplinaId = (disciplinaSelecionada != null) ? disciplinaSelecionada.getId() : null;
+        Integer assuntoId = (assuntoSelecionado != null) ? assuntoSelecionado.getId() : null;
+
+        questoesList.setAll(questaoDAO.findByFilters(disciplinaId, assuntoId));
     }
 
     private void setupFilters() {
+        // Listener para o ComboBox de Disciplina
         disciplinaComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             assuntoComboBox.getItems().clear();
+            assuntoComboBox.setValue(null); // Limpa a seleção do assunto
             if (newVal != null) {
                 assuntoComboBox.getItems().add(null);
                 assuntoComboBox.getItems().addAll(assuntoDAO.findByDisciplinaId(newVal.getId()));
             }
+            applyFiltersAndRefreshTable(); // Aplica o filtro
+        });
+
+        // Listener para o ComboBox de Assunto
+        assuntoComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            applyFiltersAndRefreshTable(); // Aplica o filtro
         });
     }
 
@@ -179,7 +193,8 @@ public class BancoQuestoesController {
 
             stage.showAndWait();
 
-            refreshTable();
+            // Após fechar, recarrega os dados e aplica os filtros
+            loadInitialData();
 
         } catch (IOException e) {
             System.err.println("Erro ao abrir o formulário de nova questão.");
