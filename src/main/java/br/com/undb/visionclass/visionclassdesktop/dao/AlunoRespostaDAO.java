@@ -6,8 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types; // Importação necessária para setNull
-import java.time.LocalDateTime; // Importação necessária
+import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,13 +54,49 @@ public class AlunoRespostaDAO {
         }
     }
 
+    // NOVO MÉTODO: Adicionado para salvar a nota da correção manual
+    public void updateCorrecaoDiscursiva(String alunoId, int simuladoId, int questaoId, double nota, String feedback) {
+        String sql = "UPDATE aluno_respostas SET nota_atribuida = ?, feedback_professor = ? WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, nota);
+            stmt.setString(2, feedback);
+            stmt.setString(3, alunoId);
+            stmt.setInt(4, simuladoId);
+            stmt.setInt(5, questaoId);
+
+            stmt.executeUpdate();
+            System.out.println("Correção manual salva para Questão ID: " + questaoId + ". Nota: " + nota);
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao salvar a correção discursiva.");
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Calcula a nota final de um aluno em um simulado, combinando MC e discursivas corrigidas.
+     */
     public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId) {
+
+        // 1. A query agora seleciona a soma total dos pontos (MC=1 ponto, Discursiva=nota/10)
         String sql = "SELECT " +
-                "  CAST(SUM(CASE WHEN a.correta = 1 THEN 1 ELSE 0 END) AS REAL) as acertos, " +
-                "  COUNT(ar.id) as total_respostas " +
+                // Se for MC (alternativa selecionada), soma 1 se correta, senão 0.
+                "  CAST(SUM(CASE WHEN ar.alternativa_selecionada_id IS NOT NULL AND a.correta = 1 THEN 1 ELSE 0 END) AS REAL) as acertos_mc, " +
+                // Se for discursiva, usa a nota_atribuida (normaliza para 0 a 1)
+                "  CAST(SUM(CASE WHEN ar.resposta_discursiva IS NOT NULL THEN ar.nota_atribuida / 10.0 ELSE 0 END) AS REAL) as soma_notas_discursivas " +
                 "FROM aluno_respostas ar " +
-                "JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
+                // Usamos LEFT JOIN para incluir todas as respostas (MC e Discursivas)
+                "LEFT JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
                 "WHERE ar.aluno_id = ? AND ar.simulado_id = ?";
+
+        // 2. Busca o número total de questões para normalizar a nota (o QuestaoDAO tem o método)
+        int totalQuestoesSimulado = new QuestaoDAO().findQuestoesBySimuladoId(simuladoId).size();
+
+        if (totalQuestoesSimulado == 0) return -1;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -70,12 +106,13 @@ public class AlunoRespostaDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                int acertos = rs.getInt("acertos");
-                int totalRespostas = rs.getInt("total_respostas");
+                double acertosMC = rs.getDouble("acertos_mc");
+                double somaNotasDiscursivas = rs.getDouble("soma_notas_discursivas");
 
-                if (totalRespostas > 0) {
-                    return ((double) acertos / totalRespostas) * 100.0;
-                }
+                double notaSomaTotal = acertosMC + somaNotasDiscursivas;
+
+                // Normaliza para 100%
+                return (notaSomaTotal / totalQuestoesSimulado) * 100.0;
             }
         } catch (SQLException e) {
             System.err.println("Erro ao calcular a nota do simulado para o aluno.");
@@ -99,59 +136,6 @@ public class AlunoRespostaDAO {
             e.printStackTrace();
         }
         return ids;
-    }
-
-    // --- NOVOS MÉTODOS PARA CORREÇÃO DO PROFESSOR ---
-
-    /**
-     * Busca os IDs dos alunos que responderam a um determinado simulado.
-     * @param simuladoId O ID do simulado.
-     * @return Uma lista de IDs de alunos (String).
-     */
-    public List<String> findAlunosIdsBySimuladoId(int simuladoId) {
-        String sql = "SELECT DISTINCT aluno_id FROM aluno_respostas WHERE simulado_id = ?";
-        List<String> alunosIds = new ArrayList<>();
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, simuladoId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                alunosIds.add(rs.getString("aluno_id"));
-            }
-        } catch (SQLException e) {
-            System.err.println("Erro ao buscar IDs de alunos por Simulado.");
-            e.printStackTrace();
-        }
-        return alunosIds;
-    }
-
-    /**
-     * Busca as respostas discursivas de um aluno para um simulado.
-     * Retorna apenas as questões discursivas que foram respondidas com texto.
-     * @param alunoId O ID do aluno.
-     * @param simuladoId O ID do simulado.
-     * @return Um mapa onde a chave é o ID da Questão (Integer) e o valor é a resposta discursiva (String).
-     */
-    public Map<Integer, String> findDiscursiveAnswers(String alunoId, int simuladoId) {
-        // A query assume que a tabela 'questoes' tem a coluna 'tipo' para filtrar por 'DISCURSIVA'
-        String sql = "SELECT ar.questao_id, ar.resposta_discursiva FROM aluno_respostas ar " +
-                "JOIN questoes q ON ar.questao_id = q.id " +
-                "WHERE ar.aluno_id = ? AND ar.simulado_id = ? AND q.tipo = 'DISCURSIVA' AND ar.resposta_discursiva IS NOT NULL";
-
-        Map<Integer, String> respostas = new HashMap<>();
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, alunoId);
-            stmt.setInt(2, simuladoId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                respostas.put(rs.getInt("questao_id"), rs.getString("resposta_discursiva"));
-            }
-        } catch (SQLException e) {
-            System.err.println("Erro ao buscar respostas discursivas.");
-            e.printStackTrace();
-        }
-        return respostas;
     }
 
     // --- NOVO MÉTODO REUTILIZÁVEL ---
@@ -185,31 +169,43 @@ public class AlunoRespostaDAO {
         return -1;
     }
 
-    // Dentro da classe AlunoRespostaDAO.java
-
-    /**
-     * Atualiza a nota de uma resposta discursiva e salva o feedback.
-     * Requer que as colunas 'nota_atribuida' e 'feedback_professor' existam na tabela 'aluno_respostas'.
-     */
-    public void updateCorrecaoDiscursiva(String alunoId, int simuladoId, int questaoId, double nota, String feedback) {
-        String sql = "UPDATE aluno_respostas SET nota_atribuida = ?, feedback_professor = ? WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
-
+    // Implementação de findAlunosIdsBySimuladoId e findDiscursiveAnswers...
+    public List<String> findAlunosIdsBySimuladoId(int simuladoId) {
+        String sql = "SELECT DISTINCT aluno_id FROM aluno_respostas WHERE simulado_id = ?";
+        List<String> alunosIds = new ArrayList<>();
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setDouble(1, nota);
-            stmt.setString(2, feedback);
-            stmt.setString(3, alunoId);
-            stmt.setInt(4, simuladoId);
-            stmt.setInt(5, questaoId);
-
-            stmt.executeUpdate();
-            System.out.println("Correção manual salva para Questão ID: " + questaoId + ". Nota: " + nota);
-
+            stmt.setInt(1, simuladoId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                alunosIds.add(rs.getString("aluno_id"));
+            }
         } catch (SQLException e) {
-            System.err.println("Erro ao salvar a correção discursiva. Verifique se as colunas 'nota_atribuida' e 'feedback_professor' existem no banco de dados.");
+            System.err.println("Erro ao buscar IDs de alunos por Simulado.");
             e.printStackTrace();
         }
+        return alunosIds;
+    }
+
+    public Map<Integer, String> findDiscursiveAnswers(String alunoId, int simuladoId) {
+        String sql = "SELECT ar.questao_id, ar.resposta_discursiva FROM aluno_respostas ar " +
+                "JOIN questoes q ON ar.questao_id = q.id " +
+                "WHERE ar.aluno_id = ? AND ar.simulado_id = ? AND q.tipo = 'DISCURSIVA' AND ar.resposta_discursiva IS NOT NULL";
+
+        Map<Integer, String> respostas = new HashMap<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, alunoId);
+            stmt.setInt(2, simuladoId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                respostas.put(rs.getInt("questao_id"), rs.getString("resposta_discursiva"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar respostas discursivas.");
+            e.printStackTrace();
+        }
+        return respostas;
     }
 
     public int countSubmissoesBySimuladoId(int simuladoId) {
@@ -228,5 +224,4 @@ public class AlunoRespostaDAO {
         }
         return count;
     }
-
 }
