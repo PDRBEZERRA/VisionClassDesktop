@@ -45,7 +45,9 @@ public class DashboardProfessorController {
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        onMinhasTurmasClick(null);
+        // --- CORREÇÃO AQUI ---
+        // Inicia na tela principal do professor e define o botão "Dashboard" como ativo.
+        onDashboardButtonClick(null);
     }
 
     private void setActiveButton(Button button) {
@@ -130,10 +132,9 @@ public class DashboardProfessorController {
         setActiveButton(bancoQuestoesButton);
     }
 
-    // --- CORREÇÃO APLICADA AQUI ---
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        loadCenterView("simulados-view.fxml"); // Linha adicionada
+        loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
     }
 
