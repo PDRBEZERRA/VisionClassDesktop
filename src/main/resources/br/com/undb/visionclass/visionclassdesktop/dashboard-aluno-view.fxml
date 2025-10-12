@@ -43,6 +43,7 @@
 
                 <Button fx:id="dashboardButton" onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
                 <Button fx:id="simuladosButton" onAction="#onSimuladosClick" styleClass="sidebar-button" text="Simulados" />
+                <Button fx:id="trocarSenhaButton" onAction="#handleTrocarSenha" prefHeight="40.0" prefWidth="150.0" styleClass="sidebar-button" text="Trocar Senha" />
 
                 <VBox VBox.vgrow="ALWAYS" />
                 <Button fx:id="sairButton" onAction="#onSairButtonClick" styleClass="sidebar-button" text="Sair" />

@@ -69,7 +69,7 @@ public class DashboardAlunoHomeController {
         // --- Média Geral (Simulados) ---
         double minhaMedia = alunoRespostaDAO.getMediaGeralSimulados(alunoLogado.getId());
         if (minhaMedia >= 0) {
-            DecimalFormat df = new DecimalFormat("#.##");
+            DecimalFormat df = new DecimalFormat("0.0");
             mediaGeralLabel.setText(df.format(minhaMedia));
         } else {
             mediaGeralLabel.setText("-");

@@ -35,6 +35,8 @@ public class UserDAO {
                     user.setRole(UserRole.valueOf(rs.getString("role")));
                     user.setCpf(rs.getString("cpf"));
                     user.setFoto(rs.getString("foto"));
+                    // CORREÇÃO CRÍTICA: Carregar o hash da senha no objeto User
+                    user.setSenha(hashedPasswordFromDB);
                 }
             }
         } catch (SQLException e) {
@@ -59,6 +61,7 @@ public class UserDAO {
                 user.setRole(UserRole.valueOf(rs.getString("role")));
                 user.setCpf(rs.getString("cpf"));
                 user.setFoto(rs.getString("foto"));
+                // NOTA: Geralmente omitimos a senha aqui por segurança, mas mantemos o resto.
                 users.add(user);
             }
         } catch (SQLException e) {
@@ -105,6 +108,7 @@ public class UserDAO {
         }
     }
 
+    // O método update permanece o mesmo (para dados de perfil)
     public void update(User user) {
         String sql = "UPDATE users SET nome = ?, email = ?, matricula = ?, role = ?, cpf = ?, foto = ? WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -123,6 +127,24 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar o utilizador.");
+            e.printStackTrace();
+        }
+    }
+
+    // NOVO MÉTODO: Adicionado para ser chamado pelo TrocarSenhaController
+    public void updatePassword(String userId, String hashedPassword) {
+        String sql = "UPDATE users SET senha = ? WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, hashedPassword);
+            stmt.setString(2, userId);
+
+            stmt.executeUpdate();
+            System.out.println("Senha do utilizador " + userId + " atualizada com sucesso!");
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar a senha do utilizador.");
             e.printStackTrace();
         }
     }
@@ -191,6 +213,8 @@ public class UserDAO {
                 user.setRole(UserRole.valueOf(rs.getString("role")));
                 user.setCpf(rs.getString("cpf"));
                 user.setFoto(rs.getString("foto"));
+                // CORREÇÃO PARA GARANTIR O HASH
+                user.setSenha(rs.getString("senha"));
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar utilizador por ID.");
