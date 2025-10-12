@@ -160,6 +160,41 @@ public class SimuladoDAO {
         return simulados;
     }
 
+    /**
+     * Busca todos os simulados atribuídos a uma turma específica.
+     * @param turmaId O ID da turma do aluno.
+     * @return Uma lista de objetos Simulado.
+     */
+    public List<Simulado> findSimuladosByTurmaId(String turmaId) {
+        // Seleciona simulados que estão na tabela de associação com a turma
+        String sql = "SELECT s.* FROM simulados s " +
+                "INNER JOIN simulado_turmas st ON s.id = st.simulado_id " +
+                "WHERE st.turma_id = ? " +
+                "ORDER BY s.data_criacao DESC";
+        List<Simulado> simulados = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, turmaId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Simulado s = new Simulado();
+                s.setId(rs.getInt("id"));
+                s.setTitulo(rs.getString("titulo"));
+                s.setDataCriacao(LocalDate.parse(rs.getString("data_criacao")));
+                s.setStatus(StatusSimulado.valueOf(rs.getString("status")));
+                s.setProfessorCriadorId(rs.getString("professor_criador_id"));
+                simulados.add(s);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar simulados por turma.");
+            e.printStackTrace();
+        }
+        return simulados;
+    }
+
     public void delete(int simuladoId) {
         String sql = "DELETE FROM simulados WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -190,7 +225,7 @@ public class SimuladoDAO {
         return count;
     }
 
-    // --- NOVOS MÉTODOS PARA O DASHBOARD DO ALUNO ---
+    // --- MÉTODOS PARA O DASHBOARD DO ALUNO ---
 
     /**
      * Conta quantos simulados foram atribuídos a uma turma.

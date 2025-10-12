@@ -88,8 +88,8 @@ public class DashboardAlunoController {
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        // Usando relatorios-view.fxml como placeholder
-        loadCenterView("relatorios-view.fxml");
+        // CORREÇÃO: Aponta para o novo FXML de simulados do aluno
+        loadCenterView("simulados-aluno-view.fxml");
         setActiveButton(simuladosButton);
     }
 
@@ -105,6 +105,7 @@ public class DashboardAlunoController {
             Parent view = loader.load();
             mainBorderPane.setCenter(view);
         } catch (IOException e) {
+            System.err.println("Erro ao carregar a vista: " + fxmlFile);
             e.printStackTrace();
         }
     }
