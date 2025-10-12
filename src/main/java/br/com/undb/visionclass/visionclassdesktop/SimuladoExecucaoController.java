@@ -7,6 +7,7 @@ import br.com.undb.visionclass.visionclassdesktop.model.Simulado;
 import br.com.undb.visionclass.visionclassdesktop.model.TipoQuestao;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import java.util.Collections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -56,6 +57,11 @@ public class SimuladoExecucaoController {
     public void setDadosSimulado(Simulado simulado, List<Questao> questoes) {
         this.simulado = simulado;
         this.questoes = questoes;
+
+        // --- CORREÇÃO CRÍTICA: REORGANIZAÇÃO AUTOMÁTICA ---
+        // Embaralha a lista de questões para garantir que cada aluno tenha uma ordem diferente.
+        Collections.shuffle(this.questoes);
+
         this.alunoLogado = UserSession.getInstance().getLoggedInUser();
         this.dataInicio = LocalDateTime.now(); // Marca o início do simulado
 
