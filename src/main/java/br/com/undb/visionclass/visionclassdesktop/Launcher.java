@@ -6,7 +6,7 @@ package br.com.undb.visionclass.visionclassdesktop;
  */
 public class Launcher {
     public static void main(String[] args) {
-        // A forma correta de iniciar a aplicação JavaFX a partir de uma classe que não estende Application.
+        // A forma correta de iniciar a aplicação JavaFX a partir de uma classe que não estende Application.saddassdsad
         HelloApplication.launch(HelloApplication.class, args);
     }
 }
