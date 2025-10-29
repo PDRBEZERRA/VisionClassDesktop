@@ -52,17 +52,17 @@ public class RelatoriosProfessorController {
     @FXML
     private Label mediaGeralStatusLabel;
     @FXML
-    private Label assiduidadeLabel;
+    private Label assiduidadeLabel; // Reutilizado para "Simulados Realizados" na aba Simulados
     @FXML
-    private Label assiduidadeStatusLabel;
+    private Label assiduidadeStatusLabel; // Reutilizado
     @FXML
-    private Label participacaoLabel;
+    private Label participacaoLabel; // Reutilizado para "Acerto Médio (MC)" na aba Simulados
     @FXML
-    private Label participacaoStatusLabel;
+    private Label participacaoStatusLabel; // Reutilizado
     @FXML
-    private Label avaliacoesCountLabel;
+    private Label avaliacoesCountLabel; // Reutilizado para "Alunos no Escopo" na aba Simulados
     @FXML
-    private Label avaliacoesCountStatusLabel;
+    private Label avaliacoesCountStatusLabel; // Reutilizado
 
     @FXML
     private VBox evolucaoGraficoContainer;
@@ -137,27 +137,34 @@ public class RelatoriosProfessorController {
         // 1. Define o escopo das turmas
         List<Turma> turmasDoEscopo;
         if (turmaSelecionada == null) {
+            // Se "Todas as Turmas" selecionado, pega todas as turmas do professor logado
             turmasDoEscopo = turmaDAO.findByProfessorId(professorLogado.getId());
         } else {
+            // Se uma turma específica foi selecionada
             turmasDoEscopo = List.of(turmaSelecionada);
         }
 
-        // 2. Define o escopo dos alunos (IDs)
+        // 2. Define o escopo dos alunos (IDs) a partir das turmas selecionadas
         List<String> alunosIds = turmasDoEscopo.stream()
-                .flatMap(t -> userDAO.findAlunosByTurmaId(t.getId()).stream())
-                .map(User::getId)
+                .flatMap(t -> userDAO.findAlunosByTurmaId(t.getId()).stream()) // Busca alunos de cada turma no escopo
+                .map(User::getId) // Pega apenas os IDs
+                .distinct() // Garante que não haja IDs duplicados se um aluno estiver em mais de uma turma (caso raro)
                 .collect(Collectors.toList());
 
-        // 3. Atualiza estilos visuais
+        // 3. Atualiza estilos visuais das abas
         updateTabStyles();
 
-        // 4. Carrega os dados da aba ativa
+        // 4. Carrega os dados da aba ativa com base nos alunos filtrados
         if (alunosIds.isEmpty()) {
-            resetStatsComportamental("0.0/5.0", "N/A");
-            updateChartPlaceholder("Gráfico de Evolução", "Selecione alunos nos filtros para ver os dados.");
-            return;
+            // Se não houver alunos no escopo (turma vazia ou nenhuma turma), reseta os stats
+            resetStatsComportamental("0.0/5.0", "N/A"); // Ou um reset geral, dependendo da aba
+            resetStatsSimulados("0.0/10", "N/A");
+            resetStatsConsolidado("N/A", "N/A");
+            updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado.");
+            return; // Interrompe a execução se não houver alunos
         }
 
+        // Carrega os dados específicos da aba ativa
         if (activeTab.equals(COMPORTAMENTAL)) {
             loadComportamentalData(alunosIds);
             updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade.");
@@ -174,33 +181,40 @@ public class RelatoriosProfessorController {
      * Atualiza o título e o conteúdo da área de gráficos.
      */
     private void updateChartPlaceholder(String title, String placeholderText) {
-        // Simulação de atualização de título (se o título for o primeiro elemento na VBox pai)
-        if (evolucaoGraficoContainer.getChildren().get(0) instanceof Label) {
-            ((Label)evolucaoGraficoContainer.getChildren().get(0)).setText(title);
+        // Tenta encontrar o Label do título (assumindo ser o primeiro filho direto)
+        if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof Label) {
+            ((Label) evolucaoGraficoContainer.getChildren().get(0)).setText(title);
         }
-        // Simulação de atualização de placeholder (se o placeholder for um Label dentro do segundo elemento)
+
+        // Tenta encontrar o Label do placeholder (assumindo estar dentro de uma VBox que é o segundo filho)
         if (evolucaoGraficoContainer.getChildren().size() > 1 && evolucaoGraficoContainer.getChildren().get(1) instanceof VBox) {
             VBox placeholderVBox = (VBox) evolucaoGraficoContainer.getChildren().get(1);
             if (!placeholderVBox.getChildren().isEmpty() && placeholderVBox.getChildren().get(0) instanceof Label) {
-                ((Label)placeholderVBox.getChildren().get(0)).setText(placeholderText);
+                ((Label) placeholderVBox.getChildren().get(0)).setText(placeholderText);
+            }
+        } else if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof VBox) {
+            // Caso alternativo: O placeholder está dentro da primeira VBox (se não houver título separado)
+            VBox placeholderVBox = (VBox) evolucaoGraficoContainer.getChildren().get(0);
+            if (!placeholderVBox.getChildren().isEmpty() && placeholderVBox.getChildren().get(0) instanceof Label) {
+                // Potencialmente atualiza o título aqui também se for o caso
+                ((Label) placeholderVBox.getChildren().get(0)).setText(placeholderText); // Ou o title dependendo da estrutura
             }
         }
     }
 
 
     /**
-     * CORREÇÃO FINAL: Atualiza o estilo dos botões das abas para garantir que o contorno azul se mova.
+     * Atualiza o estilo dos botões das abas para garantir que o contorno azul se mova.
      */
     private void updateTabStyles() {
         // Estilo transparente e texto escuro para abas inativas
         final String INACTIVE_STYLE = "-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-weight: normal;";
 
         // Estilo inline para botões ATIVOS (cor de fundo azul e texto branco, forçando dominância)
-        // Isso resolve o problema de precedência sobre o estilo transparente das outras abas
         final String ACTIVE_INLINE_STYLE = "-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold;";
 
         final String ACTIVE_CLASS = "primary-button";
-        final String INACTIVE_CLASS = "secondary-tab";
+        final String INACTIVE_CLASS = "secondary-tab"; // Supondo que você criou essa classe no CSS
 
         Button activeButtonRef = null;
         if (activeTab.equals(COMPORTAMENTAL)) {
@@ -215,19 +229,19 @@ public class RelatoriosProfessorController {
         Stream.of(comportamentalButton, simuladosButton, consolidadoButton)
                 .filter(Objects::nonNull)
                 .forEach(button -> {
-                    // Remove a classe ativa e inativa
+                    // Remove a classe ativa e inativa (se existir)
                     button.getStyleClass().removeAll(ACTIVE_CLASS, INACTIVE_CLASS);
                     // Aplica o estilo INACTIVE transparente
                     button.setStyle(INACTIVE_STYLE);
-                    // Adiciona a classe inativa (se o FXML tiver sido corrigido para usar classes)
+                    // Adiciona a classe inativa (se existir no CSS)
                     button.getStyleClass().add(INACTIVE_CLASS);
                 });
 
         // 2. Ativa o botão selecionado
         if (activeButtonRef != null) {
-            // 2a. Aplica o estilo ACTIVE INLINE para garantir fundo azul e texto branco
+            // Aplica o estilo ACTIVE INLINE para garantir fundo azul e texto branco
             activeButtonRef.setStyle(ACTIVE_INLINE_STYLE);
-            // 2b. Remove a classe inativa e Adiciona a classe 'primary-button' para reativar o outline/border
+            // Remove a classe inativa e Adiciona a classe 'primary-button' para reativar o outline/border
             activeButtonRef.getStyleClass().remove(INACTIVE_CLASS);
             activeButtonRef.getStyleClass().add(ACTIVE_CLASS);
         }
@@ -235,103 +249,108 @@ public class RelatoriosProfessorController {
 
 
     private void loadComportamentalData(List<String> alunosIds) {
-
-        if (alunosIds.isEmpty()) {
+        // Se alunosIds for null ou vazia, reseta e retorna
+        if (alunosIds == null || alunosIds.isEmpty()) {
             resetStatsComportamental("0.0/5.0", "N/A");
             return;
         }
 
         // --- Cálculo de Agregação de Dados Comportamentais ---
-
         double mediaGeral = getAggregateMedia(alunosIds, "media_geral");
         double mediaAssiduidade = getAggregateMedia(alunosIds, "assiduidade");
         double mediaParticipacao = getAggregateMedia(alunosIds, "participacao");
-        // Contagem real
+        // Contagem real usando o DAO
         int totalAvaliacoes = avaliacaoDAO.countByAlunosIds(alunosIds);
 
         DecimalFormat df = new DecimalFormat("0.0");
 
-        // 1. Média Geral Comportamental
+        // Atualiza os Labels
         mediaGeralLabel.setText(String.format("%s/5.0", df.format(mediaGeral)));
         mediaGeralStatusLabel.setText("Visão da Turma/Escopo");
-
-        // 2. Assiduidade
         assiduidadeLabel.setText(String.format("%s/5.0", df.format(mediaAssiduidade)));
         assiduidadeStatusLabel.setText("Foco de Avaliação");
-
-        // 3. Participação
         participacaoLabel.setText(String.format("%s/5.0", df.format(mediaParticipacao)));
         participacaoStatusLabel.setText("Em Análise");
-
-        // 4. Total de Avaliações
         avaliacoesCountLabel.setText(String.valueOf(totalAvaliacoes));
         avaliacoesCountStatusLabel.setText("Avaliações Encontradas");
-
     }
 
     private void loadSimuladosData(List<String> alunosIds) {
-
-        if (alunosIds.isEmpty()) {
+        // Se alunosIds for null ou vazia, reseta e retorna
+        if (alunosIds == null || alunosIds.isEmpty()) {
             resetStatsSimulados("0.0/10", "N/A");
             return;
         }
 
         // --- Cálculo de Agregação de Dados de Simulados ---
         double mediaSimulados = getAggregateSimuladosMedia(alunosIds);
-        int totalSimuladosRealizados = getAggregateSimuladosCount(alunosIds);
 
-        DecimalFormat df = new DecimalFormat("0.0");
+        // *** CORREÇÃO 1: Usar o método real do DAO para contar simulados realizados ***
+        int totalSimuladosRealizados = alunoRespostaDAO.countSimuladosRealizadosByAlunosIds(alunosIds);
+
+        // *** CORREÇÃO 2: Calcular a média de acertos MC usando o novo método do DAO ***
+        double mediaAcertosMC = alunoRespostaDAO.calculateMediaAcertosMC(alunosIds);
+
+        DecimalFormat df = new DecimalFormat("0.0"); // Formato para médias
+        DecimalFormat dfPercent = new DecimalFormat("0.0'%'"); // Formato para percentual
 
         // 1. Média Geral Simulados (0 a 10)
-        mediaGeralLabel.setText(String.format("%s/10", df.format(mediaSimulados)));
+        mediaGeralLabel.setText(mediaSimulados >= 0 ? String.format("%s/10", df.format(mediaSimulados)) : "-/10");
         mediaGeralStatusLabel.setText("Média Geral nos Simulados");
 
-        // 2. Total de Simulados Feitos (Reutilizando os cards para os dados de Simulados)
+        // 2. Total de Simulados Realizados (usando o valor real)
         assiduidadeLabel.setText(String.valueOf(totalSimuladosRealizados));
         assiduidadeStatusLabel.setText("Simulados Realizados");
 
-        // 3. (Placeholder para Posição ou Acerto Médio)
-        participacaoLabel.setText("75%"); // Mockup
+        // 3. Acerto Médio (MC) - Usando o valor calculado
+        participacaoLabel.setText(mediaAcertosMC >= 0 ? dfPercent.format(mediaAcertosMC) : "--");
         participacaoStatusLabel.setText("Acerto Médio (MC)");
 
-        // 4. Total de Submissões
-        avaliacoesCountLabel.setText(String.valueOf(alunosIds.size())); // Total de alunos no escopo
+        // 4. Total de Alunos no Escopo
+        avaliacoesCountLabel.setText(String.valueOf(alunosIds.size()));
         avaliacoesCountStatusLabel.setText("Alunos no Escopo");
     }
 
-    // NOVO MÉTODO: Carrega os dados para a aba Consolidado
+
+    // Carrega os dados para a aba Consolidado
     private void loadConsolidadoData(List<String> alunosIds) {
-        if (alunosIds.isEmpty()) {
+        if (alunosIds == null || alunosIds.isEmpty()) {
             resetStatsConsolidado("N/A", "N/A");
             return;
         }
 
-        // Calcular a média comportamental e de simulados (0-10)
-        double mediaComportamental = getAggregateMedia(alunosIds, "media_geral"); // (0-5 scale)
-        double mediaSimulados = getAggregateSimuladosMedia(alunosIds); // (0-10 scale)
+        // Calcular médias
+        double mediaComportamental = getAggregateMedia(alunosIds, "media_geral"); // (0-5)
+        double mediaSimulados = getAggregateSimuladosMedia(alunosIds); // (0-10)
         int totalAlunos = alunosIds.size();
 
         DecimalFormat dfComportamental = new DecimalFormat("0.0");
         DecimalFormat dfSimulados = new DecimalFormat("0.0");
+        DecimalFormat dfScore = new DecimalFormat("0.0");
 
-        // 1. Média Geral (Combinada)
-        mediaGeralLabel.setText(String.format("%s/10", dfSimulados.format(mediaSimulados)));
+        // Atualiza Labels
+        mediaGeralLabel.setText(mediaSimulados >= 0 ? String.format("%s/10", dfSimulados.format(mediaSimulados)) : "N/A");
         mediaGeralStatusLabel.setText("Média Acadêmica (Simulados)");
 
-        // 2. Média Comportamental
-        assiduidadeLabel.setText(String.format("%s/5.0", dfComportamental.format(mediaComportamental)));
+        assiduidadeLabel.setText(mediaComportamental >= 0 ? String.format("%s/5.0", dfComportamental.format(mediaComportamental)) : "N/A");
         assiduidadeStatusLabel.setText("Média Comportamental");
 
-        // 3. Total de Alunos
         participacaoLabel.setText(String.valueOf(totalAlunos));
         participacaoStatusLabel.setText("Total de Alunos no Escopo");
 
-        // 4. (Placeholder para Score Combinado)
-        // Score Combinado Simulado (Média Comportamental normalizada para 0-10 + Média Simulado) / 2
-        double mediaComportamentalNormalizada = mediaComportamental * 2.0; // 0-5 para 0-10
-        double scoreCombinado = (mediaComportamentalNormalizada + mediaSimulados) / 2.0;
+        // Calcula Score Combinado se ambas as médias forem válidas
+        double scoreCombinado = -1;
+        if (mediaComportamental >= 0 && mediaSimulados >= 0) {
+            double mediaComportamentalNormalizada = mediaComportamental * 2.0; // Normaliza para 0-10
+            // Evita divisão por zero se uma das médias for 0 e a outra não
+            if (mediaComportamentalNormalizada > 0 || mediaSimulados > 0) {
+                scoreCombinado = (mediaComportamentalNormalizada + mediaSimulados) / 2.0;
+            } else {
+                scoreCombinado = 0.0; // Caso ambas sejam 0
+            }
+        }
 
-        avaliacoesCountLabel.setText(String.format("%s/10", new DecimalFormat("0.0").format(scoreCombinado)));
+        avaliacoesCountLabel.setText(scoreCombinado >= 0 ? String.format("%s/10", dfScore.format(scoreCombinado)) : "N/A");
         avaliacoesCountStatusLabel.setText("Score de Progresso");
     }
 
@@ -353,12 +372,12 @@ public class RelatoriosProfessorController {
         assiduidadeLabel.setText("0");
         assiduidadeStatusLabel.setText("Simulados Realizados");
         participacaoLabel.setText("--");
-        participacaoStatusLabel.setText("Acerto Médio");
+        participacaoStatusLabel.setText("Acerto Médio (MC)");
         avaliacoesCountLabel.setText("0");
         avaliacoesCountStatusLabel.setText("Alunos no Escopo");
     }
 
-    // NOVO: Reset para a aba Consolidado
+
     private void resetStatsConsolidado(String media, String status) {
         mediaGeralLabel.setText("N/A");
         mediaGeralStatusLabel.setText("Média Acadêmica (Simulados)");
@@ -371,14 +390,15 @@ public class RelatoriosProfessorController {
     }
 
     /**
-     * MÉTODO CONCEITUAL: Calcula a média agregada de uma dimensão para um grupo de alunos.
+     * Calcula a média agregada de uma dimensão comportamental para um grupo de alunos.
      */
     private double getAggregateMedia(List<String> alunosIds, String dimensao) {
+        if (alunosIds == null || alunosIds.isEmpty()) return 0.0; // Retorna 0 se não há alunos
+
         double somaMedias = 0;
         int count = 0;
 
         for (String alunoId : alunosIds) {
-            // Se for "media_geral", usa o método específico, senão, usa o método por dimensão.
             String mediaStr;
             if ("media_geral".equals(dimensao)) {
                 mediaStr = avaliacaoDAO.getMediaGeralByAlunoId(alunoId);
@@ -386,65 +406,67 @@ public class RelatoriosProfessorController {
                 mediaStr = avaliacaoDAO.getMediaPorDimensao(alunoId, dimensao);
             }
 
-            if (!"-".equals(mediaStr)) {
+            // Verifica se o valor retornado não é o placeholder "-"
+            if (mediaStr != null && !"-".equals(mediaStr)) {
                 try {
+                    // Substitui vírgula por ponto para conversão correta
                     somaMedias += Double.parseDouble(mediaStr.replace(",", "."));
                     count++;
                 } catch (NumberFormatException e) {
-                    // Ignora, mas idealmente não deveria acontecer.
+                    System.err.println("Erro ao converter média para double: " + mediaStr + " para aluno ID: " + alunoId);
+                    // Ignora este valor, mas registra o erro
                 }
             }
         }
+        // Retorna a média ou 0.0 se nenhum valor válido foi encontrado
         return count > 0 ? somaMedias / count : 0.0;
     }
 
     /**
-     * MÉTODO CORRIGIDO: Contagem real de avaliações.
+     * MÉTODO CORRIGIDO: Usa o DAO para contagem real de avaliações.
      */
     private int getAggregateCount(List<String> alunosIds) {
-        // CORREÇÃO AQUI: Chama o método DAO para obter a contagem real
+        if (alunosIds == null || alunosIds.isEmpty()) return 0; // Retorna 0 se não há alunos
         return avaliacaoDAO.countByAlunosIds(alunosIds);
     }
 
 
     /**
-     * NOVO MÉTODO: Calcula a média de Simulado agregada para um grupo de alunos (escala 0-10).
+     * Calcula a média de Simulado agregada para um grupo de alunos (escala 0-10).
      */
     private double getAggregateSimuladosMedia(List<String> alunosIds) {
+        if (alunosIds == null || alunosIds.isEmpty()) return -1.0; // Retorna -1 se não há alunos
+
         double somaMedias = 0;
-        int count = 0;
+        int countValidos = 0; // Conta apenas alunos com médias válidas (>= 0)
         for (String alunoId : alunosIds) {
             double media = alunoRespostaDAO.getMediaGeralSimulados(alunoId);
-            if (media >= 0) {
+            if (media >= 0) { // Considera apenas médias válidas
                 somaMedias += media;
-                count++;
+                countValidos++;
             }
         }
-        return count > 0 ? somaMedias / count : 0.0;
+        // Retorna a média ou -1.0 se nenhum aluno tiver média válida
+        return countValidos > 0 ? somaMedias / countValidos : -1.0;
     }
 
-    /**
-     * MÉTODO CONCEITUAL: Simulação de contagem de Simulados Realizados.
+    /*
+     * MÉTODO getAggregateSimuladosCount REMOVIDO pois agora usamos
+     * alunoRespostaDAO.countSimuladosRealizadosByAlunosIds diretamente.
      */
-    private int getAggregateSimuladosCount(List<String> alunosIds) {
-        // Simula que cada aluno fez pelo menos 2 simulados.
-        return alunosIds.size() * 2;
-    }
 
 
     @FXML
     private void handleExportarRelatorio() {
         try {
-            // Carrega o FXML do modal de exportação
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
             Stage stage = new Stage();
             stage.setTitle("Exportar Relatório");
             stage.setScene(new Scene(root));
-            stage.initModality(Modality.APPLICATION_MODAL); // Bloqueia a tela pai
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
-
             stage.showAndWait();
 
         } catch (IOException e) {
@@ -453,7 +475,7 @@ public class RelatoriosProfessorController {
         }
     }
 
-    // Ações para alternar entre as abas (agora com troca de dados e estilo real)
+    // Ações para alternar entre as abas
     @FXML
     private void handleMudarAbaComportamental() {
         activeTab = COMPORTAMENTAL;

@@ -327,4 +327,56 @@ public class AlunoRespostaDAO {
         }
         return count;
     }
+    /**
+     * Calcula a média percentual de acertos em questões de múltipla escolha
+     * para um grupo de alunos.
+     * @param alunosIds Lista de IDs dos alunos no escopo.
+     * @return A média percentual de acertos (0.0 a 100.0), ou -1.0 se não houver respostas de múltipla escolha.
+     */
+    public double calculateMediaAcertosMC(List<String> alunosIds) {
+        if (alunosIds == null || alunosIds.isEmpty()) {
+            return -1.0; // Retorna -1 se não houver alunos no escopo
+        }
+
+        // Cria a string de placeholders (?, ?, ?) para a cláusula IN
+        String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
+
+        // Query para contar acertos e total de respostas de múltipla escolha
+        String sql = "SELECT " +
+                "  COUNT(ar.id) as total_mc_respostas, " +
+                "  SUM(CASE WHEN a.correta = 1 THEN 1 ELSE 0 END) as total_acertos_mc " +
+                "FROM aluno_respostas ar " +
+                "JOIN questoes q ON ar.questao_id = q.id " +
+                "JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " + // Garante que só pegamos respostas de múltipla escolha com alternativa selecionada
+                "WHERE ar.aluno_id IN (" + placeholders + ") AND q.tipo = 'MULTIPLA_ESCOLHA'"; // Filtra por tipo de questão
+
+        int totalRespostasMC = 0;
+        int totalAcertosMC = 0;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // Seta os IDs dos alunos como parâmetros
+            for (int i = 0; i < alunosIds.size(); i++) {
+                stmt.setString(i + 1, alunosIds.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                totalRespostasMC = rs.getInt("total_mc_respostas");
+                totalAcertosMC = rs.getInt("total_acertos_mc");
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao calcular média de acertos de múltipla escolha.");
+            e.printStackTrace();
+            return -1.0; // Retorna -1 em caso de erro
+        }
+
+        // Calcula a porcentagem
+        if (totalRespostasMC > 0) {
+            return ((double) totalAcertosMC / totalRespostasMC) * 100.0;
+        } else {
+            return -1.0; // Retorna -1 se não houver respostas de múltipla escolha para calcular
+        }
+    }
 }
