@@ -25,7 +25,7 @@ public class AvaliacaoComportamentalDAO {
             stmt.setString(2, avaliacao.getAlunoId());
             stmt.setString(3, avaliacao.getProfessorId());
             stmt.setString(4, avaliacao.getTurmaId());
-            stmt.setString(5, avaliacao.getData().toString()); // Data como String YYYY-MM-DD
+            stmt.setString(5, avaliacao.getData().toString());
             stmt.setInt(6, avaliacao.getAssiduidade());
             stmt.setInt(7, avaliacao.getParticipacao());
             stmt.setInt(8, avaliacao.getResponsabilidade());
@@ -53,7 +53,7 @@ public class AvaliacaoComportamentalDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                avaliacao = mapRowToAvaliacao(rs); // Usando método auxiliar
+                avaliacao = mapRowToAvaliacao(rs);
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar a última avaliação comportamental.");
@@ -100,7 +100,7 @@ public class AvaliacaoComportamentalDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                historico.add(mapRowToAvaliacao(rs)); // Usando método auxiliar
+                historico.add(mapRowToAvaliacao(rs));
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar o histórico de avaliações.");
@@ -109,25 +109,11 @@ public class AvaliacaoComportamentalDAO {
         return historico;
     }
 
-    /**
-     * Conta o número de avaliações comportamentais para um grupo de alunos (sem filtro de data).
-     * @param alunosIds Lista de IDs dos alunos no escopo.
-     * @return O número total de avaliações.
-     */
     public int countByAlunosIds(List<String> alunosIds) {
-        // Reutiliza o método com filtro de data, passando null para as datas
         return countByAlunosIdsAndDateRange(alunosIds, null, null);
     }
 
-    /**
-     * NOVO MÉTODO COM FILTRO DE DATA: Conta o número de avaliações comportamentais
-     * para um grupo de alunos dentro de um intervalo de datas.
-     * Usa a função date() do SQLite para comparar apenas as datas.
-     * @param alunosIds Lista de IDs dos alunos no escopo.
-     * @param dataInicio Data inicial (inclusiva). Pode ser null para não filtrar por data inicial.
-     * @param dataFim Data final (inclusiva). Pode ser null para não filtrar por data final.
-     * @return O número total de avaliações no período especificado.
-     */
+
     public int countByAlunosIdsAndDateRange(List<String> alunosIds, LocalDate dataInicio, LocalDate dataFim) {
         if (alunosIds == null || alunosIds.isEmpty()) {
             return 0;
@@ -135,23 +121,21 @@ public class AvaliacaoComportamentalDAO {
 
         String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM avaliacoes_comportamentais WHERE aluno_id IN (").append(placeholders).append(")");
-        List<Object> params = new ArrayList<>(alunosIds); // Parâmetros para a query (começa com IDs)
+        List<Object> params = new ArrayList<>(alunosIds);
 
-        // Adiciona filtros de data se as datas forem fornecidas
         if (dataInicio != null) {
-            sql.append(" AND date(data) >= date(?)"); // Compara usando date()
-            params.add(dataInicio.toString()); // Adiciona data inicial aos parâmetros
+            sql.append(" AND date(data) >= date(?)");
+            params.add(dataInicio.toString());
         }
         if (dataFim != null) {
-            sql.append(" AND date(data) <= date(?)"); // Compara usando date()
-            params.add(dataFim.toString()); // Adiciona data final aos parâmetros
+            sql.append(" AND date(data) <= date(?)");
+            params.add(dataFim.toString());
         }
 
         int count = 0;
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            // Seta os parâmetros (IDs e datas, se houver) na ordem correta
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }
@@ -168,14 +152,8 @@ public class AvaliacaoComportamentalDAO {
     }
 
 
-    /**
-     * Calcula a média de uma dimensão comportamental específica para um aluno (sem filtro de data).
-     * @param alunoId O ID do aluno.
-     * @param dimensao O nome da coluna (ex: 'assiduidade', 'participacao', etc.).
-     * @return A média formatada como uma String, ou "-" se não houver avaliações.
-     */
+
     public String getMediaPorDimensao(String alunoId, String dimensao) {
-        // Reutiliza o método com filtro de data
         double media = getAggregateMediaByDateRange(List.of(alunoId), dimensao, null, null);
         if (media >= 0) {
             DecimalFormat df = new DecimalFormat("#.#");
@@ -184,13 +162,8 @@ public class AvaliacaoComportamentalDAO {
         return "-";
     }
 
-    /**
-     * Calcula a média geral comportamental de um aluno (sem filtro de data).
-     * @param alunoId O ID do aluno.
-     * @return A média formatada como uma String, ou "-" se não houver avaliações.
-     */
+
     public String getMediaGeralByAlunoId(String alunoId) {
-        // Reutiliza o método com filtro de data
         double media = getAggregateMediaByDateRange(List.of(alunoId), "media_geral", null, null);
         if (media >= 0) {
             DecimalFormat df = new DecimalFormat("#.#");
@@ -198,38 +171,26 @@ public class AvaliacaoComportamentalDAO {
         }
         return "-";
     }
-
-    /**
-     * NOVO MÉTODO COM FILTRO DE DATA: Calcula a média de uma dimensão comportamental
-     * (ou a média geral) para um grupo de alunos dentro de um intervalo de datas.
-     * @param alunosIds Lista de IDs dos alunos.
-     * @param dimensao Nome da coluna da dimensão (ex: 'assiduidade') ou 'media_geral'.
-     * @param dataInicio Data inicial. Pode ser null.
-     * @param dataFim Data final. Pode ser null.
-     * @return A média calculada, ou -1.0 se não houver dados ou ocorrer erro.
-     */
     public double getAggregateMediaByDateRange(List<String> alunosIds, String dimensao, LocalDate dataInicio, LocalDate dataFim) {
         if (alunosIds == null || alunosIds.isEmpty()) {
-            return -1.0; // Retorna -1 se lista de alunos for vazia
+            return -1.0;
         }
 
-        // Define a expressão SQL para calcular a média
         String avgExpression;
         if ("media_geral".equals(dimensao)) {
             avgExpression = "(assiduidade + participacao + responsabilidade + sociabilidade) / 4.0";
         } else if (List.of("assiduidade", "participacao", "responsabilidade", "sociabilidade").contains(dimensao)) {
-            avgExpression = dimensao; // Usa o nome da coluna diretamente
+            avgExpression = dimensao;
         } else {
             System.err.println("Dimensão inválida para agregação: " + dimensao);
-            return -1.0; // Retorna -1 para dimensão inválida
+            return -1.0;
         }
 
-        // Monta a query SQL
+
         String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
         StringBuilder sql = new StringBuilder("SELECT AVG(").append(avgExpression).append(") as media FROM avaliacoes_comportamentais WHERE aluno_id IN (").append(placeholders).append(")");
-        List<Object> params = new ArrayList<>(alunosIds); // Lista para guardar os parâmetros
+        List<Object> params = new ArrayList<>(alunosIds);
 
-        // Adiciona filtros de data à query e aos parâmetros, se fornecidos
         if (dataInicio != null) {
             sql.append(" AND date(data) >= date(?)");
             params.add(dataInicio.toString());
@@ -239,11 +200,10 @@ public class AvaliacaoComportamentalDAO {
             params.add(dataFim.toString());
         }
 
-        double media = -1.0; // Valor padrão para caso não haja dados
+        double media = -1.0;
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            // Preenche os parâmetros (IDs dos alunos e datas)
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }
@@ -252,21 +212,18 @@ public class AvaliacaoComportamentalDAO {
             if (rs.next()) {
                 media = rs.getDouble("media");
                 if (rs.wasNull()) {
-                    media = -1.0; // Nenhum registro encontrado com os filtros
+                    media = -1.0;
                 }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao calcular média agregada (" + dimensao + ") por data.");
             e.printStackTrace();
-            media = -1.0; // Garante retorno -1 em caso de erro SQL
+            media = -1.0;
         }
         return media;
     }
 
 
-    /**
-     * Método auxiliar para mapear uma linha do ResultSet para um objeto AvaliacaoComportamental.
-     */
     private AvaliacaoComportamental mapRowToAvaliacao(ResultSet rs) throws SQLException {
         AvaliacaoComportamental avaliacao = new AvaliacaoComportamental();
         avaliacao.setId(rs.getString("id"));
@@ -280,7 +237,6 @@ public class AvaliacaoComportamentalDAO {
                 avaliacao.setData(LocalDate.parse(dataStr));
             } catch (Exception e) {
                 System.err.println("Erro ao parsear data: " + dataStr);
-                // Opcional: definir uma data padrão ou lançar exceção
             }
         }
         avaliacao.setAssiduidade(rs.getInt("assiduidade"));

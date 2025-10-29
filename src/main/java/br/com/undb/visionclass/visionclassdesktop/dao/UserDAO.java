@@ -35,7 +35,6 @@ public class UserDAO {
                     user.setRole(UserRole.valueOf(rs.getString("role")));
                     user.setCpf(rs.getString("cpf"));
                     user.setFoto(rs.getString("foto"));
-                    // CORREÇÃO CRÍTICA: Carregar o hash da senha no objeto User
                     user.setSenha(hashedPasswordFromDB);
                 }
             }
@@ -61,7 +60,6 @@ public class UserDAO {
                 user.setRole(UserRole.valueOf(rs.getString("role")));
                 user.setCpf(rs.getString("cpf"));
                 user.setFoto(rs.getString("foto"));
-                // NOTA: Geralmente omitimos a senha aqui por segurança, mas mantemos o resto.
                 users.add(user);
             }
         } catch (SQLException e) {
@@ -96,50 +94,43 @@ public class UserDAO {
     }
 
     public void delete(String userId) {
-        // Sequência de operações para garantir que nenhuma chave estrangeira falhe
         String sqlDeleteSimulados = "DELETE FROM simulados WHERE professor_criador_id = ?";
         String sqlDeleteQuestoes = "DELETE FROM questoes WHERE professor_criador_id = ?";
         String sqlDeleteAvaliacoes = "DELETE FROM avaliacoes_comportamentais WHERE professor_id = ?";
-        // Professor é desassociado da turma (a turma permanece, mas o campo professorId é NULL)
         String sqlUpdateTurmas = "UPDATE turmas SET professorId = NULL WHERE professorId = ?";
         String sqlDeleteUser = "DELETE FROM users WHERE id = ?";
 
         Connection conn = null;
         try {
             conn = ConnectionFactory.getConnection();
-            conn.setAutoCommit(false); // Inicia transação
+            conn.setAutoCommit(false);
 
-            // 1. Exclui Simulados (e suas dependências por CASCADE)
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteSimulados)) {
                 stmt.setString(1, userId);
                 stmt.executeUpdate();
             }
 
-            // 2. Exclui Questões (e suas dependências por CASCADE)
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteQuestoes)) {
                 stmt.setString(1, userId);
                 stmt.executeUpdate();
             }
 
-            // 3. Exclui Avaliações Comportamentais criadas pelo professor
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAvaliacoes)) {
                 stmt.setString(1, userId);
                 stmt.executeUpdate();
             }
 
-            // 4. Desassocia o professor das Turmas (define como NULL)
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateTurmas)) {
                 stmt.setString(1, userId);
                 stmt.executeUpdate();
             }
 
-            // 5. Exclui o utilizador
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteUser)) {
                 stmt.setString(1, userId);
                 stmt.executeUpdate();
             }
 
-            conn.commit(); // Confirma todas as operações
+            conn.commit();
             System.out.println("Utilizador excluído com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao excluir o utilizador. Realizando rollback.");
@@ -150,7 +141,6 @@ public class UserDAO {
         }
     }
 
-    // O método update permanece o mesmo (para dados de perfil)
     public void update(User user) {
         String sql = "UPDATE users SET nome = ?, email = ?, matricula = ?, role = ?, cpf = ?, foto = ? WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -173,7 +163,6 @@ public class UserDAO {
         }
     }
 
-    // NOVO MÉTODO: Adicionado para ser chamado pelo TrocarSenhaController
     public void updatePassword(String userId, String hashedPassword) {
         String sql = "UPDATE users SET senha = ? WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
@@ -265,7 +254,6 @@ public class UserDAO {
         return user;
     }
 
-    // --- NOVO MÉTODO PARA BUSCAR ALUNOS ---
     public List<User> findAlunosNotInTurmaByName(String nome, String turmaId) {
         String sql = "SELECT * FROM users " +
                 "WHERE role = 'ALUNO' AND nome LIKE ? AND id NOT IN (" +
@@ -276,7 +264,7 @@ public class UserDAO {
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, "%" + nome + "%"); // O '%' permite buscar por partes do nome
+            stmt.setString(1, "%" + nome + "%");
             stmt.setString(2, turmaId);
             ResultSet rs = stmt.executeQuery();
 
@@ -285,7 +273,6 @@ public class UserDAO {
                 user.setId(rs.getString("id"));
                 user.setNome(rs.getString("nome"));
                 user.setMatricula(rs.getString("matricula"));
-                // Preencha outros campos se necessário para a exibição
                 users.add(user);
             }
         } catch (SQLException e) {
@@ -295,7 +282,6 @@ public class UserDAO {
         return users;
     }
 
-    // Adicione este método dentro da classe UserDAO
 
     public List<User> findAlunosByTurmaId(String turmaId) {
         String sql = "SELECT u.* FROM users u " +
@@ -315,7 +301,6 @@ public class UserDAO {
                 user.setNome(rs.getString("nome"));
                 user.setMatricula(rs.getString("matricula"));
                 user.setEmail(rs.getString("email"));
-                // Preencha outros campos se forem necessários na tabela
                 alunos.add(user);
             }
         } catch (SQLException e) {

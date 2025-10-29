@@ -10,7 +10,6 @@ import java.util.List;
 public class QuestaoDAO {
 
     public void save(Questao questao) {
-        // SQL atualizado para incluir a coluna nota_pontuacao
         String sqlQuestao = "INSERT INTO questoes (enunciado, tipo, nivel_dificuldade, disciplina_id, assunto_id, professor_criador_id, nota_pontuacao) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlAlternativa = "INSERT INTO alternativas (texto, correta, questao_id) VALUES (?, ?, ?)";
 
@@ -59,9 +58,7 @@ public class QuestaoDAO {
         }
     }
 
-    // --- NOVO MÉTODO DE UPDATE ---
     public void update(Questao questao) {
-        // SQL atualizado para incluir a coluna nota_pontuacao
         String sqlUpdateQuestao = "UPDATE questoes SET enunciado = ?, tipo = ?, nivel_dificuldade = ?, disciplina_id = ?, assunto_id = ?, nota_pontuacao = ? WHERE id = ?";
         String sqlDeleteAlternativas = "DELETE FROM alternativas WHERE questao_id = ?";
         String sqlInsertAlternativa = "INSERT INTO alternativas (texto, correta, questao_id) VALUES (?, ?, ?)";
@@ -69,27 +66,24 @@ public class QuestaoDAO {
         Connection conn = null;
         try {
             conn = ConnectionFactory.getConnection();
-            conn.setAutoCommit(false); // Inicia transação
+            conn.setAutoCommit(false);
 
-            // 1. Atualiza a questão principal
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateQuestao)) {
                 stmt.setString(1, questao.getEnunciado());
                 stmt.setString(2, questao.getTipo().name());
                 stmt.setString(3, questao.getNivelDificuldade().name());
                 stmt.setInt(4, questao.getDisciplinaId());
                 stmt.setInt(5, questao.getAssuntoId());
-                stmt.setDouble(6, questao.getNotaPontuacao()); // NOVO: Seta a pontuação
+                stmt.setDouble(6, questao.getNotaPontuacao());
                 stmt.setInt(7, questao.getId());
                 stmt.executeUpdate();
             }
 
-            // 2. Deleta as alternativas antigas
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAlternativas)) {
                 stmt.setInt(1, questao.getId());
                 stmt.executeUpdate();
             }
 
-            // 3. Insere as novas alternativas (se houver)
             if (questao.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA && !questao.getAlternativas().isEmpty()) {
                 try (PreparedStatement stmt = conn.prepareStatement(sqlInsertAlternativa)) {
                     for (Alternativa alt : questao.getAlternativas()) {
@@ -102,7 +96,7 @@ public class QuestaoDAO {
                 }
             }
 
-            conn.commit(); // Confirma a transação
+            conn.commit();
             System.out.println("Questão ID " + questao.getId() + " atualizada com sucesso!");
 
         } catch (SQLException e) {
@@ -114,14 +108,12 @@ public class QuestaoDAO {
         }
     }
 
-    // --- MÉTODO PARA BUSCAR QUESTÃO COMPLETA (existente) ---
     public Questao findById(int questaoId) {
         String sqlQuestao = "SELECT * FROM questoes WHERE id = ?";
         String sqlAlternativas = "SELECT * FROM alternativas WHERE questao_id = ?";
         Questao questao = null;
 
         try (Connection conn = ConnectionFactory.getConnection()) {
-            // Busca a questão
             try (PreparedStatement stmt = conn.prepareStatement(sqlQuestao)) {
                 stmt.setInt(1, questaoId);
                 ResultSet rs = stmt.executeQuery();
@@ -134,11 +126,10 @@ public class QuestaoDAO {
                     questao.setDisciplinaId(rs.getInt("disciplina_id"));
                     questao.setAssuntoId(rs.getInt("assunto_id"));
                     questao.setProfessorCriadorId(rs.getString("professor_criador_id"));
-                    questao.setNotaPontuacao(rs.getDouble("nota_pontuacao")); // NOVO: Leitura da pontuação
+                    questao.setNotaPontuacao(rs.getDouble("nota_pontuacao"));
                 }
             }
 
-            // Se a questão foi encontrada e é de múltipla escolha, busca as alternativas
             if (questao != null && questao.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA) {
                 try (PreparedStatement stmt = conn.prepareStatement(sqlAlternativas)) {
                     stmt.setInt(1, questaoId);
@@ -162,7 +153,6 @@ public class QuestaoDAO {
         return questao;
     }
 
-    // --- NOVO MÉTODO: Calcula a pontuação máxima de um simulado ---
     public double getTotalPontuacaoBySimuladoId(int simuladoId) {
         String sql = "SELECT SUM(q.nota_pontuacao) FROM questoes q " +
                 "INNER JOIN simulado_questoes sq ON q.id = sq.questao_id " +
@@ -182,9 +172,7 @@ public class QuestaoDAO {
         return total;
     }
 
-    // --- BUSCA QUESTÕES COMPLETAS DE UM SIMULADO (usa findById) ---
     public List<Questao> findQuestoesBySimuladoId(int simuladoId) {
-        // 1. Primeiro, encontra os IDs das questões associadas ao simulado
         String sqlQuestaoIds = "SELECT questao_id FROM simulado_questoes WHERE simulado_id = ?";
         List<Integer> questaoIds = new ArrayList<>();
 
@@ -199,14 +187,12 @@ public class QuestaoDAO {
         } catch (SQLException e) {
             System.err.println("Erro ao buscar IDs de questões do simulado.");
             e.printStackTrace();
-            return new ArrayList<>(); // Retorna lista vazia em caso de erro
+            return new ArrayList<>();
         }
 
-        // 2. Agora, busca os detalhes completos de cada questão
         List<Questao> questoesCompletas = new ArrayList<>();
-        // Reutilizamos a lógica existente do findById
         for (int id : questaoIds) {
-            Questao questao = findById(id); // findById já cuida da conexão e alternativas
+            Questao questao = findById(id);
             if (questao != null) {
                 questoesCompletas.add(questao);
             }
@@ -216,7 +202,6 @@ public class QuestaoDAO {
     }
 
     public List<Questao> findByFilters(Integer disciplinaId, Integer assuntoId) {
-        // ... (código para construir o SQL)
         StringBuilder sql = new StringBuilder("SELECT * FROM questoes");
         List<Object> params = new ArrayList<>();
 
@@ -253,7 +238,7 @@ public class QuestaoDAO {
                 q.setDisciplinaId(rs.getInt("disciplina_id"));
                 q.setAssuntoId(rs.getInt("assunto_id"));
                 q.setProfessorCriadorId(rs.getString("professor_criador_id"));
-                q.setNotaPontuacao(rs.getDouble("nota_pontuacao")); // NOVO: Leitura da pontuação
+                q.setNotaPontuacao(rs.getDouble("nota_pontuacao"));
                 questoes.add(q);
             }
         } catch (SQLException e) {

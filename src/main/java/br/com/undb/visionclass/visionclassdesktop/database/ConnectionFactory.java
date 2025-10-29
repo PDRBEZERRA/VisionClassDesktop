@@ -25,10 +25,8 @@ public class ConnectionFactory {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Garante que chaves estrangeiras estão ativas
             stmt.execute("PRAGMA foreign_keys = ON");
 
-            // --- CRIAÇÃO DE TODAS AS TABELAS ---
             stmt.execute("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, nome TEXT NOT NULL, email TEXT NOT NULL UNIQUE, senha TEXT NOT NULL, matricula TEXT NOT NULL, role TEXT NOT NULL, foto TEXT, cpf TEXT);");
             stmt.execute("CREATE TABLE IF NOT EXISTS turmas (id TEXT PRIMARY KEY, nome TEXT NOT NULL, ano TEXT, periodo TEXT, professorId TEXT REFERENCES users(id), desempenho NUMERIC(5, 2));");
             stmt.execute("CREATE TABLE IF NOT EXISTS turma_alunos (turma_id TEXT NOT NULL, aluno_id TEXT NOT NULL, PRIMARY KEY (turma_id, aluno_id), FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE, FOREIGN KEY (aluno_id) REFERENCES users(id) ON DELETE CASCADE);");
@@ -36,7 +34,7 @@ public class ConnectionFactory {
             stmt.execute("CREATE TABLE IF NOT EXISTS disciplinas (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL UNIQUE);");
             stmt.execute("CREATE TABLE IF NOT EXISTS assuntos (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, disciplina_id INTEGER NOT NULL, FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE);");
 
-            // ALTERAÇÃO CRÍTICA: Adição de nota_pontuacao com valor padrão de 1.0
+
             stmt.execute("CREATE TABLE IF NOT EXISTS questoes (id INTEGER PRIMARY KEY AUTOINCREMENT, enunciado TEXT NOT NULL, tipo TEXT NOT NULL, nivel_dificuldade TEXT NOT NULL, disciplina_id INTEGER NOT NULL, assunto_id INTEGER NOT NULL, professor_criador_id TEXT NOT NULL, nota_pontuacao REAL NOT NULL DEFAULT 1.0, FOREIGN KEY (disciplina_id) REFERENCES disciplinas(id) ON DELETE CASCADE, FOREIGN KEY (assunto_id) REFERENCES assuntos(id) ON DELETE CASCADE, FOREIGN KEY (professor_criador_id) REFERENCES users(id));");
 
             stmt.execute("CREATE TABLE IF NOT EXISTS alternativas (id INTEGER PRIMARY KEY AUTOINCREMENT, texto TEXT NOT NULL, correta BOOLEAN NOT NULL, questao_id INTEGER NOT NULL, FOREIGN KEY (questao_id) REFERENCES questoes(id) ON DELETE CASCADE);");
@@ -51,14 +49,12 @@ public class ConnectionFactory {
             stmt.execute(createSimuladoTurmasTableSql);
             stmt.execute(createAlunoRespostasTableSql);
 
-            // --- MIGRAÇÃO CRÍTICA: ADICIONAR NOVAS COLUNAS ---
 
-            // 1. Adicionar nota_pontuacao à tabela questoes (para migração de versões antigas)
             try {
                 stmt.execute("ALTER TABLE questoes ADD COLUMN nota_pontuacao REAL NOT NULL DEFAULT 1.0;");
             } catch (SQLException ignored) { /* Coluna já existe */ }
 
-            // 2. Colunas de correção manual (já existentes)
+
             try {
                 stmt.execute("ALTER TABLE aluno_respostas ADD COLUMN nota_atribuida NUMERIC(5, 2);");
             } catch (SQLException ignored) { /* Coluna já existe */ }
@@ -68,9 +64,7 @@ public class ConnectionFactory {
             } catch (SQLException ignored) { /* Coluna já existe */ }
 
 
-            // --- INSERÇÃO DE DADOS PADRÃO: ADMIN E DISCIPLINAS ---
 
-            // 1. INSERÇÃO DO ADMIN
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users;");
             if (rs.next() && rs.getInt(1) == 0) {
 
@@ -95,15 +89,12 @@ public class ConnectionFactory {
                 }
             }
 
-            // 2. INSERÇÃO DE DISCIPLINAS/ASSUNTOS
             rs = stmt.executeQuery("SELECT COUNT(*) FROM disciplinas;");
             if (rs.next() && rs.getInt(1) == 0) {
 
-                // SQL para inserir Disciplinas e obter seus IDs
                 String insertDisciplinaSql = "INSERT INTO disciplinas (nome) VALUES (?)";
                 String insertAssuntoSql = "INSERT INTO assuntos (nome, disciplina_id) VALUES (?, ?)";
 
-                // Inserir Biologia
                 try (PreparedStatement ds = conn.prepareStatement(insertDisciplinaSql, Statement.RETURN_GENERATED_KEYS)) {
                     ds.setString(1, "Biologia");
                     ds.executeUpdate();
@@ -118,7 +109,6 @@ public class ConnectionFactory {
                     }
                 }
 
-                // Inserir Matemática
                 try (PreparedStatement ds = conn.prepareStatement(insertDisciplinaSql, Statement.RETURN_GENERATED_KEYS)) {
                     ds.setString(1, "Matemática");
                     ds.executeUpdate();

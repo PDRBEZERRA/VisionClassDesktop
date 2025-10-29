@@ -66,10 +66,7 @@ public class SimuladoDAO {
         }
     }
 
-    /**
-     * Atualiza um simulado existente (título, status, questões e turmas).
-     * @param simulado O simulado com os dados atualizados.
-     */
+
     public void update(Simulado simulado) {
         String sqlUpdateSimulado = "UPDATE simulados SET titulo = ?, status = ? WHERE id = ?";
         String sqlDeleteQuestoes = "DELETE FROM simulado_questoes WHERE simulado_id = ?";
@@ -80,9 +77,8 @@ public class SimuladoDAO {
         Connection conn = null;
         try {
             conn = ConnectionFactory.getConnection();
-            conn.setAutoCommit(false); // Inicia transação
+            conn.setAutoCommit(false);
 
-            // 1. Atualiza o título e status do Simulado
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateSimulado)) {
                 stmt.setString(1, simulado.getTitulo());
                 stmt.setString(2, simulado.getStatus().name());
@@ -90,7 +86,6 @@ public class SimuladoDAO {
                 stmt.executeUpdate();
             }
 
-            // 2. Deleta e insere as novas Questões
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteQuestoes)) {
                 stmt.setInt(1, simulado.getId());
                 stmt.executeUpdate();
@@ -106,7 +101,6 @@ public class SimuladoDAO {
                 }
             }
 
-            // 3. Deleta e insere as novas Turmas
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteTurmas)) {
                 stmt.setInt(1, simulado.getId());
                 stmt.executeUpdate();
@@ -122,7 +116,7 @@ public class SimuladoDAO {
                 }
             }
 
-            conn.commit(); // Confirma a transação
+            conn.commit();
             System.out.println("Simulado ID " + simulado.getId() + " atualizado com sucesso!");
 
         } catch (SQLException e) {
@@ -160,13 +154,7 @@ public class SimuladoDAO {
         return simulados;
     }
 
-    /**
-     * Busca todos os simulados atribuídos a uma turma específica.
-     * @param turmaId O ID da turma do aluno.
-     * @return Uma lista de objetos Simulado.
-     */
     public List<Simulado> findSimuladosByTurmaId(String turmaId) {
-        // Seleciona simulados que estão na tabela de associação com a turma
         String sql = "SELECT s.* FROM simulados s " +
                 "INNER JOIN simulado_turmas st ON s.id = st.simulado_id " +
                 "WHERE st.turma_id = ? " +
@@ -225,11 +213,6 @@ public class SimuladoDAO {
         return count;
     }
 
-    // --- MÉTODOS PARA O DASHBOARD DO ALUNO ---
-
-    /**
-     * Conta quantos simulados foram atribuídos a uma turma.
-     */
     public int countByTurmaId(String turmaId) {
         String sql = "SELECT COUNT(*) FROM simulado_turmas WHERE turma_id = ?";
         int count = 0;
@@ -247,11 +230,7 @@ public class SimuladoDAO {
         return count;
     }
 
-    /**
-     * Conta quantos simulados distintos um aluno já respondeu.
-     */
     public int countRealizadosByAlunoId(String alunoId) {
-        // Usamos COUNT(DISTINCT simulado_id) para não contar o mesmo simulado várias vezes
         String sql = "SELECT COUNT(DISTINCT simulado_id) FROM aluno_respostas WHERE aluno_id = ?";
         int count = 0;
         try (Connection conn = ConnectionFactory.getConnection();
@@ -268,7 +247,6 @@ public class SimuladoDAO {
         return count;
     }
 
-    // Código adicionado no SimuladoDAO.java
     public List<Integer> findQuestaoIdsBySimuladoId(int simuladoId) {
         String sql = "SELECT questao_id FROM simulado_questoes WHERE simulado_id = ?";
         List<Integer> ids = new ArrayList<>();

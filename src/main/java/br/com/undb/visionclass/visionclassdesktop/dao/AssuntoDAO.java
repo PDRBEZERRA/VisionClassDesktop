@@ -13,11 +13,6 @@ import java.util.List;
 
 public class AssuntoDAO {
 
-    /**
-     * Salva um novo assunto no banco de dados.
-     * @param assunto O assunto a ser salvo.
-     * @return O objeto Assunto salvo, com o ID gerado pelo banco.
-     */
     public Assunto save(Assunto assunto) {
         String sql = "INSERT INTO assuntos (nome, disciplina_id) VALUES (?, ?)";
 
@@ -39,11 +34,6 @@ public class AssuntoDAO {
         return assunto;
     }
 
-    /**
-     * Busca todos os assuntos de uma disciplina específica.
-     * @param disciplinaId O ID da disciplina.
-     * @return Uma lista de assuntos.
-     */
     public List<Assunto> findByDisciplinaId(int disciplinaId) {
         String sql = "SELECT * FROM assuntos WHERE disciplina_id = ? ORDER BY nome";
         List<Assunto> assuntos = new ArrayList<>();
@@ -68,11 +58,6 @@ public class AssuntoDAO {
         return assuntos;
     }
 
-    // --- NOVO MÉTODO PARA DELETAR ---
-    /**
-     * Deleta um assunto do banco de dados.
-     * @param assuntoId O ID do assunto a ser deletado.
-     */
     public void delete(int assuntoId) {
         String sql = "DELETE FROM assuntos WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();

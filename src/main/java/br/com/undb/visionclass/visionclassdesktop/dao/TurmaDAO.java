@@ -125,14 +125,8 @@ public class TurmaDAO {
         return turma;
     }
 
-    // --- NOVO MÉTODO PARA O DASHBOARD DO ALUNO ---
-    /**
-     * Busca a turma na qual um aluno está matriculado.
-     * @param alunoId O ID do aluno.
-     * @return O objeto Turma, ou null se o aluno não estiver em nenhuma turma.
-     */
+
     public Turma findByAlunoId(String alunoId) {
-        // Esta query junta a tabela de associação com a tabela de turmas
         String sql = "SELECT t.* FROM turmas t " +
                 "INNER JOIN turma_alunos ta ON t.id = ta.turma_id " +
                 "WHERE ta.aluno_id = ?";

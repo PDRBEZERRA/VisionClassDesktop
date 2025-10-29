@@ -13,11 +13,7 @@ import java.util.List;
 
 public class DisciplinaDAO {
 
-    /**
-     * Salva uma nova disciplina no banco de dados.
-     * @param disciplina A disciplina a ser salva.
-     * @return O objeto Disciplina salvo, com o ID gerado pelo banco.
-     */
+
     public Disciplina save(Disciplina disciplina) {
         String sql = "INSERT INTO disciplinas (nome) VALUES (?)";
 
@@ -39,10 +35,7 @@ public class DisciplinaDAO {
         return disciplina;
     }
 
-    /**
-     * Busca todas as disciplinas cadastradas, ordenadas por nome.
-     * @return Uma lista de todas as disciplinas.
-     */
+
     public List<Disciplina> findAll() {
         String sql = "SELECT * FROM disciplinas ORDER BY nome";
         List<Disciplina> disciplinas = new ArrayList<>();
@@ -64,11 +57,7 @@ public class DisciplinaDAO {
         return disciplinas;
     }
 
-    // --- NOVO MÉTODO PARA DELETAR ---
-    /**
-     * Deleta uma disciplina do banco de dados.
-     * @param disciplinaId O ID da disciplina a ser deletada.
-     */
+
     public void delete(int disciplinaId) {
         String sql = "DELETE FROM disciplinas WHERE id = ?";
         try (Connection conn = ConnectionFactory.getConnection();
