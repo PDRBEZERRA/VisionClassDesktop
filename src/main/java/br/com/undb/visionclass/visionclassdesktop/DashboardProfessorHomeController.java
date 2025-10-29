@@ -4,6 +4,7 @@ import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import javafx.event.ActionEvent; // Importar ActionEvent
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
@@ -19,9 +20,17 @@ public class DashboardProfessorHomeController {
 
     private TurmaDAO turmaDAO = new TurmaDAO();
 
+    // Referência ao controlador principal do dashboard
+    private DashboardProfessorController mainController;
+
     @FXML
     public void initialize() {
         loadMinhasTurmas();
+    }
+
+    // Método para injetar a referência do controlador principal
+    public void setMainController(DashboardProfessorController mainController) {
+        this.mainController = mainController;
     }
 
     private void loadMinhasTurmas() {
@@ -48,6 +57,35 @@ public class DashboardProfessorHomeController {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    // --- Métodos para os botões de Ação Rápida ---
+
+    @FXML
+    private void handleAvaliarTurma(ActionEvent event) {
+        if (mainController != null) {
+            mainController.onCarometroClick(event); // Chama o método de navegação no controlador principal
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardProfessorHomeController.");
+        }
+    }
+
+    @FXML
+    private void handleCriarQuestao(ActionEvent event) {
+        if (mainController != null) {
+            mainController.onBancoQuestoesClick(event); // Chama o método de navegação no controlador principal
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardProfessorHomeController.");
+        }
+    }
+
+    @FXML
+    private void handleGerarSimulado(ActionEvent event) {
+        if (mainController != null) {
+            mainController.onSimuladosClick(event); // Chama o método de navegação no controlador principal
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardProfessorHomeController.");
         }
     }
 }

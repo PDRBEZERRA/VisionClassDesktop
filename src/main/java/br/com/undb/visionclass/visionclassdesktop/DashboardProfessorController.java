@@ -45,7 +45,7 @@ public class DashboardProfessorController {
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        onDashboardButtonClick(null);
+        onDashboardButtonClick(null); // Carrega a home view inicial
     }
 
     private void setActiveButton(Button button) {
@@ -69,7 +69,7 @@ public class DashboardProfessorController {
 
             DetalhesTurmaController detalhesController = loader.getController();
             detalhesController.setTurma(turma);
-            detalhesController.setDashboardController(this);
+            detalhesController.setDashboardController(this); // Passa a referência deste controller
 
             mainBorderPane.setCenter(view);
             setActiveButton(minhasTurmasButton);
@@ -94,14 +94,26 @@ public class DashboardProfessorController {
                 if (file.exists()) {
                     image = new Image(file.toURI().toString());
                 } else {
+                    // Tenta carregar do classpath se não encontrar no filesystem
                     image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
             } else {
+                // Tenta carregar do classpath como fallback padrão
+                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+            }
+            // Garante que a imagem padrão seja carregada se tudo falhar
+            if (image == null || image.isError()) {
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
             userAvatar.setImage(image);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do avatar.");
+            System.err.println("Erro ao carregar a imagem do avatar no dashboard professor. Usando imagem padrão.");
+            try {
+                userAvatar.setImage(new Image(getClass().getResourceAsStream("images/avatar.jpg")));
+            } catch (Exception ex) {
+                System.err.println("Falha ao carregar até mesmo a imagem padrão.");
+                // O ImageView ficará vazio ou com um placeholder de erro do JavaFX
+            }
             e.printStackTrace();
         }
     }
@@ -119,26 +131,25 @@ public class DashboardProfessorController {
     }
 
     @FXML
-    private void onCarometroClick(ActionEvent event) {
+    public void onCarometroClick(ActionEvent event) { // Tornar público se já não for
         loadCenterView("carometro-view.fxml");
         setActiveButton(carometroButton);
     }
 
     @FXML
-    private void onBancoQuestoesClick(ActionEvent event) {
+    public void onBancoQuestoesClick(ActionEvent event) { // Tornar público se já não for
         loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
     }
 
     @FXML
-    private void onSimuladosClick(ActionEvent event) {
+    public void onSimuladosClick(ActionEvent event) { // Tornar público se já não for
         loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
     }
 
     @FXML
     private void onRelatoriosClick(ActionEvent event) {
-        // ALTERAÇÃO: Carrega a view de relatórios específica do professor.
         loadCenterView("relatorios-professor-view.fxml");
         setActiveButton(relatoriosButton);
     }
@@ -153,8 +164,16 @@ public class DashboardProfessorController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
             Parent view = loader.load();
+
+            // Adicionado: Verifica se o controller carregado é o HomeController e injeta a referência
+            Object controller = loader.getController();
+            if (controller instanceof DashboardProfessorHomeController) {
+                ((DashboardProfessorHomeController) controller).setMainController(this);
+            }
+
             mainBorderPane.setCenter(view);
         } catch (IOException e) {
+            System.err.println("Erro ao carregar a vista: " + fxmlFile);
             e.printStackTrace();
         }
     }

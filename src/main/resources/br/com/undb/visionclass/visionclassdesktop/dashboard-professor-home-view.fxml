@@ -22,9 +22,9 @@
                         <Label styleClass="title-medium" text="Ações Rápidas" />
                         <HBox alignment="CENTER" spacing="20.0">
                             <children>
-                                <Button mnemonicParsing="false" styleClass="quick-action-button" text="Avaliar Turma" />
-                                <Button mnemonicParsing="false" styleClass="quick-action-button" text="Criar Questão" />
-                                <Button mnemonicParsing="false" styleClass="quick-action-button" text="Gerar Simulado" />
+                                <Button fx:id="avaliarTurmaButton" mnemonicParsing="false" onAction="#handleAvaliarTurma" styleClass="quick-action-button" text="Avaliar Turma" />
+                                <Button fx:id="criarQuestaoButton" mnemonicParsing="false" onAction="#handleCriarQuestao" styleClass="quick-action-button" text="Criar Questão" />
+                                <Button fx:id="gerarSimuladoButton" mnemonicParsing="false" onAction="#handleGerarSimulado" styleClass="quick-action-button" text="Gerar Simulado" />
                             </children>
                         </HBox>
                     </children>
