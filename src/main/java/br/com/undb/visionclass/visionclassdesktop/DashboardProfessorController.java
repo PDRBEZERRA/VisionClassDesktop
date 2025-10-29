@@ -45,8 +45,6 @@ public class DashboardProfessorController {
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        // --- CORREÇÃO AQUI ---
-        // Inicia na tela principal do professor e define o botão "Dashboard" como ativo.
         onDashboardButtonClick(null);
     }
 

@@ -31,7 +31,6 @@ public class MinhasTurmasController {
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         if (loggedInUser == null) return;
 
-        // Busca apenas as turmas do professor logado
         List<Turma> turmas = turmaDAO.findByProfessorId(loggedInUser.getId());
 
         if (turmas.isEmpty()) {

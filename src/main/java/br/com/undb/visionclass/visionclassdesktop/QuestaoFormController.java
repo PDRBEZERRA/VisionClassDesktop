@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class QuestaoFormController {
 
     @FXML
-    private Label titleLabel; // Adicionado para mudar o título
+    private Label titleLabel;
     @FXML
     private ComboBox<Disciplina> disciplinaComboBox;
     @FXML
@@ -43,7 +43,7 @@ public class QuestaoFormController {
 
     private ToggleGroup alternativasToggleGroup = new ToggleGroup();
     private List<HBox> alternativaNodes = new ArrayList<>();
-    private Questao questaoParaEditar; // Armazena a questão em modo de edição
+    private Questao questaoParaEditar;
 
     @FXML
     public void initialize() {
@@ -51,10 +51,8 @@ public class QuestaoFormController {
         nivelDificuldadeComboBox.getItems().addAll(NivelDificuldade.values());
         tipoQuestaoComboBox.getItems().addAll(TipoQuestao.values());
 
-        // Configura o TextField para aceitar apenas números (inteiros ou decimais com vírgula/ponto)
         pontuacaoTextField.setTextFormatter(new TextFormatter<>(change -> {
             String newText = change.getControlNewText();
-            // Permite números (0-9) e no máximo um separador (ponto ou vírgula)
             if (newText.matches("([0-9]*([\\.,][0-9]*)?)")) {
                 return change;
             }
@@ -76,27 +74,22 @@ public class QuestaoFormController {
         });
     }
 
-    // --- NOVO MÉTODO PARA ENTRAR EM MODO DE EDIÇÃO ---
     public void setQuestaoParaEditar(Questao questao) {
         this.questaoParaEditar = questao;
-        titleLabel.setText("Editar Questão"); // Muda o título da janela
+        titleLabel.setText("Editar Questão");
 
-        // Preenche os campos com os dados da questão
         enunciadoTextArea.setText(questao.getEnunciado());
         nivelDificuldadeComboBox.setValue(questao.getNivelDificuldade());
         tipoQuestaoComboBox.setValue(questao.getTipo());
-        // NOVO: Preenche o campo de pontuação (substitui ponto por vírgula para pt-BR)
         pontuacaoTextField.setText(String.valueOf(questao.getNotaPontuacao()).replace(".", ","));
 
 
-        // Seleciona a disciplina correta
         disciplinaComboBox.getSelectionModel().select(
                 disciplinaComboBox.getItems().stream()
                         .filter(d -> d.getId() == questao.getDisciplinaId())
                         .findFirst().orElse(null)
         );
 
-        // A seleção do assunto precisa esperar a disciplina ser processada
         Platform.runLater(() -> {
             assuntoComboBox.getSelectionModel().select(
                     assuntoComboBox.getItems().stream()
@@ -105,9 +98,7 @@ public class QuestaoFormController {
             );
         });
 
-        // Preenche as alternativas
         if (questao.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA) {
-            // Limpa as alternativas padrão antes de adicionar as existentes
             alternativasContainer.getChildren().removeIf(node -> node instanceof HBox);
             alternativaNodes.clear();
 
@@ -119,7 +110,7 @@ public class QuestaoFormController {
 
     @FXML
     private void adicionarAlternativa() {
-        adicionarAlternativa("", false); // Chama com valores padrão
+        adicionarAlternativa("", false);
     }
 
     private void adicionarAlternativa(String texto, boolean isCorreta) {
@@ -158,7 +149,6 @@ public class QuestaoFormController {
 
         double pontuacao;
         try {
-            // Usa replace para aceitar vírgula (formato Pt-Br) e converter para ponto (formato US/Java)
             pontuacao = Double.parseDouble(pontuacaoTextField.getText().replace(",", "."));
             if (pontuacao <= 0) {
                 showAlert(Alert.AlertType.ERROR, "Erro de Validação", "A pontuação deve ser um número positivo maior que zero.");
@@ -170,7 +160,7 @@ public class QuestaoFormController {
         }
 
 
-        // Se estiver editando, atualiza o objeto existente. Senão, cria um novo.
+
         Questao questao = (questaoParaEditar != null) ? questaoParaEditar : new Questao();
 
         questao.setDisciplinaId(disciplinaComboBox.getValue().getId());
@@ -178,9 +168,9 @@ public class QuestaoFormController {
         questao.setNivelDificuldade(nivelDificuldadeComboBox.getValue());
         questao.setTipo(tipoQuestaoComboBox.getValue());
         questao.setEnunciado(enunciadoTextArea.getText());
-        questao.setNotaPontuacao(pontuacao); // NOVO: Salva a pontuação
+        questao.setNotaPontuacao(pontuacao);
 
-        if (questaoParaEditar == null) { // Apenas na criação
+        if (questaoParaEditar == null) {
             questao.setProfessorCriadorId(UserSession.getInstance().getLoggedInUser().getId());
         }
 
@@ -203,7 +193,7 @@ public class QuestaoFormController {
         if (disciplinaComboBox.getValue() == null || assuntoComboBox.getValue() == null ||
                 nivelDificuldadeComboBox.getValue() == null || tipoQuestaoComboBox.getValue() == null ||
                 enunciadoTextArea.getText().trim().isEmpty() ||
-                pontuacaoTextField.getText().trim().isEmpty()) { // NOVO: Validação do campo de pontuação
+                pontuacaoTextField.getText().trim().isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "Erro de Validação", "Todos os campos devem ser preenchidos.");
             return false;
         }

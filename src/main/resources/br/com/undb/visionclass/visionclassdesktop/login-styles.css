@@ -1,8 +1,8 @@
 .login-card {
     -fx-background-color: white;
-    -fx-background-radius: 15; /* Cantos arredondados */
-    -fx-padding: 30; /* Espaçamento interno */
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 20, 0.5, 0, 0); /* Sombra */
+    -fx-background-radius: 15;
+    -fx-padding: 30;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 20, 0.5, 0, 0);
 }
 
 /* Estilo para todos os campos de texto */
@@ -11,14 +11,14 @@
     -fx-font-size: 14px;
 }
 
-/* Estilo para o ComboBox (Tipo de usuário) */
+/* Tipo de usuário */
 .combo-box {
     -fx-background-radius: 8;
 }
 
 /* Estilo para o botão principal */
 .primary-button {
-    -fx-background-color: #3b82f6; /* Cor azul */
+    -fx-background-color: #3b82f6;
     -fx-text-fill: white;
     -fx-background-radius: 8;
     -fx-font-weight: bold;
@@ -51,7 +51,7 @@
 
 /* Estilo geral da barra lateral */
 .sidebar {
-    -fx-background-color: #f8fafc; /* Um cinza muito claro, quase branco */
+    -fx-background-color: #f8fafc;
     -fx-padding: 8;
 }
 
@@ -60,7 +60,7 @@
     -fx-background-color: transparent;
     -fx-pref-height: 48;
     -fx-font-size: 14px;
-    -fx-text-fill: #334155; /* Cinza escuro para o texto */
+    -fx-text-fill: #334155;
     -fx-font-weight: 500;
     -fx-alignment: center-left;
     -fx-background-radius: 8;
@@ -68,13 +68,13 @@
 
 /* Efeito ao passar o rato por cima */
 .sidebar-button:hover {
-    -fx-background-color: #e2e8f0; /* Cinza um pouco mais escuro */
-    -fx-text-fill: #0f172a; /* Preto para o texto */
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #0f172a;
 }
 
 /* Estilo para o botão "ativo" (vamos aplicar isto no código mais tarde) */
 .sidebar-button:focused, .sidebar-button.active {
-    -fx-background-color: #3b82f6; /* Azul primário */
+    -fx-background-color: #3b82f6;
     -fx-text-fill: white;
 }
 
@@ -84,13 +84,12 @@
     -fx-icon-color: white;
 }
 
-/* --- ESTILOS PARA A PÁGINA PRINCIPAL DO DASHBOARD --- */
 
 /* Estilos para Títulos */
 .title-large {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-text-fill: #111827; /* Cor escura para o texto */
+    -fx-text-fill: #111827;
 }
 
 .title-medium {
@@ -104,7 +103,7 @@
     -fx-text-fill: #6b7280;
 }
 
-/* Estilo para os cartões de conteúdo (como Atividades Recentes) */
+/* Estilo para os cartões de conteúdo */
 .card {
     -fx-background-color: white;
     -fx-padding: 20;
@@ -129,16 +128,15 @@
 }
 
 .quick-action-button:hover {
-    -fx-border-color: #3b82f6; /* Azul ao passar o rato */
+    -fx-border-color: #3b82f6;
     -fx-background-color: #f9fafb;
 }
 
-/* --- ESTILOS PARA O CABEÇALHO DO DASHBOARD --- */
 
 .header {
     -fx-background-color: white;
     -fx-border-color: #e2e8f0;
-    -fx-border-width: 0 0 1 0; /* Apenas uma borda na parte inferior */
+    -fx-border-width: 0 0 1 0;
 }
 
 .text-username {
@@ -147,7 +145,6 @@
     -fx-text-fill: #334155;
 }
 
-/* --- ESTILOS PARA O CARD DA TURMA --- */
 
 .turma-card {
     -fx-background-color: white;
@@ -182,7 +179,7 @@
 }
 
 .turma-card .progress-bar > .bar {
-    -fx-background-color: #3b82f6; /* Cor da barra de progresso */
+    -fx-background-color: #3b82f6;
 }
 
 .stats-card-simple {
@@ -197,11 +194,10 @@
 
 .secondary-tab {
     -fx-background-color: transparent;
-    -fx-text-fill: #334155; /* Cor cinza/escura */
+    -fx-text-fill: #334155;
     -fx-font-weight: normal;
     -fx-border-color: transparent;
 }
 
-/* Opcional: Adicione um hover para as abas inativas */
 .secondary-tab:hover {
-    -fx-background-color: #e2e8f0; /* Fundo cinza claro ao passar o mouse */
+    -fx-background-color: #e2e8f0;

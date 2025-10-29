@@ -34,18 +34,15 @@ public class SimuladoAlunoViewOuExecController {
         this.alunoLogado = UserSession.getInstance().getLoggedInUser();
         tituloSimuladoLabel.setText(simulado.getTitulo());
 
-        // Lógica de Decisão
         List<Integer> simuladosRealizados = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId());
         boolean simuladoJaFeito = simuladosRealizados.contains(simulado.getId());
 
         if (simuladoJaFeito) {
             loadNotaView();
         } else {
-            // Se for iniciar, carrega as questões e a view de execução
             List<Questao> questoes = questaoDAO.findQuestoesBySimuladoId(simulado.getId());
             if (questoes.isEmpty()) {
                 showError("Simulado Vazio", "Este simulado não possui questões associadas e não pode ser iniciado.");
-                // Fechar a janela se não houver questões
                 rootContainer.getScene().getWindow().hide();
             } else {
                 loadExecucaoView(questoes);
@@ -54,7 +51,6 @@ public class SimuladoAlunoViewOuExecController {
     }
 
     private void loadNotaView() {
-        // Lógica de Nota: Apenas um placeholder finalizado por enquanto.
         rootContainer.getChildren().clear();
         rootContainer.getChildren().add(tituloSimuladoLabel);
 
@@ -62,13 +58,10 @@ public class SimuladoAlunoViewOuExecController {
 
         String notaTexto;
         if (nota == -2) {
-            // Caso em que a nota ainda não foi totalmente corrigida (código de retorno -2)
             notaTexto = "Simulado Aguardando Correção do Professor (Questões Discursivas).";
         } else if (nota >= 0) {
-            // Nota final em pontos absolutos (formatação com vírgula)
             notaTexto = String.format("Sua Nota: %.2f pontos", nota).replace(".", ",");
         } else {
-            // Caso a nota seja -1 (sem respostas)
             notaTexto = "Não há dados de nota disponíveis para este simulado.";
         }
 
@@ -80,15 +73,12 @@ public class SimuladoAlunoViewOuExecController {
 
     private void loadExecucaoView(List<Questao> questoes) {
         try {
-            // Carrega o FXML da execução do simulado
             FXMLLoader loader = new FXMLLoader(getClass().getResource("simulado-execucao-view.fxml"));
             Parent execucaoView = loader.load();
 
-            // Pega o controller e injeta os dados essenciais
             SimuladoExecucaoController execucaoController = loader.getController();
             execucaoController.setDadosSimulado(simuladoAtual, questoes);
 
-            // Substitui o conteúdo do rootContainer pelo conteúdo da execução
             rootContainer.getChildren().clear();
             VBox.setVgrow(execucaoView, Priority.ALWAYS);
             rootContainer.getChildren().add(execucaoView);
@@ -109,6 +99,5 @@ public class SimuladoAlunoViewOuExecController {
 
     @FXML
     public void initialize() {
-        // Inicialização padrão
     }
 }

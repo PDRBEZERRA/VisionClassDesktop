@@ -76,7 +76,6 @@ public class DashboardController {
     }
 
     private void configurarVisibilidadeMenu(UserRole role) {
-        // Adiciona o novo botão à lista de botões do admin
         List<Button> adminButtons = List.of(gerirUsuariosButton, gerirDisciplinasButton);
         List<Button> professorButtons = List.of(carometroButton, bancoQuestoesButton, simuladosButton);
 
@@ -149,10 +148,8 @@ public class DashboardController {
         setActiveButton(gerirTurmasButton);
     }
 
-    // --- NOVO MÉTODO PARA O BOTÃO DE DISCIPLINAS ---
     @FXML
     private void onGerirDisciplinasClick(ActionEvent event) {
-        // Abre a tela em uma nova janela modal, pois é uma ferramenta de configuração
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("gerenciar-disciplinas-assuntos-view.fxml"));
             Parent root = loader.load();
@@ -166,7 +163,6 @@ public class DashboardController {
             System.err.println("Erro ao abrir a tela de gerenciamento de disciplinas.");
             e.printStackTrace();
         }
-        // Não muda o botão ativo, pois é uma janela pop-up
     }
 
     @FXML

@@ -42,7 +42,6 @@ public class DashboardAlunoController {
     @FXML
     public void initialize() {
         refreshUserProfile();
-        // Define o Dashboard como a tela inicial do aluno
         onDashboardButtonClick(null);
     }
 
@@ -72,11 +71,9 @@ public class DashboardAlunoController {
                 if (file.exists()) {
                     image = new Image(file.toURI().toString());
                 } else {
-                    // Usar a imagem padrão se o arquivo não for encontrado
                     image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
                 }
             } else {
-                // Usar a imagem padrão se não houver nome de arquivo
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
             userAvatar.setImage(image);
@@ -88,14 +85,12 @@ public class DashboardAlunoController {
 
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
-        // Carrega o dashboard-aluno-home-view.fxml (tela de estatísticas)
         loadCenterView("dashboard-aluno-home-view.fxml");
         setActiveButton(dashboardButton);
     }
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        // CORREÇÃO: Aponta para o novo FXML de simulados do aluno
         loadCenterView("simulados-aluno-view.fxml");
         setActiveButton(simuladosButton);
     }
@@ -126,13 +121,12 @@ public class DashboardAlunoController {
             Stage stage = new Stage();
             stage.setTitle("Alterar Senha");
             stage.setScene(new Scene(root));
-            stage.initModality(Modality.APPLICATION_MODAL); // Bloqueia a tela pai
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
             stage.showAndWait();
 
         } catch (IOException e) {
             e.printStackTrace();
-            // Lidar com o erro de carregamento do FXML
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Erro");
             alert.setHeaderText("Não foi possível carregar a tela de alteração de senha.");

@@ -29,21 +29,17 @@ public class GerenciarDisciplinasAssuntosController {
 
     @FXML
     public void initialize() {
-        // Vincula as listas observáveis às ListViews
         disciplinasListView.setItems(disciplinasList);
         assuntosListView.setItems(assuntosList);
 
-        // Listener para quando uma disciplina é selecionada
         disciplinasListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                // Se uma disciplina for selecionada, carrega seus assuntos
                 assuntosLabel.setText("Assuntos de " + newVal.getNome());
-                novoAssuntoButton.setDisable(false); // Habilita o botão "+ Novo Assunto"
+                novoAssuntoButton.setDisable(false);
                 carregarAssuntos(newVal.getId());
             } else {
-                // Se nada for selecionado, limpa a lista de assuntos
                 assuntosLabel.setText("Assuntos");
-                novoAssuntoButton.setDisable(true); // Desabilita o botão
+                novoAssuntoButton.setDisable(true);
                 assuntosList.clear();
             }
         });
@@ -72,7 +68,7 @@ public class GerenciarDisciplinasAssuntosController {
                 Disciplina novaDisciplina = new Disciplina();
                 novaDisciplina.setNome(nome.trim());
                 disciplinaDAO.save(novaDisciplina);
-                carregarDisciplinas(); // Atualiza a lista
+                carregarDisciplinas();
             }
         });
     }
@@ -93,14 +89,14 @@ public class GerenciarDisciplinasAssuntosController {
         Optional<ButtonType> resultado = confirmacao.showAndWait();
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
             disciplinaDAO.delete(selecionada.getId());
-            carregarDisciplinas(); // Atualiza a lista de disciplinas (e a de assuntos será limpa pelo listener)
+            carregarDisciplinas();
         }
     }
 
     @FXML
     private void handleNovoAssunto() {
         Disciplina disciplinaSelecionada = disciplinasListView.getSelectionModel().getSelectedItem();
-        if (disciplinaSelecionada == null) return; // Segurança extra
+        if (disciplinaSelecionada == null) return;
 
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Novo Assunto");
@@ -114,7 +110,7 @@ public class GerenciarDisciplinasAssuntosController {
                 novoAssunto.setNome(nome.trim());
                 novoAssunto.setDisciplinaId(disciplinaSelecionada.getId());
                 assuntoDAO.save(novoAssunto);
-                carregarAssuntos(disciplinaSelecionada.getId()); // Atualiza a lista
+                carregarAssuntos(disciplinaSelecionada.getId());
             }
         });
     }
@@ -135,7 +131,7 @@ public class GerenciarDisciplinasAssuntosController {
         Optional<ButtonType> resultado = confirmacao.showAndWait();
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
             assuntoDAO.delete(selecionado.getId());
-            carregarAssuntos(selecionado.getDisciplinaId()); // Atualiza a lista de assuntos
+            carregarAssuntos(selecionado.getDisciplinaId());
         }
     }
 

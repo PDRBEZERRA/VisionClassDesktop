@@ -36,21 +36,17 @@ public class LoginController {
         User usuarioAutenticado = userDAO.findByEmailAndPassword(email, senha);
 
         if (usuarioAutenticado != null) {
-            // Guarda o utilizador na sessão
             UserSession.getInstance().setLoggedInUser(usuarioAutenticado);
             showAlert(Alert.AlertType.INFORMATION, "Login Bem-sucedido", "Bem-vindo, " + usuarioAutenticado.getNome() + "!");
 
-            // VERIFICA A FUNÇÃO E REDIRECIONA PARA O DASHBOARD CORRETO
             switch (usuarioAutenticado.getRole()) {
                 case ADMIN:
                     HelloApplication.getScreenManager().switchTo("dashboard-view.fxml");
                     break;
                 case PROFESSOR:
-                    // Agora redireciona para o novo dashboard do professor
                     HelloApplication.getScreenManager().switchTo("dashboard-professor-view.fxml");
                     break;
                 case ALUNO:
-                    // --- CORREÇÃO: Redireciona para o novo dashboard do aluno ---
                     HelloApplication.getScreenManager().switchTo("dashboard-aluno-view.fxml");
                     break;
                 default:

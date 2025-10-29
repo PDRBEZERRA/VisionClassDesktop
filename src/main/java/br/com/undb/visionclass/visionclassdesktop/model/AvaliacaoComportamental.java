@@ -16,7 +16,6 @@ public class AvaliacaoComportamental {
     private int sociabilidade;
     private String observacoes;
 
-    // Getters e Setters
 
     public String getId() {
         return id;
@@ -98,14 +97,8 @@ public class AvaliacaoComportamental {
         this.observacoes = observacoes;
     }
 
-    // --- NOVO MÉTODO PARA CALCULAR A MÉDIA ---
-    /**
-     * Calcula a média das quatro notas comportamentais.
-     * @return A média formatada como uma String com uma casa decimal.
-     */
     public String getMediaComportamental() {
         double media = (assiduidade + participacao + responsabilidade + sociabilidade) / 4.0;
-        // Formata para ter apenas uma casa decimal
         DecimalFormat df = new DecimalFormat("#.#");
         return df.format(media);
     }

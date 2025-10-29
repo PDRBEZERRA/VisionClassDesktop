@@ -116,16 +116,14 @@ public class AvaliacaoComportamentalController {
         closeWindow();
     }
 
-    // --- MÉTODO ATUALIZADO ---
     @FXML
     private void handleVerHistorico(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("historico-avaliacao-view.fxml"));
             Parent root = loader.load();
 
-            // Pega o controller da nova janela de histórico
             HistoricoAvaliacaoController controller = loader.getController();
-            controller.setData(aluno, turma); // Passa os dados do aluno e da turma
+            controller.setData(aluno, turma);
 
             Stage modalStage = new Stage();
             modalStage.initStyle(StageStyle.DECORATED);

@@ -1,6 +1,6 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
-import br.com.undb.visionclass.visionclassdesktop.dao.AlunoRespostaDAO; // NOVO IMPORT
+import br.com.undb.visionclass.visionclassdesktop.dao.AlunoRespostaDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.SimuladoDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Simulado;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
@@ -36,12 +36,12 @@ public class SimuladosController {
     @FXML
     private TableColumn<Simulado, Number> questoesColumn;
     @FXML
-    private TableColumn<Simulado, Number> submissoesColumn; // NOVO CAMPO FXML
+    private TableColumn<Simulado, Number> submissoesColumn;
     @FXML
     private TableColumn<Simulado, Void> acoesColumn;
 
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
-    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO(); // NOVO DAO
+    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO();
     private ObservableList<Simulado> simuladosList = FXCollections.observableArrayList();
 
     @FXML
@@ -62,7 +62,6 @@ public class SimuladosController {
             return new SimpleIntegerProperty(count);
         });
 
-        // NOVO: Coluna de Submissões
         submissoesColumn.setCellValueFactory(cellData -> {
             int count = alunoRespostaDAO.countSubmissoesBySimuladoId(cellData.getValue().getId());
             return new SimpleIntegerProperty(count);
@@ -109,7 +108,6 @@ public class SimuladosController {
                         } else {
                             Simulado simulado = getTableRow().getItem();
 
-                            // CORREÇÃO CRÍTICA: Compara o objeto enum diretamente.
                             boolean isPublicado = simulado.getStatus() == br.com.undb.visionclass.visionclassdesktop.model.StatusSimulado.PUBLICADO;
                             int submissoes = alunoRespostaDAO.countSubmissoesBySimuladoId(simulado.getId());
 
@@ -136,7 +134,7 @@ public class SimuladosController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             simuladoDAO.delete(simulado.getId());
-            loadSimulados(); // Atualiza a tabela
+            loadSimulados();
         }
     }
 

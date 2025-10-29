@@ -98,7 +98,6 @@ public class BancoQuestoesController {
             @Override
             public TableCell<Questao, Void> call(final TableColumn<Questao, Void> param) {
                 return new TableCell<>() {
-                    // --- BOTÕES DE AÇÃO ---
                     private final Button btnEditar = new Button("Editar");
                     private final Button btnRemover = new Button("Remover");
                     private final HBox pane = new HBox(btnEditar, btnRemover);
@@ -189,17 +188,14 @@ public class BancoQuestoesController {
 
     @FXML
     private void handleNovaQuestao() {
-        abrirFormularioQuestao(null); // Abre o formulário em modo de criação
+        abrirFormularioQuestao(null);
     }
 
-    // --- NOVO MÉTODO PARA ABRIR O FORMULÁRIO DE EDIÇÃO ---
     private void handleEditarQuestao(Questao questao) {
-        // Busca a questão completa, com suas alternativas, antes de abrir o formulário
         Questao questaoCompleta = questaoDAO.findById(questao.getId());
         if (questaoCompleta != null) {
-            abrirFormularioQuestao(questaoCompleta); // Abre o formulário em modo de edição
+            abrirFormularioQuestao(questaoCompleta);
         } else {
-            // Mostra um erro se não conseguir encontrar a questão
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Erro");
             alert.setHeaderText("Não foi possível carregar a questão.");
@@ -213,7 +209,6 @@ public class BancoQuestoesController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("questao-form-view.fxml"));
             Parent root = loader.load();
 
-            // Pega o controller do formulário
             QuestaoFormController controller = loader.getController();
 
             Stage stage = new Stage();
@@ -223,14 +218,13 @@ public class BancoQuestoesController {
 
             if (questaoParaEditar != null) {
                 stage.setTitle("Editar Questão");
-                controller.setQuestaoParaEditar(questaoParaEditar); // Passa a questão para o formulário
+                controller.setQuestaoParaEditar(questaoParaEditar);
             } else {
                 stage.setTitle("Adicionar Nova Questão");
             }
 
             stage.showAndWait();
 
-            // Após fechar, recarrega os dados e aplica os filtros
             loadInitialData();
 
         } catch (IOException e) {

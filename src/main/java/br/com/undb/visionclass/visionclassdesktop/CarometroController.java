@@ -27,7 +27,6 @@ public class CarometroController {
 
     @FXML
     public void initialize() {
-        // Configura o ComboBox para exibir o nome da Turma
         turmaComboBox.setConverter(new StringConverter<Turma>() {
             @Override
             public String toString(Turma turma) {
@@ -36,7 +35,7 @@ public class CarometroController {
 
             @Override
             public Turma fromString(String string) {
-                return null; // Não precisamos converter de String para Turma
+                return null;
             }
         });
 
@@ -58,7 +57,7 @@ public class CarometroController {
     }
 
     private void carregarAlunosDaTurma(Turma turma) {
-        alunosTilePane.getChildren().clear(); // Limpa os alunos da turma anterior
+        alunosTilePane.getChildren().clear();
 
         List<User> alunos = userDAO.findAlunosByTurmaId(turma.getId());
 
@@ -68,9 +67,7 @@ public class CarometroController {
                 VBox alunoCard = loader.load();
                 AlunoCardController controller = loader.getController();
 
-                // --- ESTA É A LINHA QUE MUDOU ---
-                controller.setData(aluno, turma); // Agora passa a turma junto com o aluno
-                // --- FIM DA ALTERAÇÃO ---
+                controller.setData(aluno, turma);
 
                 alunosTilePane.getChildren().add(alunoCard);
             } catch (IOException e) {

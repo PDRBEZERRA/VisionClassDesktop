@@ -36,9 +36,8 @@ public class UsuariosController {
     private TableColumn<User, UserRole> roleColumn;
 
     private UserDAO userDAO = new UserDAO();
-    private DashboardController mainDashboardController; // Variável para guardar a referência
+    private DashboardController mainDashboardController;
 
-    // Método para o DashboardController se "apresentar"
     public void setMainDashboardController(DashboardController controller) {
         this.mainDashboardController = controller;
     }
@@ -52,7 +51,6 @@ public class UsuariosController {
         loadUsersData();
     }
 
-    // Renomeado para ser público e poder ser chamado de fora (se necessário)
     public void loadUsersData() {
         List<User> userList = userDAO.findAll();
         ObservableList<User> observableUserList = FXCollections.observableArrayList(userList);
@@ -83,7 +81,6 @@ public class UsuariosController {
             if (user != null) {
                 controller.setUserToEdit(user);
             }
-            // Passa a referência do DashboardController para o formulário
             controller.setMainDashboardController(this.mainDashboardController);
 
             Stage stage = new Stage();

@@ -33,14 +33,11 @@ public class TurmaFormController {
 
     @FXML
     public void initialize() {
-        // Preenche o ComboBox de períodos
         periodoComboBox.getItems().addAll("Matutino", "Vespertino", "Noturno");
 
-        // Busca e preenche a lista de professores
         List<User> professores = userDAO.findByRole(UserRole.PROFESSOR);
         professorComboBox.getItems().setAll(professores);
 
-        // Define como o nome do professor será exibido no ComboBox
         professorComboBox.setConverter(new StringConverter<User>() {
             @Override
             public String toString(User user) {
@@ -49,7 +46,7 @@ public class TurmaFormController {
 
             @Override
             public User fromString(String string) {
-                return null; // Não precisamos converter de volta
+                return null;
             }
         });
     }
@@ -67,7 +64,6 @@ public class TurmaFormController {
             newTurma.setProfessorId(selectedProfessor.getId());
         }
 
-        // (outros campos como desempenho podem ser definidos com valores padrão)
         newTurma.setDesempenho(0);
 
         turmaDAO.save(newTurma);

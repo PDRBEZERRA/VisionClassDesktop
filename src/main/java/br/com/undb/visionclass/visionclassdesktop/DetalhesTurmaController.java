@@ -155,11 +155,9 @@ public class DetalhesTurmaController {
         }
     }
 
-    // --- MÉTODO CORRIGIDO ---
     @FXML
     void handleVoltarParaTurmas(ActionEvent event) {
         if (dashboardController != null) {
-            // Passa null como argumento para a chamada do método
             dashboardController.onMinhasTurmasClick(null);
         }
     }

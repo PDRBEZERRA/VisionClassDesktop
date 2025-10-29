@@ -4,7 +4,6 @@ public class Disciplina {
     private int id;
     private String nome;
 
-    // Getters e Setters
     public int getId() {
         return id;
     }
@@ -21,7 +20,6 @@ public class Disciplina {
         this.nome = nome;
     }
 
-    // Usado para exibir o nome da disciplina em ComboBoxes
     @Override
     public String toString() {
         return nome;

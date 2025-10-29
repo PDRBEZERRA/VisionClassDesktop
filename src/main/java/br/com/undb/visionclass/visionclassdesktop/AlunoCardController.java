@@ -27,12 +27,11 @@ public class AlunoCardController {
     @FXML
     private Label matriculaLabel;
     @FXML
-    private VBox cardRoot; // Adicionamos uma referência ao VBox principal do card
+    private VBox cardRoot;
 
     private User aluno;
-    private Turma turma; // Armazena a turma atual
+    private Turma turma;
 
-    // O método setData agora também recebe a turma
     public void setData(User aluno, Turma turma) {
         this.aluno = aluno;
         this.turma = turma;
@@ -43,20 +42,16 @@ public class AlunoCardController {
 
     @FXML
     private void initialize() {
-        // Adiciona o listener de clique ao card
         cardRoot.setOnMouseClicked(this::handleCardClick);
     }
 
-    // Este método é chamado quando o card é clicado
     private void handleCardClick(MouseEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("avaliacao-comportamental-view.fxml"));
             Parent root = loader.load();
 
-            // Pega o controller da nova janela
             AvaliacaoComportamentalController controller = loader.getController();
-            controller.setData(this.aluno, this.turma); // Passa o aluno e a turma
-
+            controller.setData(this.aluno, this.turma);
             Stage modalStage = new Stage();
             modalStage.initStyle(StageStyle.DECORATED);
             modalStage.setTitle("Avaliação Comportamental de " + this.aluno.getNome());

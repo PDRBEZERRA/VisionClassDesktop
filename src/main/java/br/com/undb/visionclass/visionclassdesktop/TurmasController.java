@@ -26,7 +26,6 @@ import java.util.Optional;
 
 public class TurmasController {
 
-    // --- CAMPOS ATUALIZADOS PARA A TABELA ---
     @FXML
     private TableView<Turma> turmasTableView;
     @FXML
@@ -45,17 +44,15 @@ public class TurmasController {
     private Button adicionarTurmaButton;
 
     private TurmaDAO turmaDAO = new TurmaDAO();
-    private UserDAO userDAO = new UserDAO(); // DAO de usuário para buscar nomes
+    private UserDAO userDAO = new UserDAO();
     private ObservableList<Turma> turmasList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        // Configura as colunas da tabela
         nomeColumn.setCellValueFactory(new PropertyValueFactory<>("nome"));
         anoColumn.setCellValueFactory(new PropertyValueFactory<>("ano"));
         periodoColumn.setCellValueFactory(new PropertyValueFactory<>("periodo"));
 
-        // Colunas com dados que precisam ser buscados
         professorColumn.setCellValueFactory(cellData -> {
             User professor = userDAO.findById(cellData.getValue().getProfessorId());
             return new SimpleStringProperty(professor != null ? professor.getNome() : "Não definido");
@@ -66,21 +63,17 @@ public class TurmasController {
             return new SimpleStringProperty(String.valueOf(count));
         });
 
-        // Liga a lista de turmas à tabela
         turmasTableView.setItems(turmasList);
 
-        // Verifica o papel do usuário para mostrar/esconder botões
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         boolean isAdmin = (loggedInUser != null && loggedInUser.getRole() == UserRole.ADMIN);
 
         adicionarTurmaButton.setVisible(isAdmin);
         adicionarTurmaButton.setManaged(isAdmin);
 
-        // Configura a coluna de ações (com o botão de excluir para admins)
         if (isAdmin) {
             setupAcoesColumn();
         } else {
-            // Se não for admin, a coluna de ações fica vazia
             acoesColumn.setVisible(false);
         }
 
@@ -88,12 +81,10 @@ public class TurmasController {
     }
 
     private void loadTurmasData() {
-        // A lógica de busca continua a mesma, mas agora popula a lista da tabela
         List<Turma> turmas = turmaDAO.findAll();
         turmasList.setAll(turmas);
     }
 
-    // --- LÓGICA DO BOTÃO EXCLUIR ---
     private void setupAcoesColumn() {
         Callback<TableColumn<Turma, Void>, TableCell<Turma, Void>> cellFactory = new Callback<>() {
             @Override
@@ -134,7 +125,7 @@ public class TurmasController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             turmaDAO.delete(turma.getId());
-            loadTurmasData(); // Atualiza a tabela
+            loadTurmasData();
         }
     }
 

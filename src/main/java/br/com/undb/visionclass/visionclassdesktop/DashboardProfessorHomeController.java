@@ -15,7 +15,7 @@ import java.util.List;
 public class DashboardProfessorHomeController {
 
     @FXML
-    private VBox minhasTurmasContainer; // Ligação ao novo VBox do FXML
+    private VBox minhasTurmasContainer;
 
     private TurmaDAO turmaDAO = new TurmaDAO();
 
@@ -25,20 +25,16 @@ public class DashboardProfessorHomeController {
     }
 
     private void loadMinhasTurmas() {
-        // Limpa a secção antes de adicionar os novos cards
         minhasTurmasContainer.getChildren().clear();
 
-        // Obtém o ID do professor que está logado
         User loggedInProfessor = UserSession.getInstance().getLoggedInUser();
         if (loggedInProfessor == null) return;
 
-        // Busca no banco de dados apenas as turmas deste professor
         List<Turma> turmasDoProfessor = turmaDAO.findByProfessorId(loggedInProfessor.getId());
 
         if (turmasDoProfessor.isEmpty()) {
             minhasTurmasContainer.getChildren().add(new Label("Você ainda não está responsável por nenhuma turma."));
         } else {
-            // Para cada turma encontrada, carrega e adiciona um card
             for (Turma turma : turmasDoProfessor) {
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("turma-card-view.fxml"));

@@ -15,7 +15,6 @@ public class DashboardAlunoHomeController {
     @FXML
     private Label welcomeLabel;
 
-    // NOVOS LABELS PARA DESEMPENHO COMPORTAMENTAL DETALHADO
     @FXML
     private Label assiduidadeMediaLabel;
     @FXML
@@ -34,7 +33,6 @@ public class DashboardAlunoHomeController {
     @FXML
     private Label posicaoTurmaLabel;
 
-    // --- DAOs INSTANCIADOS ---
     private AvaliacaoComportamentalDAO avaliacaoDAO = new AvaliacaoComportamentalDAO();
     private TurmaDAO turmaDAO = new TurmaDAO();
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
@@ -55,18 +53,13 @@ public class DashboardAlunoHomeController {
     private void loadDashboardData() {
         if (alunoLogado == null) return;
 
-        // --- Desempenho Comportamental Detalhado ---
         assiduidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "assiduidade"));
         participacaoMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "participacao"));
         responsabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "responsabilidade"));
         sociabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "sociabilidade"));
-        // O card de média geral (comportamental) foi removido do FXML para replicar o design web
-
-        // --- Simulados Realizados (Finalizados) ---
         int simuladosFeitos = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId()).size();
         simuladosRealizadosLabel.setText(String.valueOf(simuladosFeitos));
 
-        // --- Média Geral (Simulados) ---
         double minhaMedia = alunoRespostaDAO.getMediaGeralSimulados(alunoLogado.getId());
         if (minhaMedia >= 0) {
             DecimalFormat df = new DecimalFormat("0.0");
@@ -75,23 +68,19 @@ public class DashboardAlunoHomeController {
             mediaGeralLabel.setText("-");
         }
 
-        // --- Posição na Turma e Simulados Disponíveis ---
         Turma turmaDoAluno = turmaDAO.findByAlunoId(alunoLogado.getId());
         if (turmaDoAluno != null) {
-            // Simulados Disponíveis
             int totalSimuladosNaTurma = simuladoDAO.countByTurmaId(turmaDoAluno.getId());
-            // Subtrai os realizados dos disponíveis (Disponíveis - Finalizados)
             int disponiveis = Math.max(0, totalSimuladosNaTurma - simuladosFeitos);
             simuladosDisponiveisLabel.setText(String.valueOf(disponiveis));
 
-            // Lógica de Ranking
             List<User> colegasDeTurma = userDAO.findAlunosByTurmaId(turmaDoAluno.getId());
             int posicao = 1;
             int totalAlunosNaTurma = colegasDeTurma.size();
 
-            if (minhaMedia >= 0) { // Só calcula a posição se o aluno tiver uma média
+            if (minhaMedia >= 0) {
                 for (User colega : colegasDeTurma) {
-                    if (!colega.getId().equals(alunoLogado.getId())) { // Não se compara com si mesmo
+                    if (!colega.getId().equals(alunoLogado.getId())) {
                         double mediaColega = alunoRespostaDAO.getMediaGeralSimulados(colega.getId());
                         if (mediaColega > minhaMedia) {
                             posicao++;
@@ -100,11 +89,10 @@ public class DashboardAlunoHomeController {
                 }
                 posicaoTurmaLabel.setText(posicao + "º de " + totalAlunosNaTurma);
             } else {
-                posicaoTurmaLabel.setText("-"); // Não tem posição se não fez simulados
+                posicaoTurmaLabel.setText("-");
             }
 
         } else {
-            // Caso o aluno não esteja em nenhuma turma
             simuladosDisponiveisLabel.setText("0");
             posicaoTurmaLabel.setText("N/A");
         }

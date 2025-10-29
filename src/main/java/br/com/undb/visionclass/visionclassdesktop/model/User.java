@@ -11,12 +11,11 @@ public class User {
     private String foto;
     private String cpf;
     private List<String> turmasIds;
-    private String senha; // Ponto e vírgula adicionado aqui
+    private String senha;
 
     public User() {
     }
 
-    // Construtor atualizado para incluir a senha
     public User(String id, String nome, String email, String matricula, UserRole role, String foto, String cpf, List<String> turmasIds, String senha) {
         this.id = id;
         this.nome = nome;
@@ -29,7 +28,6 @@ public class User {
         this.senha = senha;
     }
 
-    // --- Getters e Setters existentes ---
 
     public String getId() {
         return id;
@@ -95,7 +93,6 @@ public class User {
         this.turmasIds = turmasIds;
     }
 
-    // --- Getter e Setter para a Senha ---
 
     public String getSenha() {
         return senha;

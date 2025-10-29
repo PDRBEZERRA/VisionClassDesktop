@@ -50,7 +50,6 @@ public class CorrecaoSimuladoController {
     private QuestaoDAO questaoDAO = new QuestaoDAO();
     private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO();
 
-    // Classe interna auxiliar (Mantida como estava)
     private static class QuestaoResposta {
         Questao questao;
         String respostaDiscursiva;
@@ -69,7 +68,6 @@ public class CorrecaoSimuladoController {
 
     @FXML
     public void initialize() {
-        // Formato customizado para a lista de alunos
         alunosListView.setCellFactory(new Callback<>() {
             @Override
             public ListCell<User> call(ListView<User> param) {
@@ -87,14 +85,12 @@ public class CorrecaoSimuladoController {
             }
         });
 
-        // Listener 1: Seleção de Aluno (Carrega o painel direito)
         alunosListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 carregarDetalhesCorrecao(newVal);
             }
         });
 
-        // Listener 2: Duplo Clique na Questão (Abre o modal de correção)
         questoesDiscursivasListView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 QuestaoResposta questaoResposta = questoesDiscursivasListView.getSelectionModel().getSelectedItem();
@@ -136,22 +132,18 @@ public class CorrecaoSimuladoController {
         }
     }
 
-    // --- LÓGICA DE RECARGA: Chama a busca no DAO novamente ---
     public void carregarDetalhesCorrecao(User aluno) {
         setDetalhesPanelDisabled(false);
         nomeAlunoDetalheLabel.setText("Corrigindo: " + aluno.getNome());
 
-        // 1. NOTA ATUAL: Esta chamada refaz a consulta no AlunoRespostaDAO.getNotaByAlunoAndSimulado
         double notaParcial = alunoRespostaDAO.getNotaByAlunoAndSimulado(aluno.getId(), simuladoAtual.getId());
 
         if (notaParcial < 0) {
             notaAtualLabel.setText("Nota Parcial: 0.0%");
         } else {
-            // A nota deve ser atualizada com o novo valor do banco
             notaAtualLabel.setText(String.format("Nota Parcial: %.2f%%", notaParcial));
         }
 
-        // 2. Carrega as questões discursivas (para manter a lista atualizada)
         Map<Integer, String> respostasDiscursivas = alunoRespostaDAO.findDiscursiveAnswers(aluno.getId(), simuladoAtual.getId());
         ObservableList<QuestaoResposta> listaDeCorrecao = FXCollections.observableArrayList();
 
@@ -164,7 +156,6 @@ public class CorrecaoSimuladoController {
 
         questoesDiscursivasListView.getItems().setAll(listaDeCorrecao);
 
-        // 3. Status de Correção
         if (listaDeCorrecao.isEmpty()) {
             statusCorrecaoLabel.setText("Status: Sem questões discursivas para corrigir.");
         } else {
@@ -172,7 +163,6 @@ public class CorrecaoSimuladoController {
         }
     }
 
-    // --- LÓGICA DE ABERTURA DO MODAL ---
     private void handleAbrirCorrecaoDetalhada(QuestaoResposta qr, User aluno) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("correcao-detalhe-view.fxml"));
@@ -180,7 +170,6 @@ public class CorrecaoSimuladoController {
 
             CorrecaoDetalheController controller = loader.getController();
 
-            // Passa TODOS os dados necessários para o modal
             controller.setDadosCorrecao(simuladoAtual, aluno, qr.questao, qr.respostaDiscursiva);
 
             Stage modalStage = new Stage();
@@ -189,11 +178,9 @@ public class CorrecaoSimuladoController {
             modalStage.initModality(Modality.APPLICATION_MODAL);
             modalStage.setResizable(false);
 
-            // AQUI OCORRE A ESPERA, e o código retoma quando o modal é fechado
             modalStage.showAndWait();
 
-            // AÇÃO FINAL: Recarrega os detalhes do aluno
-            // Isto obriga o método carregarDetalhesCorrecao() a consultar a nova nota do DB.
+
             carregarDetalhesCorrecao(aluno);
 
         } catch (IOException e) {

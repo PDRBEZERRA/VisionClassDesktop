@@ -35,7 +35,6 @@ public class HistoricoAvaliacaoController {
 
     @FXML
     public void initialize() {
-        // Configura como cada célula da lista será exibida
         historicoListView.setCellFactory(new Callback<>() {
             @Override
             public ListCell<AvaliacaoComportamental> call(ListView<AvaliacaoComportamental> param) {
@@ -47,8 +46,7 @@ public class HistoricoAvaliacaoController {
                             setText(null);
                             setGraphic(null);
                         } else {
-                            // Cria a aparência customizada para cada item
-                            VBox vbox = new VBox(5); // Espaçamento de 5px
+                            VBox vbox = new VBox(5);
                             vbox.setStyle("-fx-padding: 10px;");
 
                             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -57,7 +55,7 @@ public class HistoricoAvaliacaoController {
 
                             Label mediaLabel = new Label("Média Comportamental: " + avaliacao.getMediaComportamental());
                             Label obsLabel = new Label("Observações: " + (avaliacao.getObservacoes().isEmpty() ? "Nenhuma" : avaliacao.getObservacoes()));
-                            obsLabel.setWrapText(true); // Quebra a linha se a observação for longa
+                            obsLabel.setWrapText(true);
 
                             vbox.getChildren().addAll(dataLabel, mediaLabel, obsLabel);
                             setGraphic(vbox);

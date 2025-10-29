@@ -38,25 +38,20 @@ public class AdicionarAlunoController {
     public void setTurma(Turma turma) {
         this.turmaAtual = turma;
         nomeTurmaLabel.setText("Buscando alunos para adicionar à turma: " + turma.getNome());
-        // Carrega os alunos disponíveis assim que a janela é aberta
         buscarAlunos();
     }
 
     @FXML
     public void initialize() {
-        // 1. Configurar as colunas para exibir os dados dos alunos
         matriculaColumn.setCellValueFactory(new PropertyValueFactory<>("matricula"));
         nomeColumn.setCellValueFactory(new PropertyValueFactory<>("nome"));
 
-        // 2. Configurar o listener para a barra de busca
         buscaAlunoTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             buscarAlunos();
         });
 
-        // 3. Configurar a coluna de ação para ter um botão "Adicionar"
         setupAcaoColumn();
 
-        // 4. Ligar a lista observável à tabela
         alunosTableView.setItems(alunosDisponiveis);
     }
 
@@ -64,7 +59,7 @@ public class AdicionarAlunoController {
         if (turmaAtual == null) return;
         String termoBusca = buscaAlunoTextField.getText();
         List<User> alunosEncontrados = userDAO.findAlunosNotInTurmaByName(termoBusca, turmaAtual.getId());
-        alunosDisponiveis.setAll(alunosEncontrados); // Atualiza a lista da tabela
+        alunosDisponiveis.setAll(alunosEncontrados);
     }
 
     private void setupAcaoColumn() {
@@ -75,7 +70,7 @@ public class AdicionarAlunoController {
                     private final Button btn = new Button("Adicionar");
 
                     {
-                        btn.getStyleClass().add("primary-button"); // Adiciona um estilo se quiser
+                        btn.getStyleClass().add("primary-button");
                         btn.setOnAction(event -> {
                             User aluno = getTableView().getItems().get(getIndex());
                             adicionarAlunoNaTurma(aluno);
@@ -104,10 +99,8 @@ public class AdicionarAlunoController {
         System.out.println("Adicionando aluno " + aluno.getNome() + " à turma " + turmaAtual.getNome());
         turmaDAO.addAlunoToTurma(turmaAtual.getId(), aluno.getId());
 
-        // Remove o aluno da lista para não ser adicionado novamente
         alunosDisponiveis.remove(aluno);
 
-        // Opcional: Mostrar um feedback para o usuário
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Sucesso");
         alert.setHeaderText(null);

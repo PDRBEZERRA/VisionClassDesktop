@@ -6,7 +6,6 @@ public class Alternativa {
     private boolean correta;
     private int questaoId;
 
-    // Construtor (opcional, mas útil)
     public Alternativa(String texto, boolean correta) {
         this.texto = texto;
         this.correta = correta;
@@ -14,7 +13,6 @@ public class Alternativa {
 
     public Alternativa() {}
 
-    // Getters e Setters
     public int getId() {
         return id;
     }

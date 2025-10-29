@@ -14,20 +14,20 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader; // Import adicionado
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent; // Import adicionado
-import javafx.scene.Scene; // Import adicionado
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.stage.Modality; // Import adicionado
-import javafx.stage.Stage; // Import adicionado
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
-import java.io.IOException; // Import adicionado
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,7 +50,7 @@ public class SimuladosAlunoController {
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
     private TurmaDAO turmaDAO = new TurmaDAO();
     private UserDAO userDAO = new UserDAO();
-    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO(); // Adicionado para manter a lógica
+    private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO();
 
     private User alunoLogado;
     private Turma turmaDoAluno;
@@ -61,7 +61,6 @@ public class SimuladosAlunoController {
     @FXML
     public void initialize() {
         this.alunoLogado = UserSession.getInstance().getLoggedInUser();
-        // 1. Encontra a turma do aluno (Necessário para a busca)
         this.turmaDoAluno = turmaDAO.findByAlunoId(alunoLogado.getId());
 
         setupTableColumns();
@@ -72,13 +71,10 @@ public class SimuladosAlunoController {
         tituloColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitulo()));
         statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(getSimuladoStatus(cellData.getValue())));
 
-        // Usa o countQuestoesBySimuladoId que está no SimuladoDAO
         questoesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(simuladoDAO.countQuestoesBySimuladoId(cellData.getValue().getId())));
 
-        // Busca o nome do professor a partir do ID
         professorColumn.setCellValueFactory(cellData -> {
             String professorId = cellData.getValue().getProfessorCriadorId();
-            // Utiliza o cache para evitar múltiplas chamadas ao banco de dados
             String nome = professoresNomesCache.getOrDefault(professorId, "N/A");
             return new SimpleStringProperty(nome);
         });
@@ -87,7 +83,6 @@ public class SimuladosAlunoController {
         setupAcoesColumn();
     }
 
-    // Método para determinar o status do simulado (Disponível, Feito, etc.)
     private String getSimuladoStatus(Simulado simulado) {
         List<Integer> realizados = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId());
 
@@ -102,12 +97,11 @@ public class SimuladosAlunoController {
 
     private void setupAcoesColumn() {
         Callback<TableColumn<Simulado, Void>, TableCell<Simulado, Void>> cellFactory = param -> new TableCell<>() {
-            private final Button btnAcao = new Button(); // Remove o texto inicial
+            private final Button btnAcao = new Button();
 
             {
                 btnAcao.getStyleClass().add("primary-button");
 
-                // Adiciona o listener da ação aqui, ele será sempre o mesmo
                 btnAcao.setOnAction(event -> {
                     Simulado simulado = getTableView().getItems().get(getIndex());
                     handleAcaoSimulado(simulado);
@@ -134,9 +128,8 @@ public class SimuladosAlunoController {
                         btnAcao.setText("Iniciar");
                         btnAcao.setDisable(false);
                     } else {
-                        // Trata "Em Rascunho" e quaisquer outros estados não esperados
                         btnAcao.setText("...");
-                        btnAcao.setDisable(true); // Desabilita para rascunhos, etc.
+                        btnAcao.setDisable(true);
                     }
                 }
             }
@@ -149,7 +142,6 @@ public class SimuladosAlunoController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("simulado-aluno-acao-view.fxml"));
             Parent root = loader.load();
 
-            // Passa o objeto Simulado para o novo controller
             SimuladoAlunoViewOuExecController controller = loader.getController();
             controller.setSimulado(simulado);
 
@@ -161,7 +153,6 @@ public class SimuladosAlunoController {
 
             modalStage.showAndWait();
 
-            // Após fechar o modal, atualiza a lista (caso o status tenha mudado)
             loadSimulados();
 
         } catch (IOException e) {
@@ -181,7 +172,6 @@ public class SimuladosAlunoController {
 
         List<Simulado> simulados = simuladoDAO.findSimuladosByTurmaId(turmaDoAluno.getId());
 
-        // Pré-carrega os nomes dos professores
         professoresNomesCache = simulados.stream()
                 .map(Simulado::getProfessorCriadorId)
                 .distinct()

@@ -43,31 +43,24 @@ public class SimuladoExecucaoController {
     private Simulado simulado;
     private User alunoLogado;
 
-    // Armazena as respostas do aluno: <QuestaoId, RespostaCapturada>
-    // RespostaCapturada pode ser: Integer (AlternativaID) ou String (Texto Discursivo)
     private Map<Integer, Object> respostas = new HashMap<>();
 
     private LocalDateTime dataInicio;
 
-    // Grupo para as alternativas (garante que apenas uma seja selecionada)
     private ToggleGroup alternativaToggleGroup = new ToggleGroup();
 
-    // --- MÉTODOS DE INICIALIZAÇÃO ---
 
     public void setDadosSimulado(Simulado simulado, List<Questao> questoes) {
         this.simulado = simulado;
         this.questoes = questoes;
 
-        // --- CORREÇÃO CRÍTICA: REORGANIZAÇÃO AUTOMÁTICA ---
-        // Embaralha a lista de questões para garantir que cada aluno tenha uma ordem diferente.
         Collections.shuffle(this.questoes);
 
         this.alunoLogado = UserSession.getInstance().getLoggedInUser();
-        this.dataInicio = LocalDateTime.now(); // Marca o início do simulado
+        this.dataInicio = LocalDateTime.now();
 
         tituloLabel.setText("Simulado: " + simulado.getTitulo());
 
-        // Inicializa o mapa de respostas com valores nulos para todas as questões
         for (Questao q : questoes) {
             respostas.put(q.getId(), null);
         }
@@ -77,32 +70,25 @@ public class SimuladoExecucaoController {
 
     @FXML
     public void initialize() {
-        // Inicialização padrão
     }
 
-    // --- LÓGICA DE NAVEGAÇÃO E RENDERIZAÇÃO ---
 
     private void mostrarQuestao(int indice) {
         if (indice < 0 || indice >= questoes.size()) return;
 
-        // 1. Salva a resposta da questão anterior antes de mudar
         salvarRespostaAtual();
 
         this.indiceQuestaoAtual = indice;
         Questao q = questoes.get(indice);
 
-        // 2. Atualiza UI de Progresso
         progressoLabel.setText(String.format("Questão %d de %d", indice + 1, questoes.size()));
         progressBar.setProgress((double) (indice + 1) / questoes.size());
         enunciadoLabel.setText(q.getEnunciado());
 
-        // 3. Renderiza o container de respostas
         renderizarRespostaContainer(q);
 
-        // 4. Carrega a resposta previamente salva (se houver)
         carregarRespostaSalva(q);
 
-        // 5. Atualiza os botões de navegação
         btnAnterior.setDisable(indice == 0);
         btnProximo.setManaged(indice < questoes.size() - 1);
         btnProximo.setVisible(indice < questoes.size() - 1);
@@ -118,7 +104,7 @@ public class SimuladoExecucaoController {
 
             for (Alternativa alt : questao.getAlternativas()) {
                 RadioButton rb = new RadioButton(alt.getTexto());
-                rb.setUserData(alt.getId()); // Usa o ID da alternativa como UserData
+                rb.setUserData(alt.getId());
                 rb.setToggleGroup(alternativaToggleGroup);
                 respostaContainer.getChildren().add(rb);
             }
@@ -130,21 +116,17 @@ public class SimuladoExecucaoController {
         }
     }
 
-    // --- LÓGICA DE RESPOSTAS ---
 
     private void salvarRespostaAtual() {
         Questao q = questoes.get(indiceQuestaoAtual);
         Object resposta = null;
 
         if (q.getTipo() == TipoQuestao.MULTIPLA_ESCOLHA) {
-            // Se for múltipla escolha, salva o ID da alternativa selecionada
             Toggle selected = alternativaToggleGroup.getSelectedToggle();
             if (selected != null) {
-                // UserData aqui é o ID da Alternativa (Integer)
                 resposta = selected.getUserData();
             }
         } else if (q.getTipo() == TipoQuestao.DISCURSIVA) {
-            // Se for discursiva, salva o texto
             if (!respostaContainer.getChildren().isEmpty() && respostaContainer.getChildren().get(0) instanceof TextArea) {
                 TextArea textArea = (TextArea) respostaContainer.getChildren().get(0);
                 String texto = textArea.getText().trim();
@@ -177,7 +159,6 @@ public class SimuladoExecucaoController {
         }
     }
 
-    // --- HANDLERS DE EVENTO ---
 
     @FXML
     private void handleAnterior() {
@@ -195,10 +176,8 @@ public class SimuladoExecucaoController {
 
     @FXML
     private void handleFinalizar() {
-        // 1. Salva a resposta da última questão
         salvarRespostaAtual();
 
-        // 2. Confirmação
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Confirmação de Finalização");
         confirmation.setHeaderText("Deseja realmente finalizar o simulado?");
@@ -206,10 +185,8 @@ public class SimuladoExecucaoController {
 
         confirmation.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // 3. Processa e salva as respostas
                 processarEFinalizarSimulado();
 
-                // 4. Fecha a janela modal
                 Stage stage = (Stage) btnFinalizar.getScene().getWindow();
                 stage.close();
             }
@@ -221,10 +198,6 @@ public class SimuladoExecucaoController {
         LocalDateTime dataFinalizacao = LocalDateTime.now();
         int respostasSalvas = 0;
 
-        // Exclui respostas antigas antes de salvar as novas para garantir integridade
-        // Nota: Esta exclusão não foi implementada no AlunoRespostaDAO, mas é recomendada.
-        // Por enquanto, vamos apenas salvar. Se o aluno já tiver respondido (o que não deve acontecer
-        // se a lógica de decisão estiver correta), a DB pode falhar (violação de chave).
 
         for (Map.Entry<Integer, Object> entry : respostas.entrySet()) {
             Integer questaoId = entry.getKey();
@@ -237,11 +210,10 @@ public class SimuladoExecucaoController {
                 if (resposta instanceof Integer) {
                     alternativaId = (Integer) resposta;
                 } else if (resposta instanceof String) {
-                    // Garante que a string não é apenas espaço em branco
                     if (!((String)resposta).trim().isEmpty()) {
                         respostaDiscursiva = (String) resposta;
                     } else {
-                        continue; // Não salva se a discursiva for vazia
+                        continue;
                     }
                 }
 
@@ -257,7 +229,6 @@ public class SimuladoExecucaoController {
             }
         }
 
-        // Alerta de sucesso
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Sucesso");
         alert.setHeaderText("Simulado Finalizado!");

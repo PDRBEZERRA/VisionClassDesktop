@@ -5,7 +5,6 @@ public class Assunto {
     private String nome;
     private int disciplinaId;
 
-    // Getters e Setters
     public int getId() {
         return id;
     }
@@ -30,7 +29,6 @@ public class Assunto {
         this.disciplinaId = disciplinaId;
     }
 
-    // Usado para exibir o nome do assunto em ComboBoxes
     @Override
     public String toString() {
         return nome;

@@ -12,11 +12,9 @@ public class Simulado {
     private StatusSimulado status;
     private String professorCriadorId;
 
-    // Listas para armazenar os relacionamentos
     private List<Questao> questoes = new ArrayList<>();
     private List<Turma> turmas = new ArrayList<>();
 
-    // Getters e Setters
 
     public int getId() {
         return id;
