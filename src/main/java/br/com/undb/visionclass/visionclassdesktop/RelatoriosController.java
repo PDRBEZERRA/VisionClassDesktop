@@ -11,10 +11,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -22,6 +19,7 @@ import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Objects;
@@ -89,6 +87,8 @@ public class RelatoriosController {
         // Listeners para os filtros principais
         turmaComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> handleTrocaDeAbas());
         professorComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> handleTrocaDeAbas());
+        dataInicialPicker.valueProperty().addListener((obs, oldVal, newVal) -> handleFiltroDataChange());
+        dataFinalPicker.valueProperty().addListener((obs, oldVal, newVal) -> handleFiltroDataChange());
         // TODO: Adicionar listeners para periodoComboBox, dataInicialPicker, dataFinalPicker se necessário
 
         // Carga inicial dos dados
@@ -132,6 +132,13 @@ public class RelatoriosController {
         professorComboBox.getItems().add(null); // Opção "Todos os Professores"
         professorComboBox.getItems().addAll(professores);
         professorComboBox.getSelectionModel().selectFirst(); // Seleciona "Todos os Professores"
+    }
+
+
+    private void handleFiltroDataChange() {
+        System.out.println("Filtro de data alterado.");
+        // Opcional: Adicionar lógica para limpar/recarregar dados visuais se necessário
+        // handleTrocaDeAbas(); // Poderia chamar aqui se quisesse recarregar tudo
     }
 
     // --- LÓGICA DE CARREGAMENTO DE DADOS (Adaptada para ADM) ---
@@ -396,16 +403,44 @@ public class RelatoriosController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
+
+            // Pega o controller da janela de exportação ANTES de mostrá-la
+            ExportarRelatorioController exportController = loader.getController();
+
+            // --- Coleta os filtros selecionados ---
+            Turma turmaSelecionada = turmaComboBox.getValue();
+            User professorSelecionado = professorComboBox.getValue(); // Específico do ADM
+            LocalDate dataInicial = dataInicialPicker.getValue();
+            LocalDate dataFinal = dataFinalPicker.getValue();
+            // String periodoSelecionado = periodoComboBox.getValue(); // Poderia ser usado se necessário
+
+            // --- Passa os filtros para o ExportarRelatorioController ---
+            exportController.setFiltros(turmaSelecionada, professorSelecionado, dataInicial, dataFinal);
+
+
             Stage stage = new Stage();
-            stage.setTitle("Exportar Relatório - Visão ADM"); // Título adaptado
+            stage.setTitle("Exportar Relatório - Visão ADM");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
-            stage.showAndWait();
+            stage.showAndWait(); // Mostra a janela e espera ela fechar
+
+            // Nenhuma ação extra necessária após fechar, a exportação acontece dentro do modal
+
         } catch (IOException e) {
             System.err.println("Erro ao abrir o modal de exportação de relatórios.");
             e.printStackTrace();
+            // Mostrar alerta de erro para o usuário
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível abrir a janela de exportação.");
         }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     @FXML private void handleMudarAbaComportamental() { activeTab = COMPORTAMENTAL; handleTrocaDeAbas(); }

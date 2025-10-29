@@ -12,6 +12,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.12.1</junit.version>
+        <!-- Adicionando versões para as novas dependências -->
+        <poi.version>5.2.5</poi.version>
+        <commons.csv.version>1.10.0</commons.csv.version>
     </properties>
 
     <dependencies>
@@ -52,6 +55,28 @@
             <artifactId>ikonli-feather-pack</artifactId>
             <version>12.3.1</version>
         </dependency>
+
+        <!-- === NOVAS DEPENDÊNCIAS PARA EXPORTAÇÃO === -->
+        <!-- Apache POI para Excel (.xls e .xlsx) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- Apache Commons CSV para CSV -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${commons.csv.version}</version>
+        </dependency>
+        <!-- ========================================== -->
+
     </dependencies>
 
     <build>
@@ -61,8 +86,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>24</source>
-                    <target>24</target>
+                    <source>17</source> <!-- Recomendo usar 17 LTS ou superior -->
+                    <target>17</target> <!-- Recomendo usar 17 LTS ou superior -->
                 </configuration>
             </plugin>
             <plugin>
@@ -74,9 +99,8 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>
-                                br.com.undb.visionclass.visionclassdesktop/br.com.undb.visionclass.visionclassdesktop.HelloApplication
-                            </mainClass>
+                            <!-- ATENÇÃO: Corrigido o mainClass para apontar para o Launcher -->
+                            <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

@@ -27,6 +27,11 @@ import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import java.time.LocalDate;
+import javafx.stage.FileChooser;
+import java.io.File;
+import javafx.scene.control.Alert;
+
 public class RelatoriosProfessorController {
 
     // --- Componentes FXML para Filtros ---
@@ -94,7 +99,14 @@ public class RelatoriosProfessorController {
         // Carga inicial dos dados
         handleTrocaDeAbas();
 
-        // TODO: Implementar listener para os outros filtros (período, datas)
+        dataInicialPicker.valueProperty().addListener((obs, oldVal, newVal) -> handleFiltroDataChange());
+        dataFinalPicker.valueProperty().addListener((obs, oldVal, newVal) -> handleFiltroDataChange());
+    }
+
+    private void handleFiltroDataChange() {
+        System.out.println("Filtro de data alterado.");
+        // Opcional: Adicionar lógica para limpar/recarregar dados visuais
+        // handleTrocaDeAbas();
     }
 
     private void setupComboBoxes() {
@@ -462,8 +474,25 @@ public class RelatoriosProfessorController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
+            ExportarRelatorioController exportController = loader.getController();
+
+            // --- Coleta os filtros ---
+            Turma turmaSelecionada = turmaComboBox.getValue();
+            LocalDate dataInicial = dataInicialPicker.getValue();
+            LocalDate dataFinal = dataFinalPicker.getValue();
+            // O professor é o logado, não precisa pegar do ComboBox
+            User professorSelecionado = this.professorLogado;
+
+            // --- Passa os filtros ---
+            // Passa null para o professor no caso do professor (ou passa o logado,
+            // dependendo de como ExportarRelatorioController tratará isso)
+            // Vamos passar o professor logado para consistência.
+            exportController.setFiltros(turmaSelecionada, professorSelecionado, dataInicial, dataFinal);
+
+
             Stage stage = new Stage();
-            stage.setTitle("Exportar Relatório");
+            // Título ligeiramente diferente para clareza
+            stage.setTitle("Exportar Relatório - Professor");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
@@ -472,7 +501,17 @@ public class RelatoriosProfessorController {
         } catch (IOException e) {
             System.err.println("Erro ao abrir o modal de exportação de relatórios.");
             e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível abrir a janela de exportação.");
         }
+    }
+
+    // Método auxiliar para mostrar alertas (adicionar se não existir)
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     // Ações para alternar entre as abas

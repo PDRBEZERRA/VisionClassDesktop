@@ -7,7 +7,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDate; // Import necessário
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter; // Import necessário
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,21 +33,21 @@ public class AlunoRespostaDAO {
             stmt.setInt(2, simuladoId);
             stmt.setInt(3, questaoId);
 
-            // 4. Handle alternativa_selecionada_id (pode ser NULL para discursivas)
             if (alternativaSelecionadaId != null) {
                 stmt.setInt(4, alternativaSelecionadaId);
             } else {
                 stmt.setNull(4, Types.INTEGER);
             }
 
-            // 5. Handle resposta_discursiva (pode ser NULL para múltipla escolha)
-            if (respostaDiscursiva != null) {
+            if (respostaDiscursiva != null && !respostaDiscursiva.trim().isEmpty()) {
                 stmt.setString(5, respostaDiscursiva);
             } else {
                 stmt.setNull(5, Types.VARCHAR);
             }
 
-            stmt.setString(6, dataResposta.toString());
+            // Formata LocalDateTime para String no formato ISO (compatível com SQLite)
+            stmt.setString(6, dataResposta.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
 
             stmt.executeUpdate();
             System.out.println("Resposta salva para Questão ID: " + questaoId);
@@ -56,7 +58,7 @@ public class AlunoRespostaDAO {
         }
     }
 
-    // MÉTODO EXISTENTE: Salva a nota da correção manual
+    // Salva a nota da correção manual
     public void updateCorrecaoDiscursiva(String alunoId, int simuladoId, int questaoId, double nota, String feedback) {
         String sql = "UPDATE aluno_respostas SET nota_atribuida = ?, feedback_professor = ? WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
 
@@ -78,7 +80,7 @@ public class AlunoRespostaDAO {
         }
     }
 
-    // NOVO MÉTODO: Para encontrar a nota atribuída em questões discursivas
+    // Encontra a nota atribuída em questões discursivas
     public Double findNotaAtribuida(String alunoId, int simuladoId, int questaoId) {
         String sql = "SELECT nota_atribuida FROM aluno_respostas WHERE aluno_id = ? AND simulado_id = ? AND questao_id = ?";
         Double nota = null;
@@ -106,101 +108,154 @@ public class AlunoRespostaDAO {
 
 
     /**
-     * Calcula a nota final de um aluno em um simulado, somando os pontos obtidos
-     * em cada questão (baseado na notaPontuacao).
-     *
+     * Calcula a nota final de um aluno em um simulado, somando os pontos obtidos.
+     * Considera filtro de data se fornecido.
      * @param alunoId O ID do aluno.
      * @param simuladoId O ID do simulado.
-     * @return A nota absoluta (soma dos pontos), -1 se não houver respostas, ou -2 se houver correção manual pendente.
+     * @param dataInicio Data inicial (pode ser null).
+     * @param dataFim Data final (pode ser null).
+     * @return A nota absoluta (soma dos pontos), -1 se não houver respostas, ou -2 se houver correção pendente.
      */
-    public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId) {
+    public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId, LocalDate dataInicio, LocalDate dataFim) {
+        // Query base para somar pontos obtidos
+        StringBuilder sqlSomaObtida = new StringBuilder(
+                "SELECT " +
+                        "  CAST(SUM(CASE WHEN ar.alternativa_selecionada_id IS NOT NULL AND a.correta = 1 THEN q.nota_pontuacao ELSE 0 END) AS REAL) as obtido_mc, " +
+                        "  CAST(SUM(CASE WHEN ar.resposta_discursiva IS NOT NULL THEN ar.nota_atribuida ELSE 0 END) AS REAL) as obtido_discursiva " +
+                        "FROM aluno_respostas ar " +
+                        "JOIN questoes q ON ar.questao_id = q.id " +
+                        "LEFT JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
+                        "WHERE ar.aluno_id = ? AND ar.simulado_id = ?"
+        );
+        List<Object> paramsSoma = new ArrayList<>();
+        paramsSoma.add(alunoId);
+        paramsSoma.add(simuladoId);
 
-        // Query para somar os pontos obtidos:
-        String sqlSomaObtida = "SELECT " +
-                // 1. Multipla Escolha (MC): Soma a nota_pontuacao da questao (q) se a alternativa selecionada (a) estiver correta
-                "  CAST(SUM(CASE WHEN ar.alternativa_selecionada_id IS NOT NULL AND a.correta = 1 THEN q.nota_pontuacao ELSE 0 END) AS REAL) as obtido_mc, " +
-                // 2. Discursiva: Soma a nota_atribuida (que é o ponto concedido pelo professor)
-                "  CAST(SUM(CASE WHEN ar.resposta_discursiva IS NOT NULL THEN ar.nota_atribuida ELSE 0 END) AS REAL) as obtido_discursiva " +
-                "FROM aluno_respostas ar " +
-                "JOIN questoes q ON ar.questao_id = q.id " +
-                "LEFT JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " +
-                "WHERE ar.aluno_id = ? AND ar.simulado_id = ?";
+        // Adiciona filtros de data se presentes (comparando data_resposta)
+        if (dataInicio != null) {
+            sqlSomaObtida.append(" AND date(ar.data_resposta) >= date(?)");
+            paramsSoma.add(dataInicio.toString());
+        }
+        if (dataFim != null) {
+            sqlSomaObtida.append(" AND date(ar.data_resposta) <= date(?)");
+            paramsSoma.add(dataFim.toString());
+        }
 
         double notaObtidaTotal = -1;
         boolean hasResult = false;
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmtSoma = conn.prepareStatement(sqlSomaObtida)) {
+             PreparedStatement stmtSoma = conn.prepareStatement(sqlSomaObtida.toString())) {
 
-            stmtSoma.setString(1, alunoId);
-            stmtSoma.setInt(2, simuladoId);
+            // Seta os parâmetros (alunoId, simuladoId, datas)
+            for (int i = 0; i < paramsSoma.size(); i++) {
+                stmtSoma.setObject(i + 1, paramsSoma.get(i));
+            }
+
             ResultSet rs = stmtSoma.executeQuery();
-
             if (rs.next()) {
                 double obtidoMc = rs.getDouble("obtido_mc");
                 double obtidoDiscursiva = rs.getDouble("obtido_discursiva");
-
-                if (!rs.wasNull()) { // Se pelo menos uma das somas tem valor (i.e., há respostas)
+                if (!rs.wasNull()) {
                     notaObtidaTotal = obtidoMc + obtidoDiscursiva;
                     hasResult = true;
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao calcular a nota do simulado para o aluno.");
+            System.err.println("Erro ao calcular a nota do simulado para o aluno com filtro de data.");
             e.printStackTrace();
             return -1;
         }
 
         if (hasResult) {
-            // VERIFICAÇÃO CRÍTICA: Contar questões discursivas que o aluno respondeu e que não foram corrigidas
-            String sqlDiscursivasNaoCorrigidas = "SELECT COUNT(ar.id) FROM aluno_respostas ar " +
-                    "JOIN questoes q ON ar.questao_id = q.id " +
-                    "WHERE ar.aluno_id = ? AND ar.simulado_id = ? AND q.tipo = 'DISCURSIVA' AND ar.nota_atribuida IS NULL AND ar.resposta_discursiva IS NOT NULL";
+            // Verifica pendências de correção DENTRO DO PERÍODO
+            StringBuilder sqlDiscursivasNaoCorrigidas = new StringBuilder(
+                    "SELECT COUNT(ar.id) FROM aluno_respostas ar " +
+                            "JOIN questoes q ON ar.questao_id = q.id " +
+                            "WHERE ar.aluno_id = ? AND ar.simulado_id = ? AND q.tipo = 'DISCURSIVA' AND ar.nota_atribuida IS NULL AND ar.resposta_discursiva IS NOT NULL"
+            );
+            List<Object> paramsPendente = new ArrayList<>();
+            paramsPendente.add(alunoId);
+            paramsPendente.add(simuladoId);
 
-            try (Connection conn = ConnectionFactory.getConnection();
-                 PreparedStatement stmtCount = conn.prepareStatement(sqlDiscursivasNaoCorrigidas)) {
-                stmtCount.setString(1, alunoId);
-                stmtCount.setInt(2, simuladoId);
-                ResultSet rs = stmtCount.executeQuery();
-                if (rs.next() && rs.getInt(1) > 0) {
-                    return -2; // Retorna código de erro: Aguardando correção manual
-                }
-            } catch (SQLException e) {
-                System.err.println("Erro ao verificar correção manual pendente.");
+            if (dataInicio != null) {
+                sqlDiscursivasNaoCorrigidas.append(" AND date(ar.data_resposta) >= date(?)");
+                paramsPendente.add(dataInicio.toString());
+            }
+            if (dataFim != null) {
+                sqlDiscursivasNaoCorrigidas.append(" AND date(ar.data_resposta) <= date(?)");
+                paramsPendente.add(dataFim.toString());
             }
 
-            // O retorno é a nota absoluta (soma dos pontos), se não houver pendências
-            return notaObtidaTotal;
+
+            try (Connection conn = ConnectionFactory.getConnection();
+                 PreparedStatement stmtCount = conn.prepareStatement(sqlDiscursivasNaoCorrigidas.toString())) {
+
+                for (int i = 0; i < paramsPendente.size(); i++) {
+                    stmtCount.setObject(i + 1, paramsPendente.get(i));
+                }
+
+                ResultSet rs = stmtCount.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return -2; // Aguardando correção manual
+                }
+            } catch (SQLException e) {
+                System.err.println("Erro ao verificar correção manual pendente com filtro de data.");
+                e.printStackTrace(); // Continua, mas pode levar a nota incorreta se houver erro
+            }
+            return notaObtidaTotal; // Nota calculada
         }
 
-        return -1; // Sem respostas (notaObtidaTotal continua -1)
+        return -1; // Sem respostas no período
     }
 
+    // Sobrecarga para manter compatibilidade onde não se usa filtro de data
+    public double getNotaByAlunoAndSimulado(String alunoId, int simuladoId) {
+        return getNotaByAlunoAndSimulado(alunoId, simuladoId, null, null);
+    }
+
+
     /**
-     * Conta o número total de simulados distintos realizados pelo grupo de alunos.
+     * Conta o número total de simulados distintos realizados pelo grupo de alunos (sem filtro de data).
      * @param alunosIds Lista de IDs dos alunos no escopo.
      * @return O número total de simulados realizados pelo grupo.
      */
     public int countSimuladosRealizadosByAlunosIds(List<String> alunosIds) {
+        return countSimuladosRealizadosByAlunosIdsAndDateRange(alunosIds, null, null);
+    }
+
+    /**
+     * NOVO MÉTODO COM FILTRO DE DATA: Conta o número total de simulados distintos
+     * realizados por um grupo de alunos dentro de um intervalo de datas.
+     * @param alunosIds Lista de IDs dos alunos no escopo.
+     * @param dataInicio Data inicial (inclusiva, baseada na data_resposta). Pode ser null.
+     * @param dataFim Data final (inclusiva, baseada na data_resposta). Pode ser null.
+     * @return O número total de simulados distintos realizados no período.
+     */
+    public int countSimuladosRealizadosByAlunosIdsAndDateRange(List<String> alunosIds, LocalDate dataInicio, LocalDate dataFim) {
         if (alunosIds == null || alunosIds.isEmpty()) {
             return 0;
         }
 
-        // Cria a string de placeholders (?, ?, ?) para a cláusula IN
         String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT simulado_id) FROM aluno_respostas WHERE aluno_id IN (").append(placeholders).append(")");
+        List<Object> params = new ArrayList<>(alunosIds);
 
-        // Query para contar o total de simulados distintos para os alunos selecionados
-        // DISTINCT simulado_id garante que cada simulado seja contado apenas uma vez,
-        // mesmo que vários alunos tenham feito a mesma prova.
-        String sql = "SELECT COUNT(DISTINCT simulado_id) FROM aluno_respostas WHERE aluno_id IN (" + placeholders + ")";
+        if (dataInicio != null) {
+            sql.append(" AND date(data_resposta) >= date(?)");
+            params.add(dataInicio.toString());
+        }
+        if (dataFim != null) {
+            sql.append(" AND date(data_resposta) <= date(?)");
+            params.add(dataFim.toString());
+        }
+
         int count = 0;
-
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            // Seta os IDs dos alunos como parâmetros
-            for (int i = 0; i < alunosIds.size(); i++) {
-                stmt.setString(i + 1, alunosIds.get(i));
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
             }
 
             ResultSet rs = stmt.executeQuery();
@@ -208,7 +263,7 @@ public class AlunoRespostaDAO {
                 count = rs.getInt(1);
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao contar simulados realizados por grupo de alunos.");
+            System.err.println("Erro ao contar simulados realizados por grupo e data.");
             e.printStackTrace();
         }
         return count;
@@ -233,46 +288,123 @@ public class AlunoRespostaDAO {
     }
 
     /**
-     * Calcula a média geral de um aluno em todos os simulados que ele realizou.
-     * A nota do simulado (soma dos pontos) é normalizada para a escala de 0 a 10.
+     * Calcula a média geral (0-10) de um aluno em todos os simulados realizados (sem filtro de data).
      * @param alunoId O ID do aluno.
-     * @return A média geral (0 a 10), ou -1 se não houver simulados realizados.
+     * @return A média geral (0 a 10), ou -1 se não houver simulados realizados/válidos.
      */
     public double getMediaGeralSimulados(String alunoId) {
-        List<Integer> simuladosRealizadosIds = findSimuladosRealizadosIdsByAluno(alunoId);
-        QuestaoDAO questaoDAO = new QuestaoDAO();
+        return getAggregateSimuladosMediaByDateRange(List.of(alunoId), null, null); // Chama a versão agregada sem data
+    }
 
-        if (simuladosRealizadosIds.isEmpty()) {
-            return -1;
+
+    /**
+     * NOVO MÉTODO COM FILTRO DE DATA: Calcula a média geral agregada (0-10)
+     * dos simulados realizados por um grupo de alunos dentro de um intervalo de datas.
+     * @param alunosIds Lista de IDs dos alunos.
+     * @param dataInicio Data inicial. Pode ser null.
+     * @param dataFim Data final. Pode ser null.
+     * @return A média geral agregada (0 a 10), ou -1.0 se não houver simulados válidos no período.
+     */
+    public double getAggregateSimuladosMediaByDateRange(List<String> alunosIds, LocalDate dataInicio, LocalDate dataFim) {
+        if (alunosIds == null || alunosIds.isEmpty()) {
+            return -1.0;
         }
 
-        double somaDasNotasFinal = 0;
-        int countValidos = 0;
+        QuestaoDAO questaoDAO = new QuestaoDAO(); // Necessário para obter pontuação máxima
+        double somaDasMediasIndividuaisNormalizadas = 0;
+        int countAlunosComMediaValida = 0;
 
-        for (Integer simuladoId : simuladosRealizadosIds) {
-            double notaAbsoluta = getNotaByAlunoAndSimulado(alunoId, simuladoId);
+        // Itera por cada aluno no escopo
+        for (String alunoId : alunosIds) {
+            // Busca IDs dos simulados feitos PELO ALUNO ESPECÍFICO (respeitando datas se houver)
+            List<Integer> simuladosDoAlunoNoPeriodo = findSimuladosRealizadosIdsByAlunoAndDateRange(alunoId, dataInicio, dataFim);
 
-            // Ignora simulados sem respostas (-1) ou aguardando correção (-2)
-            if (notaAbsoluta >= 0) {
-                double maxPontos = questaoDAO.getTotalPontuacaoBySimuladoId(simuladoId);
+            if (simuladosDoAlunoNoPeriodo.isEmpty()) {
+                continue; // Próximo aluno se este não fez simulados no período
+            }
 
-                if (maxPontos > 0) {
-                    // Normaliza a nota para a escala de 0 a 10 para o cálculo da média
-                    double notaFinal = (notaAbsoluta / maxPontos) * 10.0;
-                    somaDasNotasFinal += notaFinal;
-                    countValidos++;
+            double somaNotasFinaisAluno = 0;
+            int countSimuladosValidosAluno = 0;
+
+            // Calcula a média 0-10 para este aluno nos simulados do período
+            for (Integer simuladoId : simuladosDoAlunoNoPeriodo) {
+                // Usa a versão do getNota que já considera as datas
+                double notaAbsoluta = getNotaByAlunoAndSimulado(alunoId, simuladoId, dataInicio, dataFim);
+
+                if (notaAbsoluta >= 0) { // Ignora -1 (sem resposta) e -2 (pendente)
+                    double maxPontos = questaoDAO.getTotalPontuacaoBySimuladoId(simuladoId); // Pontuação máxima do simulado
+                    if (maxPontos > 0) {
+                        double notaFinalNormalizada = (notaAbsoluta / maxPontos) * 10.0; // Normaliza para 0-10
+                        somaNotasFinaisAluno += notaFinalNormalizada;
+                        countSimuladosValidosAluno++;
+                    }
                 }
+            }
+
+            // Se o aluno teve pelo menos um simulado válido no período, calcula sua média e adiciona à soma geral
+            if (countSimuladosValidosAluno > 0) {
+                double mediaAluno = somaNotasFinaisAluno / countSimuladosValidosAluno;
+                somaDasMediasIndividuaisNormalizadas += mediaAluno;
+                countAlunosComMediaValida++;
             }
         }
 
-        if (countValidos > 0) {
-            return somaDasNotasFinal / countValidos;
+        // Calcula a média final agregada
+        if (countAlunosComMediaValida > 0) {
+            return somaDasMediasIndividuaisNormalizadas / countAlunosComMediaValida;
         }
 
-        return -1;
+        return -1.0; // Nenhum aluno teve média válida no período
     }
 
-    // Implementação de findAlunosIdsBySimuladoId e findDiscursiveAnswers...
+    /**
+     * NOVO MÉTODO AUXILIAR: Encontra IDs de simulados realizados por um aluno específico
+     * dentro de um intervalo de datas.
+     */
+    private List<Integer> findSimuladosRealizadosIdsByAlunoAndDateRange(String alunoId, LocalDate dataInicio, LocalDate dataFim) {
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT simulado_id FROM aluno_respostas WHERE aluno_id = ?");
+        List<Object> params = new ArrayList<>();
+        params.add(alunoId);
+
+        if (dataInicio != null) {
+            sql.append(" AND date(data_resposta) >= date(?)");
+            params.add(dataInicio.toString());
+        }
+        if (dataFim != null) {
+            sql.append(" AND date(data_resposta) <= date(?)");
+            params.add(dataFim.toString());
+        }
+
+        List<Integer> ids = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                ids.add(rs.getInt("simulado_id"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar IDs de simulados realizados por aluno e data.");
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
+    /**
+     * Calcula a média geral (0-10) agregada para um grupo de alunos (sem filtro de data).
+     * @param alunosIds Lista de IDs dos alunos.
+     * @return A média geral agregada (0 a 10), ou -1.0 se não houver dados válidos.
+     */
+    public double getMediaGeralSimulados(List<String> alunosIds) {
+        return getAggregateSimuladosMediaByDateRange(alunosIds, null, null);
+    }
+
+
+    // Encontra IDs dos alunos que responderam a um simulado
     public List<String> findAlunosIdsBySimuladoId(int simuladoId) {
         String sql = "SELECT DISTINCT aluno_id FROM aluno_respostas WHERE simulado_id = ?";
         List<String> alunosIds = new ArrayList<>();
@@ -290,6 +422,7 @@ public class AlunoRespostaDAO {
         return alunosIds;
     }
 
+    // Encontra as respostas discursivas de um aluno para um simulado
     public Map<Integer, String> findDiscursiveAnswers(String alunoId, int simuladoId) {
         String sql = "SELECT ar.questao_id, ar.resposta_discursiva FROM aluno_respostas ar " +
                 "JOIN questoes q ON ar.questao_id = q.id " +
@@ -311,6 +444,7 @@ public class AlunoRespostaDAO {
         return respostas;
     }
 
+    // Conta quantas submissões (alunos distintos) um simulado teve
     public int countSubmissoesBySimuladoId(int simuladoId) {
         String sql = "SELECT COUNT(DISTINCT aluno_id) FROM aluno_respostas WHERE simulado_id = ?";
         int count = 0;
@@ -327,38 +461,61 @@ public class AlunoRespostaDAO {
         }
         return count;
     }
+
     /**
      * Calcula a média percentual de acertos em questões de múltipla escolha
-     * para um grupo de alunos.
+     * para um grupo de alunos (sem filtro de data).
      * @param alunosIds Lista de IDs dos alunos no escopo.
-     * @return A média percentual de acertos (0.0 a 100.0), ou -1.0 se não houver respostas de múltipla escolha.
+     * @return A média percentual de acertos (0.0 a 100.0), ou -1.0 se não houver respostas válidas.
      */
     public double calculateMediaAcertosMC(List<String> alunosIds) {
+        return calculateMediaAcertosMCByDateRange(alunosIds, null, null);
+    }
+
+
+    /**
+     * NOVO MÉTODO COM FILTRO DE DATA: Calcula a média percentual de acertos em questões
+     * de múltipla escolha para um grupo de alunos dentro de um intervalo de datas.
+     * @param alunosIds Lista de IDs dos alunos no escopo.
+     * @param dataInicio Data inicial (inclusiva, baseada na data_resposta). Pode ser null.
+     * @param dataFim Data final (inclusiva, baseada na data_resposta). Pode ser null.
+     * @return A média percentual de acertos (0.0 a 100.0), ou -1.0 se não houver respostas válidas no período.
+     */
+    public double calculateMediaAcertosMCByDateRange(List<String> alunosIds, LocalDate dataInicio, LocalDate dataFim) {
         if (alunosIds == null || alunosIds.isEmpty()) {
-            return -1.0; // Retorna -1 se não houver alunos no escopo
+            return -1.0;
         }
 
-        // Cria a string de placeholders (?, ?, ?) para a cláusula IN
         String placeholders = String.join(",", java.util.Collections.nCopies(alunosIds.size(), "?"));
+        StringBuilder sql = new StringBuilder(
+                "SELECT " +
+                        "  COUNT(ar.id) as total_mc_respostas, " +
+                        "  SUM(CASE WHEN a.correta = 1 THEN 1 ELSE 0 END) as total_acertos_mc " +
+                        "FROM aluno_respostas ar " +
+                        "JOIN questoes q ON ar.questao_id = q.id " +
+                        "JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " + // INNER JOIN aqui garante que só pegamos respostas com alternativa selecionada
+                        "WHERE ar.aluno_id IN (" + placeholders + ") AND q.tipo = 'MULTIPLA_ESCOLHA'"
+        );
+        List<Object> params = new ArrayList<>(alunosIds);
 
-        // Query para contar acertos e total de respostas de múltipla escolha
-        String sql = "SELECT " +
-                "  COUNT(ar.id) as total_mc_respostas, " +
-                "  SUM(CASE WHEN a.correta = 1 THEN 1 ELSE 0 END) as total_acertos_mc " +
-                "FROM aluno_respostas ar " +
-                "JOIN questoes q ON ar.questao_id = q.id " +
-                "JOIN alternativas a ON ar.alternativa_selecionada_id = a.id " + // Garante que só pegamos respostas de múltipla escolha com alternativa selecionada
-                "WHERE ar.aluno_id IN (" + placeholders + ") AND q.tipo = 'MULTIPLA_ESCOLHA'"; // Filtra por tipo de questão
+        // Adiciona filtros de data se presentes
+        if (dataInicio != null) {
+            sql.append(" AND date(ar.data_resposta) >= date(?)");
+            params.add(dataInicio.toString());
+        }
+        if (dataFim != null) {
+            sql.append(" AND date(ar.data_resposta) <= date(?)");
+            params.add(dataFim.toString());
+        }
 
         int totalRespostasMC = 0;
         int totalAcertosMC = 0;
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            // Seta os IDs dos alunos como parâmetros
-            for (int i = 0; i < alunosIds.size(); i++) {
-                stmt.setString(i + 1, alunosIds.get(i));
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
             }
 
             ResultSet rs = stmt.executeQuery();
@@ -367,16 +524,16 @@ public class AlunoRespostaDAO {
                 totalAcertosMC = rs.getInt("total_acertos_mc");
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao calcular média de acertos de múltipla escolha.");
+            System.err.println("Erro ao calcular média de acertos MC por data.");
             e.printStackTrace();
-            return -1.0; // Retorna -1 em caso de erro
+            return -1.0;
         }
 
-        // Calcula a porcentagem
         if (totalRespostasMC > 0) {
             return ((double) totalAcertosMC / totalRespostasMC) * 100.0;
         } else {
-            return -1.0; // Retorna -1 se não houver respostas de múltipla escolha para calcular
+            return -1.0; // Sem respostas MC válidas no período
         }
     }
+
 }
