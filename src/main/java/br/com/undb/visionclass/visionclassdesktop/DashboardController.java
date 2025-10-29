@@ -37,7 +37,7 @@ public class DashboardController {
     @FXML
     private Button gerirTurmasButton;
     @FXML
-    private Button gerirDisciplinasButton; // Botão adicionado
+    private Button gerirDisciplinasButton;
     @FXML
     private Button relatoriosButton;
     @FXML
@@ -84,9 +84,17 @@ public class DashboardController {
 
         if (role == UserRole.ADMIN) {
             setNodesVisible(adminButtons, true);
+            relatoriosButton.setVisible(true);
+            relatoriosButton.setManaged(true);
+            gerirTurmasButton.setVisible(true);
+            gerirTurmasButton.setManaged(true);
         } else if (role == UserRole.PROFESSOR) {
             setNodesVisible(professorButtons, true);
             gerirTurmasButton.setText("Minhas Turmas");
+            relatoriosButton.setVisible(true);
+            relatoriosButton.setManaged(true);
+            gerirTurmasButton.setVisible(true);
+            gerirTurmasButton.setManaged(true);
         }
     }
 
@@ -118,9 +126,17 @@ public class DashboardController {
             } else {
                 image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
             }
+            if (image == null || image.isError()) {
+                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+            }
             userAvatar.setImage(image);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do avatar no dashboard.");
+            System.err.println("Erro ao carregar a imagem do avatar no dashboard. Usando imagem padrão.");
+            try {
+                userAvatar.setImage(new Image(getClass().getResourceAsStream("images/avatar.jpg")));
+            } catch (Exception ex) {
+                System.err.println("Falha ao carregar até mesmo a imagem padrão.");
+            }
             e.printStackTrace();
         }
     }
@@ -166,7 +182,7 @@ public class DashboardController {
     }
 
     @FXML
-    private void onRelatoriosClick(ActionEvent event) {
+    public void onRelatoriosClick(ActionEvent event) {
         loadCenterView("relatorios-view.fxml");
         setActiveButton(relatoriosButton);
     }
@@ -185,7 +201,7 @@ public class DashboardController {
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        // loadCenterView("simulados-view.fxml");
+        loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
     }
 

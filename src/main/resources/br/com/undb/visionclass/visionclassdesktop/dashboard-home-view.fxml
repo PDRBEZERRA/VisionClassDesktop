@@ -51,7 +51,7 @@
                             <children>
                                 <Button mnemonicParsing="false" onAction="#onCadastrarUsuarioClick" styleClass="quick-action-button" text="Cadastrar Utilizador" />
                                 <Button mnemonicParsing="false" onAction="#onCriarTurmaClick" styleClass="quick-action-button" text="Criar Turma" />
-                                <Button mnemonicParsing="false" styleClass="quick-action-button" text="Ver Relatórios" />
+                                <Button fx:id="verRelatoriosButton" mnemonicParsing="false" onAction="#onVerRelatoriosClick" styleClass="quick-action-button" text="Ver Relatórios" />
                             </children>
                         </HBox>
                     </children>

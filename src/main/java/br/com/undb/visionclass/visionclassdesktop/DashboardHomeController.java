@@ -3,6 +3,7 @@ package br.com.undb.visionclass.visionclassdesktop;
 import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -30,7 +31,7 @@ public class DashboardHomeController {
         totalAlunosLabel.setText(String.valueOf(numAlunos));
         totalProfessoresLabel.setText(String.valueOf(numProfessores));
         totalTurmasLabel.setText(String.valueOf(numTurmas));
-        totalSimuladosLabel.setText("0"); // Placeholder
+        totalSimuladosLabel.setText("0");
     }
 
     public void setMainController(DashboardController mainController) {
@@ -40,16 +41,27 @@ public class DashboardHomeController {
     @FXML
     private void onCadastrarUsuarioClick() {
         if (mainController != null) {
-            // --- CORREÇÃO AQUI ---
             mainController.onGerirUsuariosClick(null);
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardHomeController.");
         }
     }
 
     @FXML
     private void onCriarTurmaClick() {
         if (mainController != null) {
-            // --- CORREÇÃO AQUI ---
             mainController.onGerirTurmasClick(null);
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardHomeController.");
+        }
+    }
+
+    @FXML
+    private void onVerRelatoriosClick(ActionEvent event) {
+        if (mainController != null) {
+            mainController.onRelatoriosClick(event);
+        } else {
+            System.err.println("Erro: mainController não foi injetado em DashboardHomeController.");
         }
     }
 }
