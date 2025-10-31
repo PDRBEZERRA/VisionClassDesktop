@@ -12,7 +12,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox; // Importa VBox, mas a variável será comentada
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
@@ -61,14 +60,6 @@ public class RelatoriosController {
     @FXML
     private Label avaliacoesCountStatusLabel;
 
-    // @FXML
-    // private VBox evolucaoGraficoContainer; // <-- REMOVIDO (Comentado)
-
-    // @FXML
-    // private Label graficoTituloLabel; // <-- REMOVIDO (Comentado)
-
-    // @FXML
-    // private Label graficoPlaceholderLabel; // <-- REMOVIDO (Comentado)
 
 
     private TurmaDAO turmaDAO = new TurmaDAO();
@@ -161,43 +152,19 @@ public class RelatoriosController {
             resetStatsComportamental("0.0/5.0", "N/A");
             resetStatsSimulados("0.0/10", "N/A");
             resetStatsConsolidado("N/A", "N/A");
-            // updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado."); // <-- REMOVIDO
             return;
         }
 
         if (activeTab.equals(COMPORTAMENTAL)) {
             loadComportamentalData(alunosIds);
-            // updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade."); // <-- REMOVIDO
         } else if (activeTab.equals(SIMULADOS)) {
             loadSimuladosData(alunosIds);
-            // updateChartPlaceholder("Desempenho em Simulados", "Gráfico de acertos por disciplina ou nível de dificuldade."); // <-- REMOVIDO
         } else if (activeTab.equals(CONSOLIDADO)) {
             loadConsolidadoData(alunosIds);
-            // updateChartPlaceholder("Análise Consolidada", "Gráfico de correlação entre desempenho acadêmico e comportamental."); // <-- REMOVIDO
         }
     }
 
 
-    /*
-    // MÉTODO INTEIRO REMOVIDO (Comentado)
-    private void updateChartPlaceholder(String title, String placeholderText) {
-        if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof Label) {
-            ((Label) evolucaoGraficoContainer.getChildren().get(0)).setText(title);
-        }
-
-        if (evolucaoGraficoContainer.getChildren().size() > 1 && evolucaoGraficoContainer.getChildren().get(1) instanceof VBox) {
-            VBox placeholderVBox = (VBox) evolucaoGraficoContainer.getChildren().get(1);
-            if (!placeholderVBox.getChildren().isEmpty() && placeholderVBox.getChildren().get(0) instanceof Label) {
-                ((Label) placeholderVBox.getChildren().get(0)).setText(placeholderText);
-            }
-        } else if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof VBox) {
-            VBox placeholderVBox = (VBox) evolucaoGraficoContainer.getChildren().get(0);
-            if (!placeholderVBox.getChildren().isEmpty() && placeholderVBox.getChildren().get(0) instanceof Label) {
-                ((Label) placeholderVBox.getChildren().get(0)).setText(placeholderText);
-            }
-        }
-    }
-    */
 
     private void updateTabStyles() {
         final String INACTIVE_STYLE = "-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-weight: normal;";
