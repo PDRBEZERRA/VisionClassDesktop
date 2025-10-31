@@ -12,7 +12,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.VBox; // Importa VBox, mas a variável será comentada
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
@@ -61,8 +61,15 @@ public class RelatoriosController {
     @FXML
     private Label avaliacoesCountStatusLabel;
 
-    @FXML
-    private VBox evolucaoGraficoContainer;
+    // @FXML
+    // private VBox evolucaoGraficoContainer; // <-- REMOVIDO (Comentado)
+
+    // @FXML
+    // private Label graficoTituloLabel; // <-- REMOVIDO (Comentado)
+
+    // @FXML
+    // private Label graficoPlaceholderLabel; // <-- REMOVIDO (Comentado)
+
 
     private TurmaDAO turmaDAO = new TurmaDAO();
     private UserDAO userDAO = new UserDAO();
@@ -154,24 +161,25 @@ public class RelatoriosController {
             resetStatsComportamental("0.0/5.0", "N/A");
             resetStatsSimulados("0.0/10", "N/A");
             resetStatsConsolidado("N/A", "N/A");
-            updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado.");
+            // updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado."); // <-- REMOVIDO
             return;
         }
 
         if (activeTab.equals(COMPORTAMENTAL)) {
             loadComportamentalData(alunosIds);
-            updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade.");
+            // updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade."); // <-- REMOVIDO
         } else if (activeTab.equals(SIMULADOS)) {
             loadSimuladosData(alunosIds);
-            updateChartPlaceholder("Desempenho em Simulados", "Gráfico de acertos por disciplina ou nível de dificuldade.");
+            // updateChartPlaceholder("Desempenho em Simulados", "Gráfico de acertos por disciplina ou nível de dificuldade."); // <-- REMOVIDO
         } else if (activeTab.equals(CONSOLIDADO)) {
             loadConsolidadoData(alunosIds);
-            updateChartPlaceholder("Análise Consolidada", "Gráfico de correlação entre desempenho acadêmico e comportamental.");
+            // updateChartPlaceholder("Análise Consolidada", "Gráfico de correlação entre desempenho acadêmico e comportamental."); // <-- REMOVIDO
         }
     }
 
 
-
+    /*
+    // MÉTODO INTEIRO REMOVIDO (Comentado)
     private void updateChartPlaceholder(String title, String placeholderText) {
         if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof Label) {
             ((Label) evolucaoGraficoContainer.getChildren().get(0)).setText(title);
@@ -189,6 +197,7 @@ public class RelatoriosController {
             }
         }
     }
+    */
 
     private void updateTabStyles() {
         final String INACTIVE_STYLE = "-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-weight: normal;";
@@ -238,13 +247,13 @@ public class RelatoriosController {
         DecimalFormat df = new DecimalFormat("0.0");
 
         mediaGeralLabel.setText(String.format("%s/5.0", df.format(mediaGeral)));
-        mediaGeralStatusLabel.setText("Visão Institucional");
+        mediaGeralStatusLabel.setText("Média Geral");
         assiduidadeLabel.setText(String.format("%s/5.0", df.format(mediaAssiduidade)));
-        assiduidadeStatusLabel.setText("Média da Escola");
+        assiduidadeStatusLabel.setText("Média Geral Assiduidade");
         participacaoLabel.setText(String.format("%s/5.0", df.format(mediaParticipacao)));
-        participacaoStatusLabel.setText("Foco Estratégico");
+        participacaoStatusLabel.setText("Média Geral Participação");
         avaliacoesCountLabel.setText(String.valueOf(totalAvaliacoes));
-        avaliacoesCountStatusLabel.setText("Total no Escopo");
+        avaliacoesCountStatusLabel.setText("Avaliações Encontradas");
     }
 
     private void loadSimuladosData(List<String> alunosIds) {

@@ -15,7 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.DatePicker;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.VBox; // Importa VBox, mas a variável será comentada
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
@@ -66,8 +66,8 @@ public class RelatoriosProfessorController {
     @FXML
     private Label avaliacoesCountStatusLabel;
 
-    @FXML
-    private VBox evolucaoGraficoContainer;
+    // @FXML
+    // private VBox evolucaoGraficoContainer; // <-- REMOVIDO (Comentado)
 
     private TurmaDAO turmaDAO = new TurmaDAO();
     private AvaliacaoComportamentalDAO avaliacaoDAO = new AvaliacaoComportamentalDAO();
@@ -150,23 +150,24 @@ public class RelatoriosProfessorController {
             resetStatsComportamental("0.0/5.0", "N/A");
             resetStatsSimulados("0.0/10", "N/A");
             resetStatsConsolidado("N/A", "N/A");
-            updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado.");
+            // updateChartPlaceholder("Gráfico de Evolução", "Nenhum aluno encontrado no escopo selecionado."); // <-- REMOVIDO
             return;
         }
 
         if (activeTab.equals(COMPORTAMENTAL)) {
             loadComportamentalData(alunosIds);
-            updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade.");
+            // updateChartPlaceholder("Evolução dos Critérios Comportamentais", "Gráfico de tendência de Assiduidade, Participação, Responsabilidade e Sociabilidade."); // <-- REMOVIDO
         } else if (activeTab.equals(SIMULADOS)) {
             loadSimuladosData(alunosIds);
-            updateChartPlaceholder("Desempenho em Simulados", "Gráfico de acertos por disciplina ou nível de dificuldade.");
+            // updateChartPlaceholder("Desempenho em Simulados", "Gráfico de acertos por disciplina ou nível de dificuldade."); // <-- REMOVIDO
         } else if (activeTab.equals(CONSOLIDADO)) {
             loadConsolidadoData(alunosIds);
-            updateChartPlaceholder("Análise Consolidada", "Gráfico de correlação entre desempenho acadêmico e comportamental.");
+            // updateChartPlaceholder("Análise Consolidada", "Gráfico de correlação entre desempenho acadêmico e comportamental."); // <-- REMOVIDO
         }
     }
 
-
+    /*
+    // MÉTODO INTEIRO REMOVIDO (Comentado)
     private void updateChartPlaceholder(String title, String placeholderText) {
         if (!evolucaoGraficoContainer.getChildren().isEmpty() && evolucaoGraficoContainer.getChildren().get(0) instanceof Label) {
             ((Label) evolucaoGraficoContainer.getChildren().get(0)).setText(title);
@@ -184,6 +185,7 @@ public class RelatoriosProfessorController {
             }
         }
     }
+    */
 
 
     private void updateTabStyles() {
@@ -233,11 +235,11 @@ public class RelatoriosProfessorController {
         DecimalFormat df = new DecimalFormat("0.0");
 
         mediaGeralLabel.setText(String.format("%s/5.0", df.format(mediaGeral)));
-        mediaGeralStatusLabel.setText("Visão da Turma/Escopo");
+        mediaGeralStatusLabel.setText("Média Geral");
         assiduidadeLabel.setText(String.format("%s/5.0", df.format(mediaAssiduidade)));
-        assiduidadeStatusLabel.setText("Foco de Avaliação");
+        assiduidadeStatusLabel.setText("Média Geral Assiduidade");
         participacaoLabel.setText(String.format("%s/5.0", df.format(mediaParticipacao)));
-        participacaoStatusLabel.setText("Em Análise");
+        participacaoStatusLabel.setText("Média Geral Participação");
         avaliacoesCountLabel.setText(String.valueOf(totalAvaliacoes));
         avaliacoesCountStatusLabel.setText("Avaliações Encontradas");
     }

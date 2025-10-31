@@ -69,33 +69,27 @@
 
                 <FlowPane alignment="CENTER" hgap="20.0" vgap="20.0">
                     <VBox prefWidth="200.0" styleClass="stats-card">
-                        <Label style="-fx-font-weight: bold;" text="Média Geral" />
+                        <Label style="-fx-font-weight: bold;" text="" />
                         <Label fx:id="mediaGeralLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #3b82f6;" text="4.2/5.0" />
                         <Label fx:id="mediaGeralStatusLabel" styleClass="text-muted" text="Visão da Turma/Escopo" wrapText="true" />
                     </VBox>
                     <VBox prefWidth="200.0" styleClass="stats-card">
-                        <Label style="-fx-font-weight: bold;" text="Assiduidade" />
+                        <Label style="-fx-font-weight: bold;" text="" />
                         <Label fx:id="assiduidadeLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.5/5.0" />
                         <Label fx:id="assiduidadeStatusLabel" styleClass="text-muted" text="Foco de Avaliação" wrapText="true" />
                     </VBox>
                     <VBox prefWidth="200.0" styleClass="stats-card">
-                        <Label style="-fx-font-weight: bold;" text="Participação" />
+                        <Label style="-fx-font-weight: bold;" text="" />
                         <Label fx:id="participacaoLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="4.0/5.0" />
                         <Label fx:id="participacaoStatusLabel" styleClass="text-muted" text="Em Análise" wrapText="true" />
                     </VBox>
                     <VBox prefWidth="200.0" styleClass="stats-card">
-                        <Label style="-fx-font-weight: bold;" text="Avaliações" />
+                        <Label style="-fx-font-weight: bold;" text="" />
                         <Label fx:id="avaliacoesCountLabel" style="-fx-font-size: 24px; -fx-font-weight: bold;" text="156" />
                         <Label fx:id="avaliacoesCountStatusLabel" styleClass="text-muted" text="Avaliações Encontradas" wrapText="true" />
                     </VBox>
                 </FlowPane>
 
-                <VBox styleClass="card" VBox.vgrow="ALWAYS">
-                    <Label styleClass="title-medium" text="Evolução dos Critérios Comportamentais" />
-                    <VBox fx:id="evolucaoGraficoContainer" alignment="CENTER" VBox.vgrow="ALWAYS">
-                        <Label styleClass="text-muted" text="Gráfico de evolução temporal será exibido aqui" />
-                    </VBox>
-                </VBox>
             </children>
         </VBox>
     </children>
