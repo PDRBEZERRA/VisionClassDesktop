@@ -20,6 +20,7 @@
 
             <children>
 
+
                 <VBox alignment="CENTER" spacing="5.0">
                     <children>
                         <ImageView fx:id="userAvatar" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
@@ -42,10 +43,12 @@
                 </VBox>
 
                 <Button fx:id="dashboardButton" onAction="#onDashboardButtonClick" styleClass="sidebar-button" text="Dashboard" />
+                <Button fx:id="minhasTurmasButton" onAction="#onMinhasTurmasClick" styleClass="sidebar-button" text="Minhas Turmas" />
                 <Button fx:id="simuladosButton" onAction="#onSimuladosClick" styleClass="sidebar-button" text="Simulados" />
                 <Button fx:id="trocarSenhaButton" onAction="#handleTrocarSenha" prefHeight="40.0" prefWidth="150.0" styleClass="sidebar-button" text="Trocar Senha" />
 
                 <VBox VBox.vgrow="ALWAYS" />
+
                 <Button fx:id="sairButton" onAction="#onSairButtonClick" styleClass="sidebar-button" text="Sair" />
 
             </children>

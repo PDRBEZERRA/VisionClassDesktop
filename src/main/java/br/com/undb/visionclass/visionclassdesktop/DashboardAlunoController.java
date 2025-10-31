@@ -30,14 +30,15 @@ public class DashboardAlunoController {
     @FXML
     private Button dashboardButton;
     @FXML
+    private Button minhasTurmasButton; // NOVO BOTÃO
+    @FXML
     private Button simuladosButton;
     @FXML
-    private Button sairButton; // Adicionado do FXML
-
-    private Button activeButton;
-
+    private Button sairButton;
     @FXML
     private Button trocarSenhaButton;
+
+    private Button activeButton;
 
     @FXML
     public void initialize() {
@@ -87,6 +88,12 @@ public class DashboardAlunoController {
     private void onDashboardButtonClick(ActionEvent event) {
         loadCenterView("dashboard-aluno-home-view.fxml");
         setActiveButton(dashboardButton);
+    }
+
+    @FXML
+    private void onMinhasTurmasClick(ActionEvent event) {
+        loadCenterView("dashboard-aluno-turmas-view.fxml");
+        setActiveButton(minhasTurmasButton);
     }
 
     @FXML

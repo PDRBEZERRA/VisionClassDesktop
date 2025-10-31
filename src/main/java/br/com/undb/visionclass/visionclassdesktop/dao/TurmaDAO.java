@@ -211,4 +211,31 @@ public class TurmaDAO {
             e.printStackTrace();
         }
     }
+
+    public List<Turma> findAllByAlunoId(String alunoId) {
+        String sql = "SELECT t.* FROM turmas t " +
+                "INNER JOIN turma_alunos ta ON t.id = ta.turma_id " +
+                "WHERE ta.aluno_id = ? ORDER BY t.nome";
+        List<Turma> turmas = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, alunoId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Turma turma = new Turma();
+                turma.setId(rs.getString("id"));
+                turma.setNome(rs.getString("nome"));
+                turma.setAno(rs.getString("ano"));
+                turma.setPeriodo(rs.getString("periodo"));
+                turma.setProfessorId(rs.getString("professorId"));
+                turma.setDesempenho(rs.getDouble("desempenho"));
+                turmas.add(turma);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar TODAS as turmas por alunoId.");
+            e.printStackTrace();
+        }
+        return turmas;
+    }
 }

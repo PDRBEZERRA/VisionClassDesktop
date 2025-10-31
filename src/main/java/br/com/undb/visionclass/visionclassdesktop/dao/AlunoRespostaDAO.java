@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class AlunoRespostaDAO {
 
@@ -42,7 +40,6 @@ public class AlunoRespostaDAO {
                 stmt.setNull(5, Types.VARCHAR);
             }
 
-            // Formata LocalDateTime para String no formato ISO (compatível com SQLite)
             stmt.setString(6, dataResposta.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
 
@@ -462,6 +459,35 @@ public class AlunoRespostaDAO {
         } else {
             return -1.0;
         }
+    }
+
+    public double getMediaGeralSimuladosPorLista(String alunoId, List<Integer> simuladosIds) {
+        if (simuladosIds == null || simuladosIds.isEmpty()) {
+            return -1.0;
+        }
+
+        QuestaoDAO questaoDAO = new QuestaoDAO();
+        double somaNotasFinaisAluno = 0;
+        int countSimuladosValidosAluno = 0;
+
+        for (Integer simuladoId : simuladosIds) {
+            double notaAbsoluta = getNotaByAlunoAndSimulado(alunoId, simuladoId);
+
+            if (notaAbsoluta >= 0) {
+                double maxPontos = questaoDAO.getTotalPontuacaoBySimuladoId(simuladoId);
+                if (maxPontos > 0) {
+                    double notaFinalNormalizada = (notaAbsoluta / maxPontos) * 10.0;
+                    somaNotasFinaisAluno += notaFinalNormalizada;
+                    countSimuladosValidosAluno++;
+                }
+            }
+        }
+
+        if (countSimuladosValidosAluno > 0) {
+            return somaNotasFinaisAluno / countSimuladosValidosAluno;
+        }
+
+        return -1.0;
     }
 
 }

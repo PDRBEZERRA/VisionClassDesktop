@@ -1,13 +1,14 @@
 package br.com.undb.visionclass.visionclassdesktop;
 
 import br.com.undb.visionclass.visionclassdesktop.dao.*;
+import br.com.undb.visionclass.visionclassdesktop.model.Simulado;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
-import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DashboardAlunoHomeController {
@@ -28,10 +29,7 @@ public class DashboardAlunoHomeController {
     private Label simuladosDisponiveisLabel;
     @FXML
     private Label simuladosRealizadosLabel;
-    @FXML
-    private Label mediaGeralLabel;
-    @FXML
-    private Label posicaoTurmaLabel;
+
 
     private AvaliacaoComportamentalDAO avaliacaoDAO = new AvaliacaoComportamentalDAO();
     private TurmaDAO turmaDAO = new TurmaDAO();
@@ -57,44 +55,32 @@ public class DashboardAlunoHomeController {
         participacaoMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "participacao"));
         responsabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "responsabilidade"));
         sociabilidadeMediaLabel.setText(avaliacaoDAO.getMediaPorDimensao(alunoLogado.getId(), "sociabilidade"));
+
         int simuladosFeitos = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId()).size();
         simuladosRealizadosLabel.setText(String.valueOf(simuladosFeitos));
 
-        double minhaMedia = alunoRespostaDAO.getMediaGeralSimulados(alunoLogado.getId());
-        if (minhaMedia >= 0) {
-            DecimalFormat df = new DecimalFormat("0.0");
-            mediaGeralLabel.setText(df.format(minhaMedia));
-        } else {
-            mediaGeralLabel.setText("-");
-        }
+        List<Turma> turmasDoAluno = turmaDAO.findAllByAlunoId(alunoLogado.getId());
 
-        Turma turmaDoAluno = turmaDAO.findByAlunoId(alunoLogado.getId());
-        if (turmaDoAluno != null) {
-            int totalSimuladosNaTurma = simuladoDAO.countByTurmaId(turmaDoAluno.getId());
-            int disponiveis = Math.max(0, totalSimuladosNaTurma - simuladosFeitos);
-            simuladosDisponiveisLabel.setText(String.valueOf(disponiveis));
+        if (turmasDoAluno != null && !turmasDoAluno.isEmpty()) {
 
-            List<User> colegasDeTurma = userDAO.findAlunosByTurmaId(turmaDoAluno.getId());
-            int posicao = 1;
-            int totalAlunosNaTurma = colegasDeTurma.size();
+            List<Integer> meusSimuladosFeitos = alunoRespostaDAO.findSimuladosRealizadosIdsByAluno(alunoLogado.getId());
 
-            if (minhaMedia >= 0) {
-                for (User colega : colegasDeTurma) {
-                    if (!colega.getId().equals(alunoLogado.getId())) {
-                        double mediaColega = alunoRespostaDAO.getMediaGeralSimulados(colega.getId());
-                        if (mediaColega > minhaMedia) {
-                            posicao++;
-                        }
-                    }
-                }
-                posicaoTurmaLabel.setText(posicao + "º de " + totalAlunosNaTurma);
-            } else {
-                posicaoTurmaLabel.setText("-");
+            List<Integer> todosSimuladosDasMinhasTurmasIds = new ArrayList<>();
+
+            for (Turma turma : turmasDoAluno) {
+                simuladoDAO.findSimuladosByTurmaId(turma.getId()).stream()
+                        .map(Simulado::getId)
+                        .forEach(todosSimuladosDasMinhasTurmasIds::add);
             }
+
+            long totalSimuladosUnicos = todosSimuladosDasMinhasTurmasIds.stream().distinct().count();
+
+            long disponiveis = totalSimuladosUnicos - simuladosFeitos;
+            simuladosDisponiveisLabel.setText(String.valueOf(Math.max(0, disponiveis)));
+
 
         } else {
             simuladosDisponiveisLabel.setText("0");
-            posicaoTurmaLabel.setText("N/A");
         }
     }
 }

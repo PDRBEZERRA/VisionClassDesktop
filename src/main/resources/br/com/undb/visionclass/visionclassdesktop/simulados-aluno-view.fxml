@@ -15,24 +15,30 @@
             <children>
                 <VBox>
                     <children>
+
                         <Label styleClass="title-large" text="Meus Simulados">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
+
                         </Label>
-                        <Label styleClass="text-muted" text="Lista de simulados atribuídos à sua turma." />
+                        <Label styleClass="text-muted" text="Lista de simulados atribuídos à sua turma."
+                        />
                     </children>
                 </VBox>
                 <TableView fx:id="simuladosTableView" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="tituloColumn" prefWidth="300.0" text="Título" />
+                        <TableColumn fx:id="tituloColumn" prefWidth="250.0" text="Título" />
+                        <TableColumn fx:id="turmaColumn" prefWidth="150.0" text="Turma(s)" />
                         <TableColumn fx:id="professorColumn" prefWidth="150.0" text="Professor" />
-                        <TableColumn fx:id="questoesColumn" prefWidth="100.0" text="Nº Questões" />
-                        <TableColumn fx:id="statusColumn" prefWidth="120.0" text="Status" />
-                        <TableColumn fx:id="acoesColumn" prefWidth="150.0" text="Ações" />
+                        <TableColumn fx:id="questoesColumn" prefWidth="80.0" text="Nº Questões" />
+                        <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
+
+                        <TableColumn fx:id="acoesColumn" prefWidth="120.0" text="Ações" />
                     </columns>
                     <columnResizePolicy>
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+
                     </columnResizePolicy>
                 </TableView>
             </children>

@@ -28,6 +28,9 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,17 +38,19 @@ import java.util.stream.Collectors;
 public class SimuladosAlunoController {
 
     @FXML
-    private TableView<Simulado> simuladosTableView;
+    private TableView<SimuladoTurmaWrapper> simuladosTableView;
     @FXML
-    private TableColumn<Simulado, String> tituloColumn;
+    private TableColumn<SimuladoTurmaWrapper, String> tituloColumn;
     @FXML
-    private TableColumn<Simulado, String> professorColumn;
+    private TableColumn<SimuladoTurmaWrapper, String> turmaColumn;
     @FXML
-    private TableColumn<Simulado, Number> questoesColumn;
+    private TableColumn<SimuladoTurmaWrapper, String> professorColumn;
     @FXML
-    private TableColumn<Simulado, String> statusColumn;
+    private TableColumn<SimuladoTurmaWrapper, Number> questoesColumn;
     @FXML
-    private TableColumn<Simulado, Void> acoesColumn;
+    private TableColumn<SimuladoTurmaWrapper, String> statusColumn;
+    @FXML
+    private TableColumn<SimuladoTurmaWrapper, Void> acoesColumn;
 
     private SimuladoDAO simuladoDAO = new SimuladoDAO();
     private TurmaDAO turmaDAO = new TurmaDAO();
@@ -53,28 +58,43 @@ public class SimuladosAlunoController {
     private AlunoRespostaDAO alunoRespostaDAO = new AlunoRespostaDAO();
 
     private User alunoLogado;
-    private Turma turmaDoAluno;
+    private List<Turma> turmasDoAluno;
     private Map<String, String> professoresNomesCache;
 
-    private ObservableList<Simulado> simuladosList = FXCollections.observableArrayList();
+    private ObservableList<SimuladoTurmaWrapper> simuladosList = FXCollections.observableArrayList();
+
+    public static class SimuladoTurmaWrapper {
+        private Simulado simulado;
+        private String nomesDasTurmas;
+
+        public SimuladoTurmaWrapper(Simulado simulado, String nomesDasTurmas) {
+            this.simulado = simulado;
+            this.nomesDasTurmas = nomesDasTurmas;
+        }
+
+        public Simulado getSimulado() { return simulado; }
+        public String getNomesDasTurmas() { return nomesDasTurmas; }
+    }
+
 
     @FXML
     public void initialize() {
         this.alunoLogado = UserSession.getInstance().getLoggedInUser();
-        this.turmaDoAluno = turmaDAO.findByAlunoId(alunoLogado.getId());
+        this.turmasDoAluno = turmaDAO.findAllByAlunoId(alunoLogado.getId());
 
         setupTableColumns();
         loadSimulados();
     }
 
     private void setupTableColumns() {
-        tituloColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitulo()));
-        statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(getSimuladoStatus(cellData.getValue())));
+        tituloColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSimulado().getTitulo()));
+        turmaColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getNomesDasTurmas()));
+        statusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(getSimuladoStatus(cellData.getValue().getSimulado())));
 
-        questoesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(simuladoDAO.countQuestoesBySimuladoId(cellData.getValue().getId())));
+        questoesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(simuladoDAO.countQuestoesBySimuladoId(cellData.getValue().getSimulado().getId())));
 
         professorColumn.setCellValueFactory(cellData -> {
-            String professorId = cellData.getValue().getProfessorCriadorId();
+            String professorId = cellData.getValue().getSimulado().getProfessorCriadorId();
             String nome = professoresNomesCache.getOrDefault(professorId, "N/A");
             return new SimpleStringProperty(nome);
         });
@@ -96,15 +116,15 @@ public class SimuladosAlunoController {
     }
 
     private void setupAcoesColumn() {
-        Callback<TableColumn<Simulado, Void>, TableCell<Simulado, Void>> cellFactory = param -> new TableCell<>() {
+        Callback<TableColumn<SimuladoTurmaWrapper, Void>, TableCell<SimuladoTurmaWrapper, Void>> cellFactory = param -> new TableCell<>() {
             private final Button btnAcao = new Button();
 
             {
                 btnAcao.getStyleClass().add("primary-button");
 
                 btnAcao.setOnAction(event -> {
-                    Simulado simulado = getTableView().getItems().get(getIndex());
-                    handleAcaoSimulado(simulado);
+                    SimuladoTurmaWrapper wrapper = getTableView().getItems().get(getIndex());
+                    handleAcaoSimulado(wrapper.getSimulado());
                 });
             }
 
@@ -112,10 +132,10 @@ public class SimuladosAlunoController {
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
 
-                if (empty || getTableRow().getItem() == null) {
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setGraphic(null);
                 } else {
-                    Simulado simulado = getTableRow().getItem();
+                    Simulado simulado = getTableRow().getItem().getSimulado();
                     setGraphic(btnAcao);
                     setAlignment(Pos.CENTER);
 
@@ -165,14 +185,25 @@ public class SimuladosAlunoController {
     private void loadSimulados() {
         simuladosList.clear();
 
-        if (turmaDoAluno == null) {
+        if (turmasDoAluno == null || turmasDoAluno.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Sem Turma", "O aluno não está associado a nenhuma turma. Não há simulados para exibir.");
             return;
         }
 
-        List<Simulado> simulados = simuladoDAO.findSimuladosByTurmaId(turmaDoAluno.getId());
 
-        professoresNomesCache = simulados.stream()
+        Map<Integer, Simulado> simuladoMap = new HashMap<>();
+        Map<Integer, List<Turma>> simuladoParaTurmasMap = new HashMap<>();
+
+        for (Turma turma : turmasDoAluno) {
+            List<Simulado> simuladosDaTurma = simuladoDAO.findSimuladosByTurmaId(turma.getId());
+            for (Simulado s : simuladosDaTurma) {
+                simuladoMap.putIfAbsent(s.getId(), s);
+                simuladoParaTurmasMap.putIfAbsent(s.getId(), new ArrayList<>());
+                simuladoParaTurmasMap.get(s.getId()).add(turma);
+            }
+        }
+
+        professoresNomesCache = simuladoMap.values().stream()
                 .map(Simulado::getProfessorCriadorId)
                 .distinct()
                 .collect(Collectors.toMap(
@@ -180,7 +211,23 @@ public class SimuladosAlunoController {
                         id -> userDAO.findById(id).getNome()
                 ));
 
-        simuladosList.setAll(simulados);
+        List<SimuladoTurmaWrapper> wrappers = new ArrayList<>();
+        for (Simulado simulado : simuladoMap.values()) {
+            List<Turma> turmasDesteSimulado = simuladoParaTurmasMap.get(simulado.getId());
+
+            String nomesDasTurmas;
+            if (turmasDesteSimulado.size() > 1) {
+                nomesDasTurmas = "Várias Turmas";
+            } else {
+                nomesDasTurmas = turmasDesteSimulado.get(0).getNome();
+            }
+
+            wrappers.add(new SimuladoTurmaWrapper(simulado, nomesDasTurmas));
+        }
+
+        wrappers.sort(Comparator.comparing((SimuladoTurmaWrapper w) -> w.getSimulado().getDataCriacao()).reversed());
+
+        simuladosList.setAll(wrappers);
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
