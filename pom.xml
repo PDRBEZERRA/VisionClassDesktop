@@ -98,8 +98,6 @@
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running -->
-                        <!-- Usage: mvn javafx:run -->
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
@@ -114,11 +112,10 @@
                 </executions>
             </plugin>
 
-            <!-- Plugin adicionado para criar o JAR executável (Fat JAR) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version> <!-- Você pode usar a versão mais recente -->
+                <version>3.5.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -128,7 +125,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass> <!-- Confirme se esta é a sua classe principal com o método main -->
+                                    <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
