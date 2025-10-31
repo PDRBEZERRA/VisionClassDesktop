@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -188,43 +187,34 @@ public class ExportarRelatorioController {
             int fontSizeHeader = 8;
             int fontSizeBody = 8;
 
-            // ### CORREÇÃO AQUI ###
-            // Definir larguras e posições das colunas
             String[] pdfHeaders = getPdfHeaders(headers);
             float[] colWidths = new float[pdfHeaders.length];
             float[] colPositions = new float[pdfHeaders.length];
 
-            // Definir larguras fixas para as primeiras colunas
             colWidths[0] = 70;  // ID
             colWidths[1] = 150; // Nome
             colWidths[2] = 80;  // Matrícula
 
-            float fixedWidth = colWidths[0] + colWidths[1] + colWidths[2]; // 300
-            float remainingWidth = tableWidth - fixedWidth; // ~761.8 - 300 = 461.8
+            float fixedWidth = colWidths[0] + colWidths[1] + colWidths[2];
+            float remainingWidth = tableWidth - fixedWidth;
             int remainingCols = pdfHeaders.length - 3;
-            float dataColWidth = remainingWidth / remainingCols; // 461.8 / 10 = 46.18
+            float dataColWidth = remainingWidth / remainingCols;
 
-            // Definir a largura das colunas de dados restantes
             for (int i = 3; i < pdfHeaders.length; i++) {
                 colWidths[i] = dataColWidth;
             }
 
-            // Calcular as posições X com base nas larguras
             colPositions[0] = margin;
             for (int i = 1; i < pdfHeaders.length; i++) {
                 colPositions[i] = colPositions[i-1] + colWidths[i-1];
             }
 
-            // Adicionar uma pequena margem/padding a cada coluna (exceto a primeira)
-            // para evitar que o texto cole
             float padding = 3;
             for (int i = 1; i < colPositions.length; i++) {
                 colPositions[i] += padding;
             }
-            // ### FIM DA CORREÇÃO DE POSICIONAMENTO ###
 
 
-            // --- Escrever Títulos ---
             writeText(contentStream, fontBold, fontSizeTitle, margin, yPosition, "Relatório - " + conteudoRelatorioComboBox.getValue());
             yPosition -= (lineSpacing * 1.5f);
 
@@ -239,15 +229,13 @@ public class ExportarRelatorioController {
 
             contentStream.setLineWidth(0.5f);
 
-            // --- Escrever Cabeçalho ---
-            writeRow(contentStream, colPositions, colWidths, yPosition, pdfHeaders, fontBold, fontSizeHeader); // Passar colWidths
+            writeRow(contentStream, colPositions, colWidths, yPosition, pdfHeaders, fontBold, fontSizeHeader);
             yPosition -= (lineSpacing * 0.5f);
             contentStream.moveTo(margin, yPosition);
             contentStream.lineTo(margin + tableWidth, yPosition);
             contentStream.stroke();
             yPosition -= lineSpacing;
 
-            // --- Escrever Dados ---
             for (Object[] row : data) {
                 if (yPosition < bottomMargin) {
                     contentStream.close();
@@ -257,7 +245,7 @@ public class ExportarRelatorioController {
                     contentStream = new PDPageContentStream(document, page);
                     yPosition = yStart;
 
-                    writeRow(contentStream, colPositions, colWidths, yPosition, pdfHeaders, fontBold, fontSizeHeader); // Passar colWidths
+                    writeRow(contentStream, colPositions, colWidths, yPosition, pdfHeaders, fontBold, fontSizeHeader);
                     yPosition -= (lineSpacing * 0.5f);
                     contentStream.moveTo(margin, yPosition);
                     contentStream.lineTo(margin + tableWidth, yPosition);
@@ -270,7 +258,7 @@ public class ExportarRelatorioController {
                     dataLine[i] = formatPdfField(row[i]);
                 }
 
-                writeRow(contentStream, colPositions, colWidths, yPosition, dataLine, fontPlain, fontSizeBody); // Passar colWidths
+                writeRow(contentStream, colPositions, colWidths, yPosition, dataLine, fontPlain, fontSizeBody);
                 yPosition -= lineSpacing;
             }
 
@@ -321,7 +309,7 @@ public class ExportarRelatorioController {
                     pdfHeaders[i] = "Score";
                     break;
                 default:
-                    pdfHeaders[i] = originalHeaders[i]; // ex: "Matrícula"
+                    pdfHeaders[i] = originalHeaders[i];
                     break;
             }
         }
@@ -329,10 +317,9 @@ public class ExportarRelatorioController {
     }
 
 
-    // ### MÉTODO writeRow CORRIGIDO (agora recebe colWidths) ###
     private void writeRow(PDPageContentStream stream, float[] colPositions, float[] colWidths, float y, String[] data, PDFont font, int fontSize) throws IOException {
         stream.setFont(font, fontSize);
-        float padding = 3; // Padding que adicionamos às posições
+        float padding = 3;
 
         for (int i = 0; i < data.length; i++) {
             stream.beginText();
@@ -340,12 +327,10 @@ public class ExportarRelatorioController {
 
             String text = data[i];
 
-            // Truncar texto se for maior que a largura da coluna (menos o padding)
             float textWidth = font.getStringWidth(text) / 1000 * fontSize;
             float availableWidth = colWidths[i] - padding;
 
             if (textWidth > availableWidth) {
-                // Lógica de truncamento simples
                 int charsToKeep = (int) (text.length() * (availableWidth / textWidth));
                 if (charsToKeep > 3) {
                     text = text.substring(0, charsToKeep - 3) + "...";
