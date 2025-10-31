@@ -15,6 +15,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,8 +78,12 @@ public class UsuarioFormController {
 
         if (file != null) {
             selectedPhotoFile = file;
-            Image image = new Image(file.toURI().toString());
-            avatarImageView.setImage(image);
+            try (FileInputStream fis = new FileInputStream(file)) {
+                Image image = new Image(fis);
+                avatarImageView.setImage(image);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -145,17 +150,27 @@ public class UsuarioFormController {
             Image image;
             if (photoFileName != null && !photoFileName.isEmpty()) {
                 File file = new File("user_photos/" + photoFileName);
-                if (file.exists()) {
+                if (file.exists() && !file.isDirectory()) {
                     image = new Image(file.toURI().toString());
                 } else {
-                    image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                    image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 }
             } else {
-                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
+
+            if (image == null || image.isError()) {
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
+            }
+
             avatarImageView.setImage(image);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro ao carregar a imagem do avatar: " + e.getMessage());
+            try {
+                avatarImageView.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
+            } catch (Exception ex) {
+                System.err.println("Falha total ao carregar qualquer imagem.");
+            }
         }
     }
 

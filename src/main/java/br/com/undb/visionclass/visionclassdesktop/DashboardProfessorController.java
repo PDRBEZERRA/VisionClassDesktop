@@ -45,7 +45,7 @@ public class DashboardProfessorController {
     public void initialize() {
         instance = this;
         refreshUserProfile();
-        onDashboardButtonClick(null); // Carrega a home view inicial
+        onDashboardButtonClick(null);
     }
 
     private void setActiveButton(Button button) {
@@ -69,7 +69,7 @@ public class DashboardProfessorController {
 
             DetalhesTurmaController detalhesController = loader.getController();
             detalhesController.setTurma(turma);
-            detalhesController.setDashboardController(this); // Passa a referência deste controller
+            detalhesController.setDashboardController(this);
 
             mainBorderPane.setCenter(view);
             setActiveButton(minhasTurmasButton);
@@ -91,30 +91,27 @@ public class DashboardProfessorController {
             Image image;
             if (photoFileName != null && !photoFileName.isEmpty()) {
                 File file = new File("user_photos/" + photoFileName);
-                if (file.exists()) {
+                if (file.exists() && !file.isDirectory()) {
                     image = new Image(file.toURI().toString());
                 } else {
-                    // Tenta carregar do classpath se não encontrar no filesystem
-                    image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                    image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 }
             } else {
-                // Tenta carregar do classpath como fallback padrão
-                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
-            // Garante que a imagem padrão seja carregada se tudo falhar
+
             if (image == null || image.isError()) {
-                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
+
             userAvatar.setImage(image);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do avatar no dashboard professor. Usando imagem padrão.");
+            System.err.println("Erro ao carregar a imagem do avatar no dashboard. Usando imagem padrão. " + e.getMessage());
             try {
-                userAvatar.setImage(new Image(getClass().getResourceAsStream("images/avatar.jpg")));
+                userAvatar.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
             } catch (Exception ex) {
                 System.err.println("Falha ao carregar até mesmo a imagem padrão.");
-                // O ImageView ficará vazio ou com um placeholder de erro do JavaFX
             }
-            e.printStackTrace();
         }
     }
 
@@ -131,19 +128,19 @@ public class DashboardProfessorController {
     }
 
     @FXML
-    public void onCarometroClick(ActionEvent event) { // Tornar público se já não for
+    public void onCarometroClick(ActionEvent event) {
         loadCenterView("carometro-view.fxml");
         setActiveButton(carometroButton);
     }
 
     @FXML
-    public void onBancoQuestoesClick(ActionEvent event) { // Tornar público se já não for
+    public void onBancoQuestoesClick(ActionEvent event) {
         loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
     }
 
     @FXML
-    public void onSimuladosClick(ActionEvent event) { // Tornar público se já não for
+    public void onSimuladosClick(ActionEvent event) {
         loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
     }
@@ -165,7 +162,6 @@ public class DashboardProfessorController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
             Parent view = loader.load();
 
-            // Adicionado: Verifica se o controller carregado é o HomeController e injeta a referência
             Object controller = loader.getController();
             if (controller instanceof DashboardProfessorHomeController) {
                 ((DashboardProfessorHomeController) controller).setMainController(this);

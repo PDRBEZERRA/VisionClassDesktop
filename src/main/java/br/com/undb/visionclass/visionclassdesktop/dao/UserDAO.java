@@ -301,6 +301,7 @@ public class UserDAO {
                 user.setNome(rs.getString("nome"));
                 user.setMatricula(rs.getString("matricula"));
                 user.setEmail(rs.getString("email"));
+                user.setFoto(rs.getString("foto"));
                 alunos.add(user);
             }
         } catch (SQLException e) {

@@ -118,26 +118,27 @@ public class DashboardController {
             Image image;
             if (photoFileName != null && !photoFileName.isEmpty()) {
                 File file = new File("user_photos/" + photoFileName);
-                if (file.exists()) {
+                if (file.exists() && !file.isDirectory()) {
                     image = new Image(file.toURI().toString());
                 } else {
-                    image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                    image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 }
             } else {
-                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
+
             if (image == null || image.isError()) {
-                image = new Image(getClass().getResourceAsStream("images/avatar.jpg"));
+                image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
+
             userAvatar.setImage(image);
         } catch (Exception e) {
-            System.err.println("Erro ao carregar a imagem do avatar no dashboard. Usando imagem padrão.");
+            System.err.println("Erro ao carregar a imagem do avatar no dashboard. Usando imagem padrão. " + e.getMessage());
             try {
-                userAvatar.setImage(new Image(getClass().getResourceAsStream("images/avatar.jpg")));
+                userAvatar.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
             } catch (Exception ex) {
                 System.err.println("Falha ao carregar até mesmo a imagem padrão.");
             }
-            e.printStackTrace();
         }
     }
 
