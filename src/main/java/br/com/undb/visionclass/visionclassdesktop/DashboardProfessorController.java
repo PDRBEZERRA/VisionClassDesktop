@@ -10,8 +10,9 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.ImagePattern; // Importação Adicionada
+import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class DashboardProfessorController {
     @FXML
     private Label userNameLabel;
     @FXML
-    private ImageView userAvatar;
+    private Circle userAvatar; // Tipo Modificado (de ImageView para Circle)
     @FXML
     private Button dashboardButton;
     @FXML
@@ -104,11 +105,15 @@ public class DashboardProfessorController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            userAvatar.setImage(image);
+            // Linha Corrigida
+            userAvatar.setFill(new ImagePattern(image));
+
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar no dashboard. Usando imagem padrão. " + e.getMessage());
             try {
-                userAvatar.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
+                // Bloco Catch Corrigido
+                Image defaultImage = new Image(getClass().getResourceAsStream("/br/com.undb.visionclass/visionclassdesktop/images/avatar.jpg"));
+                userAvatar.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {
                 System.err.println("Falha ao carregar até mesmo a imagem padrão.");
             }

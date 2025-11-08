@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
 <VBox fx:id="cardRoot" alignment="CENTER" spacing="8.0" styleClass="card" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.AlunoCardController">
     <children>
-        <ImageView fx:id="avatarImageView" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
-            <clip>
-                <Circle centerX="40.0" centerY="40.0" radius="40.0" />
-            </clip>
-        </ImageView>
+
+        <Circle fx:id="avatarImageView" radius="40.0" />
+
         <VBox alignment="CENTER">
             <children>
                 <Label fx:id="nomeLabel" text="Nome do Aluno" textAlignment="CENTER" wrapText="true">

@@ -3,8 +3,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -32,14 +30,9 @@
                 <HBox alignment="CENTER" spacing="10.0">
                     <children>
                         <Label fx:id="userNameLabel" styleClass="text-username" text="Nome do Professor" />
-                        <ImageView fx:id="userAvatar" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@images/avatar.jpg" />
-                            </image>
-                            <clip>
-                                <Circle radius="20.0" centerX="20.0" centerY="20.0" />
-                            </clip>
-                        </ImageView>
+
+                        <Circle fx:id="userAvatar" radius="20.0" />
+
                     </children>
                     <padding>
                         <Insets right="30.0" />

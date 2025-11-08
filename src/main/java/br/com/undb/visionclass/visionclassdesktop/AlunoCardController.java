@@ -8,9 +8,10 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.ImagePattern; // Importação Adicionada
+import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -21,7 +22,7 @@ import java.io.IOException;
 public class AlunoCardController {
 
     @FXML
-    private ImageView avatarImageView;
+    private Circle avatarImageView; // Tipo Modificado (de ImageView para Circle)
     @FXML
     private Label nomeLabel;
     @FXML
@@ -82,11 +83,15 @@ public class AlunoCardController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            avatarImageView.setImage(image);
+            // Linha Corrigida
+            avatarImageView.setFill(new ImagePattern(image));
+
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar para o aluno: " + e.getMessage());
             try {
-                avatarImageView.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
+                // Bloco Catch Corrigido
+                Image defaultImage = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
+                avatarImageView.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {
                 System.err.println("Falha total ao carregar qualquer imagem.");
             }

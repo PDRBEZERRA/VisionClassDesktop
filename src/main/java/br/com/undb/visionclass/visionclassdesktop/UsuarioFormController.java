@@ -10,7 +10,8 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.paint.ImagePattern; // Importação Adicionada
+import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -38,7 +39,7 @@ public class UsuarioFormController {
     @FXML
     private ComboBox<UserRole> roleComboBox;
     @FXML
-    private ImageView avatarImageView;
+    private Circle avatarImageView; // Tipo Modificado (de ImageView para Circle)
     @FXML
     private Button salvarButton;
 
@@ -80,7 +81,8 @@ public class UsuarioFormController {
             selectedPhotoFile = file;
             try (FileInputStream fis = new FileInputStream(file)) {
                 Image image = new Image(fis);
-                avatarImageView.setImage(image);
+                // Linha Corrigida
+                avatarImageView.setFill(new ImagePattern(image));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -163,11 +165,15 @@ public class UsuarioFormController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            avatarImageView.setImage(image);
+            // Linha Corrigida
+            avatarImageView.setFill(new ImagePattern(image));
+
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar: " + e.getMessage());
             try {
-                avatarImageView.setImage(new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg")));
+                // Bloco Catch Corrigido
+                Image defaultImage = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
+                avatarImageView.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {
                 System.err.println("Falha total ao carregar qualquer imagem.");
             }
