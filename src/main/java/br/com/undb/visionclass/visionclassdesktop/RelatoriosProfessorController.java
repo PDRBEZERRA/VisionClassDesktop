@@ -369,19 +369,11 @@ public class RelatoriosProfessorController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
-            ExportarRelatorioController exportController = loader.getController();
-
-            Turma turmaSelecionada = turmaComboBox.getValue();
-            LocalDate dataInicial = dataInicialPicker.getValue();
-            LocalDate dataFinal = dataFinalPicker.getValue();
-            User professorSelecionado = this.professorLogado;
-
-
-            exportController.setFiltros(turmaSelecionada, professorSelecionado, dataInicial, dataFinal);
-
+            // O ExportarRelatorioController agora cuida de si mesmo.
 
             Stage stage = new Stage();
-            stage.setTitle("Exportar Relatório - Professor");
+            // Adapte o título conforme o controller (ADM ou Professor)
+            stage.setTitle("Exportar Relatório");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
@@ -393,7 +385,6 @@ public class RelatoriosProfessorController {
             showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível abrir a janela de exportação.");
         }
     }
-
     private void showAlert(Alert.AlertType type, String title, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

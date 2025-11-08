@@ -6,12 +6,15 @@ import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
+import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
+import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.TextField;
+// import javafx.scene.control.TextField; // Removido
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -37,28 +40,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javafx.util.StringConverter;
 
 
 public class ExportarRelatorioController {
 
     @FXML private ComboBox<String> periodoComboBox;
     @FXML private ComboBox<Turma> turmaComboBoxFiltro;
-    @FXML private TextField alunoEspecificoTextField;
+    @FXML private ComboBox<User> professorComboBoxFiltro;
+
+    @FXML private ComboBox<User> alunoComboBoxFiltro;
+
     @FXML private DatePicker dataInicialPickerFiltro;
     @FXML private DatePicker dataFinalPickerFiltro;
     @FXML private ComboBox<String> conteudoRelatorioComboBox;
-    @FXML private Button prepararDadosButton;
 
     @FXML private Button exportarPDFButton;
     @FXML private Button exportarCSVButton;
     @FXML private Button exportarExcelButton;
     @FXML private Button voltarButton;
 
-    private Turma turmaSelecionada;
-    private User professorSelecionado;
-    private LocalDate dataInicial;
-    private LocalDate dataFinal;
     private List<String> alunosIdsDoEscopo;
+
+    private Task<List<User>> searchTask;
 
     private TurmaDAO turmaDAO = new TurmaDAO();
     private UserDAO userDAO = new UserDAO();
@@ -70,76 +74,159 @@ public class ExportarRelatorioController {
         conteudoRelatorioComboBox.getItems().addAll("Consolidado", "Apenas Comportamental", "Apenas Simulados");
         conteudoRelatorioComboBox.setValue("Consolidado");
 
-        exportarPDFButton.setDisable(false);
+        loadTurmasEProfessores();
 
+        setupAlunoSearchComboBox();
+
+        exportarPDFButton.setDisable(false);
         exportarCSVButton.setDisable(false);
         exportarExcelButton.setDisable(false);
 
         periodoComboBox.setDisable(true);
-        turmaComboBoxFiltro.setDisable(true);
-        alunoEspecificoTextField.setDisable(true);
-        dataInicialPickerFiltro.setDisable(true);
-        dataFinalPickerFiltro.setDisable(true);
+        periodoComboBox.setValue("Personalizado");
     }
 
-    public void setFiltros(Turma turma, User professor, LocalDate dataIni, LocalDate dataFim) {
-        this.turmaSelecionada = turma;
-        this.professorSelecionado = professor;
-        this.dataInicial = dataIni;
-        this.dataFinal = dataFim;
+    private void loadTurmasEProfessores() {
+        turmaComboBoxFiltro.setConverter(new StringConverter<Turma>() {
+            @Override
+            public String toString(Turma turma) {
+                return turma == null ? "Todas as Turmas" : turma.getNome();
+            }
+            @Override
+            public Turma fromString(String string) { return null; }
+        });
+        List<Turma> turmas = turmaDAO.findAll();
+        turmaComboBoxFiltro.getItems().add(null);
+        turmaComboBoxFiltro.getItems().addAll(turmas);
+        turmaComboBoxFiltro.getSelectionModel().selectFirst();
 
-        calcularAlunosDoEscopo();
-
-        if (turma != null) {
-            turmaComboBoxFiltro.setPromptText(turma.getNome());
-        } else if (professor != null) {
-            turmaComboBoxFiltro.setPromptText("Turmas de " + professor.getNome());
-        } else {
-            turmaComboBoxFiltro.setPromptText("Todas as Turmas (ADM)");
-        }
-
-        if (dataIni != null) dataInicialPickerFiltro.setValue(dataIni);
-        if (dataFim != null) dataFinalPickerFiltro.setValue(dataFim);
-
-        if (dataIni == null && dataFim == null) {
-            periodoComboBox.setPromptText("Todo o período");
-        } else {
-            periodoComboBox.setPromptText("Personalizado");
-        }
-
-        System.out.println("Filtros recebidos. Data inicial: " + dataIni + ", Data final: " + dataFim);
-        System.out.println("Alunos no escopo para exportação: " + (alunosIdsDoEscopo != null ? alunosIdsDoEscopo.size() : 0));
+        professorComboBoxFiltro.setConverter(new StringConverter<User>() {
+            @Override
+            public String toString(User user) {
+                return user == null ? "Todos os Professores" : user.getNome();
+            }
+            @Override
+            public User fromString(String string) { return null; }
+        });
+        List<User> professores = userDAO.findByRole(UserRole.PROFESSOR);
+        professorComboBoxFiltro.getItems().add(null);
+        professorComboBoxFiltro.getItems().addAll(professores);
+        professorComboBoxFiltro.getSelectionModel().selectFirst();
     }
+
+    private void setupAlunoSearchComboBox() {
+        alunoComboBoxFiltro.setConverter(new StringConverter<User>() {
+            @Override
+            public String toString(User user) {
+                return user == null ? null : user.getNome() + " (" + user.getMatricula() + ")";
+            }
+
+            @Override
+            public User fromString(String string) {
+                if (string == null || string.trim().isEmpty()) {
+                    return null;
+                }
+                for (User user : alunoComboBoxFiltro.getItems()) {
+                    if (toString(user).equals(string)) {
+                        return user;
+                    }
+                }
+                return null;
+            }
+        });
+
+        alunoComboBoxFiltro.getEditor().textProperty().addListener((obs, oldText, newText) -> {
+
+            User selectedUser = alunoComboBoxFiltro.getSelectionModel().getSelectedItem();
+            String selectedUserText = null;
+            if (selectedUser != null) {
+                selectedUserText = alunoComboBoxFiltro.getConverter().toString(selectedUser);
+            }
+
+            if (newText != null && newText.equals(selectedUserText)) {
+                return;
+            }
+
+            if (newText == null || newText.trim().length() < 3) {
+                alunoComboBoxFiltro.getItems().clear();
+                return;
+            }
+
+            if (searchTask != null && searchTask.isRunning()) {
+                searchTask.cancel();
+            }
+
+            searchTask = new Task<>() {
+                @Override
+                protected List<User> call() throws Exception {
+                    return userDAO.findAlunosByNameLike(newText);
+                }
+            };
+
+            searchTask.setOnSucceeded(e -> {
+                List<User> results = searchTask.getValue();
+                User currentSelection = alunoComboBoxFiltro.getSelectionModel().getSelectedItem();
+
+                alunoComboBoxFiltro.setItems(FXCollections.observableArrayList(results));
+                alunoComboBoxFiltro.show();
+
+                if (currentSelection != null && results.contains(currentSelection)) {
+                    alunoComboBoxFiltro.getSelectionModel().select(currentSelection);
+                }
+            });
+
+            searchTask.setOnFailed(e -> searchTask.getException().printStackTrace());
+
+            new Thread(searchTask).start();
+        });
+    }
+
 
     private void calcularAlunosDoEscopo() {
-        List<Turma> turmasDoEscopo = new ArrayList<>();
+        User alunoFiltro = alunoComboBoxFiltro.getValue();
+        Turma turmaFiltro = turmaComboBoxFiltro.getValue();
+        User professorFiltro = professorComboBoxFiltro.getValue();
 
-        if (turmaSelecionada != null) {
-            turmasDoEscopo = List.of(turmaSelecionada);
-        } else if (professorSelecionado != null) {
-            turmasDoEscopo = turmaDAO.findByProfessorId(professorSelecionado.getId());
+        if (alunoFiltro != null) {
+            this.alunosIdsDoEscopo = List.of(alunoFiltro.getId());
+
+        } else if (turmaFiltro != null) {
+            this.alunosIdsDoEscopo = userDAO.findAlunosByTurmaId(turmaFiltro.getId()).stream()
+                    .map(User::getId)
+                    .collect(Collectors.toList());
+        } else if (professorFiltro != null) {
+            List<Turma> turmasDoProf = turmaDAO.findByProfessorId(professorFiltro.getId());
+            this.alunosIdsDoEscopo = turmasDoProf.stream()
+                    .flatMap(t -> userDAO.findAlunosByTurmaId(t.getId()).stream())
+                    .map(User::getId)
+                    .distinct()
+                    .collect(Collectors.toList());
         } else {
-            turmasDoEscopo = turmaDAO.findAll();
+            this.alunosIdsDoEscopo = userDAO.findByRole(UserRole.ALUNO).stream()
+                    .map(User::getId)
+                    .collect(Collectors.toList());
         }
 
-        this.alunosIdsDoEscopo = turmasDoEscopo.stream()
-                .flatMap(t -> userDAO.findAlunosByTurmaId(t.getId()).stream())
-                .map(User::getId)
-                .distinct()
-                .collect(Collectors.toList());
+        System.out.println("Alunos no escopo para exportação: " + (alunosIdsDoEscopo != null ? alunosIdsDoEscopo.size() : 0));
     }
 
 
     @FXML
     private void handleExportarPDF() {
+        calcularAlunosDoEscopo();
+
         if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
             return;
         }
 
         FileChooser fileChooser = createFileChooser("Salvar Relatório PDF", "*.pdf", "Arquivo PDF");
-        String suggestedFileName = "relatorio_" + conteudoRelatorioComboBox.getValue().toLowerCase().replace(" ", "_") + ".pdf";
-        fileChooser.setInitialFileName(suggestedFileName);
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Estava 'suggestFileName()' e foi mudado para 'suggestFileName(".pdf")'
+        fileChooser.setInitialFileName(suggestFileName(".pdf"));
+        // --- FIM DA CORREÇÃO ---
+
         File file = fileChooser.showSaveDialog(getStage());
 
         if (file != null) {
@@ -149,14 +236,10 @@ public class ExportarRelatorioController {
                     showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
                     return;
                 }
-
                 String[] headers = getHeader();
-
-                saveAsPDF(data, headers, file);
-
+                saveAsPDF(data, headers, file, dataInicialPickerFiltro.getValue(), dataFinalPickerFiltro.getValue());
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório PDF exportado com sucesso para:\n" + file.getAbsolutePath());
                 closeWindow();
-
             } catch (IOException e) {
                 handleExportException("PDF", e);
             } catch (Exception e) {
@@ -165,10 +248,8 @@ public class ExportarRelatorioController {
         }
     }
 
-
-    private void saveAsPDF(List<Object[]> data, String[] headers, File file) throws IOException {
+    private void saveAsPDF(List<Object[]> data, String[] headers, File file, LocalDate dataInicial, LocalDate dataFinal) throws IOException {
         try (PDDocument document = new PDDocument()) {
-
             PDRectangle landscapeA4 = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
             PDPage page = new PDPage(landscapeA4);
             document.addPage(page);
@@ -198,7 +279,7 @@ public class ExportarRelatorioController {
             float fixedWidth = colWidths[0] + colWidths[1] + colWidths[2];
             float remainingWidth = tableWidth - fixedWidth;
             int remainingCols = pdfHeaders.length - 3;
-            float dataColWidth = remainingWidth / remainingCols;
+            float dataColWidth = remainingCols > 0 ? remainingWidth / remainingCols : 0;
 
             for (int i = 3; i < pdfHeaders.length; i++) {
                 colWidths[i] = dataColWidth;
@@ -214,7 +295,6 @@ public class ExportarRelatorioController {
                 colPositions[i] += padding;
             }
 
-
             writeText(contentStream, fontBold, fontSizeTitle, margin, yPosition, "Relatório - " + conteudoRelatorioComboBox.getValue());
             yPosition -= (lineSpacing * 1.5f);
 
@@ -223,8 +303,10 @@ public class ExportarRelatorioController {
                     " até " + (dataFinal != null ? dataFinal.format(dtf) : "N/A");
             writeText(contentStream, fontPlain, 10, margin, yPosition, dataFiltro);
             yPosition -= lineSpacing;
-            String turmaFiltro = "Turma: " + (turmaSelecionada != null ? turmaSelecionada.getNome() : (professorSelecionado != null ? "Turmas de " + professorSelecionado.getNome() : "Todas as Turmas (ADM)"));
-            writeText(contentStream, fontPlain, 10, margin, yPosition, turmaFiltro);
+
+            String turmaFiltro = "Turma: " + (turmaComboBoxFiltro.getValue() != null ? turmaComboBoxFiltro.getValue().getNome() : "Todas");
+            String profFiltro = "Professor: " + (professorComboBoxFiltro.getValue() != null ? professorComboBoxFiltro.getValue().getNome() : "Todos");
+            writeText(contentStream, fontPlain, 10, margin, yPosition, turmaFiltro + " | " + profFiltro);
             yPosition -= (lineSpacing * 2.0f);
 
             contentStream.setLineWidth(0.5f);
@@ -239,12 +321,10 @@ public class ExportarRelatorioController {
             for (Object[] row : data) {
                 if (yPosition < bottomMargin) {
                     contentStream.close();
-
                     page = new PDPage(landscapeA4);
                     document.addPage(page);
                     contentStream = new PDPageContentStream(document, page);
                     yPosition = yStart;
-
                     writeRow(contentStream, colPositions, colWidths, yPosition, pdfHeaders, fontBold, fontSizeHeader);
                     yPosition -= (lineSpacing * 0.5f);
                     contentStream.moveTo(margin, yPosition);
@@ -252,93 +332,59 @@ public class ExportarRelatorioController {
                     contentStream.stroke();
                     yPosition -= lineSpacing;
                 }
-
                 String[] dataLine = new String[row.length];
                 for (int i = 0; i < row.length; i++) {
                     dataLine[i] = formatPdfField(row[i]);
                 }
-
                 writeRow(contentStream, colPositions, colWidths, yPosition, dataLine, fontPlain, fontSizeBody);
                 yPosition -= lineSpacing;
             }
-
             contentStream.close();
             document.save(file);
         }
     }
 
-
     private String[] getPdfHeaders(String[] originalHeaders) {
         String[] pdfHeaders = new String[originalHeaders.length];
         for (int i = 0; i < originalHeaders.length; i++) {
             switch (originalHeaders[i]) {
-                case "Aluno ID":
-                    pdfHeaders[i] = "ID";
-                    break;
-                case "Nome Aluno":
-                    pdfHeaders[i] = "Nome";
-                    break;
-                case "Média Geral Comp.":
-                    pdfHeaders[i] = "M. Comp";
-                    break;
-                case "Média Assiduidade":
-                    pdfHeaders[i] = "Assid.";
-                    break;
-                case "Média Participação":
-                    pdfHeaders[i] = "Partic.";
-                    break;
-                case "Média Responsab.":
-                    pdfHeaders[i] = "Resp.";
-                    break;
-                case "Média Sociab.":
-                    pdfHeaders[i] = "Sociab.";
-                    break;
-                case "Nº Avaliações":
-                    pdfHeaders[i] = "N. Aval.";
-                    break;
-                case "Média Geral Simulados (0-10)":
-                    pdfHeaders[i] = "M. Simu";
-                    break;
-                case "Nº Simulados Realizados":
-                    pdfHeaders[i] = "N. Simu";
-                    break;
-                case "Acerto Médio MC (%)":
-                    pdfHeaders[i] = "% MC";
-                    break;
-                case "Score de Progresso (0-10)":
-                    pdfHeaders[i] = "Score";
-                    break;
-                default:
-                    pdfHeaders[i] = originalHeaders[i];
-                    break;
+                case "Aluno ID": pdfHeaders[i] = "ID"; break;
+                case "Nome Aluno": pdfHeaders[i] = "Nome"; break;
+                case "Média Geral Comp.": pdfHeaders[i] = "M. Comp"; break;
+                case "Média Assiduidade": pdfHeaders[i] = "Assid."; break;
+                case "Média Participação": pdfHeaders[i] = "Partic."; break;
+                case "Média Responsab.": pdfHeaders[i] = "Resp."; break;
+                case "Média Sociab.": pdfHeaders[i] = "Sociab."; break;
+                case "Nº Avaliações": pdfHeaders[i] = "N. Aval."; break;
+                case "Média Geral Simulados (0-10)": pdfHeaders[i] = "M. Simu"; break;
+                case "Nº Simulados Realizados": pdfHeaders[i] = "N. Simu"; break;
+                case "Acerto Médio MC (%)": pdfHeaders[i] = "% MC"; break;
+                case "Score de Progresso (0-10)": pdfHeaders[i] = "Score"; break;
+                default: pdfHeaders[i] = originalHeaders[i]; break;
             }
         }
         return pdfHeaders;
     }
 
-
     private void writeRow(PDPageContentStream stream, float[] colPositions, float[] colWidths, float y, String[] data, PDFont font, int fontSize) throws IOException {
         stream.setFont(font, fontSize);
         float padding = 3;
-
         for (int i = 0; i < data.length; i++) {
             stream.beginText();
             stream.newLineAtOffset(colPositions[i], y);
-
             String text = data[i];
-
             float textWidth = font.getStringWidth(text) / 1000 * fontSize;
             float availableWidth = colWidths[i] - padding;
-
             if (textWidth > availableWidth) {
                 int charsToKeep = (int) (text.length() * (availableWidth / textWidth));
                 if (charsToKeep > 3) {
                     text = text.substring(0, charsToKeep - 3) + "...";
-                } else {
-                    text = text.substring(0, (int)(availableWidth / (textWidth/text.length())) -1 );
+                } else if (charsToKeep > 0) {
+                    text = text.substring(0, charsToKeep -1 );
+                } else if (text.length() > 0) {
+                    text = text.substring(0, Math.min(text.length(), 10)) + "...";
                 }
             }
-
             stream.showText(text);
             stream.endText();
         }
@@ -361,16 +407,14 @@ public class ExportarRelatorioController {
 
     @FXML
     private void handleExportarCSV() {
+        calcularAlunosDoEscopo();
         if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
             return;
         }
-
         FileChooser fileChooser = createFileChooser("Salvar Relatório CSV", "*.csv", "Arquivo CSV");
-        String suggestedFileName = "relatorio_" + conteudoRelatorioComboBox.getValue().toLowerCase().replace(" ", "_") + ".csv";
-        fileChooser.setInitialFileName(suggestedFileName);
+        fileChooser.setInitialFileName(suggestFileName(".csv"));
         File file = fileChooser.showSaveDialog(getStage());
-
         if (file != null) {
             try {
                 List<Object[]> data = fetchDataForExport();
@@ -378,10 +422,8 @@ public class ExportarRelatorioController {
                     showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
                     return;
                 }
-
                 try (FileWriter out = new FileWriter(file);
                      CSVPrinter csvPrinter = new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(getHeader()))) {
-
                     for (Object[] row : data) {
                         for (int i = 0; i < row.length; i++) {
                             if (row[i] instanceof Double) {
@@ -392,10 +434,8 @@ public class ExportarRelatorioController {
                     csvPrinter.printRecords(data);
                     csvPrinter.flush();
                 }
-
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório CSV exportado com sucesso para:\n" + file.getAbsolutePath());
                 closeWindow();
-
             } catch (IOException e) {
                 handleExportException("CSV", e);
             } catch (Exception e) {
@@ -406,16 +446,14 @@ public class ExportarRelatorioController {
 
     @FXML
     private void handleExportarExcel() {
+        calcularAlunosDoEscopo();
         if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
             return;
         }
-
         FileChooser fileChooser = createFileChooser("Salvar Relatório Excel", "*.xlsx", "Planilha Excel");
-        String suggestedFileName = "relatorio_" + conteudoRelatorioComboBox.getValue().toLowerCase().replace(" ", "_") + ".xlsx";
-        fileChooser.setInitialFileName(suggestedFileName);
+        fileChooser.setInitialFileName(suggestFileName(".xlsx"));
         File file = fileChooser.showSaveDialog(getStage());
-
         if (file != null) {
             try {
                 List<Object[]> data = fetchDataForExport();
@@ -423,31 +461,47 @@ public class ExportarRelatorioController {
                     showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
                     return;
                 }
-
                 try (Workbook workbook = new XSSFWorkbook();
                      FileOutputStream fileOut = new FileOutputStream(file)) {
-
                     Sheet sheet = workbook.createSheet("Relatório");
                     String[] headers = getHeader();
                     createExcelHeader(workbook, sheet, headers);
                     populateExcelSheet(workbook, sheet, data);
-
                     for(int i = 0; i < headers.length; i++) {
                         sheet.autoSizeColumn(i);
                     }
-
                     workbook.write(fileOut);
                 }
-
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório Excel exportado com sucesso para:\n" + file.getAbsolutePath());
                 closeWindow();
-
             } catch (IOException e) {
                 handleExportException("Excel", e);
             } catch (Exception e) {
                 handleDataFetchException("Excel", e);
             }
         }
+    }
+
+    private String suggestFileName(String extension) {
+        String tipo = conteudoRelatorioComboBox.getValue().toLowerCase().replace(" ", "_");
+        String nomeFiltro = "";
+
+        if (alunoComboBoxFiltro.getValue() != null) {
+            nomeFiltro = alunoComboBoxFiltro.getValue().getNome().toLowerCase().replace(" ", "_");
+        } else if (turmaComboBoxFiltro.getValue() != null) {
+            nomeFiltro = turmaComboBoxFiltro.getValue().getNome().toLowerCase().replace(" ", "_");
+        } else if (professorComboBoxFiltro.getValue() != null) {
+            nomeFiltro = "prof_" + professorComboBoxFiltro.getValue().getNome().toLowerCase().replace(" ", "_");
+        } else {
+            nomeFiltro = "todos";
+        }
+
+        return String.format("relatorio_%s_%s%s", tipo, nomeFiltro, extension);
+    }
+
+    // Sobrecarga para o PDF não precisar do parâmetro
+    private String suggestFileName() {
+        return suggestFileName("");
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {
@@ -458,7 +512,6 @@ public class ExportarRelatorioController {
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        // Adicionando bordas
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
@@ -469,7 +522,6 @@ public class ExportarRelatorioController {
     private String[] getHeader() {
         String tipoRelatorio = conteudoRelatorioComboBox.getValue();
         List<String> headerList = new ArrayList<>(List.of("Aluno ID", "Nome Aluno", "Matrícula"));
-
         if ("Apenas Comportamental".equals(tipoRelatorio) || "Consolidado".equals(tipoRelatorio)) {
             headerList.addAll(List.of("Média Geral Comp.", "Média Assiduidade", "Média Participação", "Média Responsab.", "Média Sociab.", "Nº Avaliações"));
         }
@@ -479,21 +531,20 @@ public class ExportarRelatorioController {
         if ("Consolidado".equals(tipoRelatorio)) {
             headerList.add("Score de Progresso (0-10)");
         }
-
         return headerList.toArray(new String[0]);
     }
 
     private List<Object[]> fetchDataForExport() throws Exception {
         List<Object[]> results = new ArrayList<>();
         String tipoRelatorio = conteudoRelatorioComboBox.getValue();
+        LocalDate dataInicial = dataInicialPickerFiltro.getValue();
+        LocalDate dataFinal = dataFinalPickerFiltro.getValue();
 
         for (String alunoId : alunosIdsDoEscopo) {
             User aluno = userDAO.findById(alunoId);
             if (aluno == null) continue;
-
             List<Object> rowData = new ArrayList<>(List.of(aluno.getId(), aluno.getNome(), aluno.getMatricula()));
             List<String> alunoIdList = List.of(alunoId);
-
             if ("Apenas Comportamental".equals(tipoRelatorio) || "Consolidado".equals(tipoRelatorio)) {
                 double mediaGeralComp = avaliacaoDAO.getAggregateMediaByDateRange(alunoIdList, "media_geral", dataInicial, dataFinal);
                 double mediaAssid = avaliacaoDAO.getAggregateMediaByDateRange(alunoIdList, "assiduidade", dataInicial, dataFinal);
@@ -501,7 +552,6 @@ public class ExportarRelatorioController {
                 double mediaResp = avaliacaoDAO.getAggregateMediaByDateRange(alunoIdList, "responsabilidade", dataInicial, dataFinal);
                 double mediaSociab = avaliacaoDAO.getAggregateMediaByDateRange(alunoIdList, "sociabilidade", dataInicial, dataFinal);
                 int countAval = avaliacaoDAO.countByAlunosIdsAndDateRange(alunoIdList, dataInicial, dataFinal);
-
                 rowData.add(mediaGeralComp >= 0 ? mediaGeralComp : null);
                 rowData.add(mediaAssid >= 0 ? mediaAssid : null);
                 rowData.add(mediaPart >= 0 ? mediaPart : null);
@@ -509,22 +559,17 @@ public class ExportarRelatorioController {
                 rowData.add(mediaSociab >= 0 ? mediaSociab : null);
                 rowData.add(countAval);
             }
-
             if ("Apenas Simulados".equals(tipoRelatorio) || "Consolidado".equals(tipoRelatorio)) {
                 double mediaGeralSim = alunoRespostaDAO.getAggregateSimuladosMediaByDateRange(alunoIdList, dataInicial, dataFinal);
                 int countSimRealizados = alunoRespostaDAO.countSimuladosRealizadosByAlunosIdsAndDateRange(alunoIdList, dataInicial, dataFinal);
                 double mediaAcertosMC = alunoRespostaDAO.calculateMediaAcertosMCByDateRange(alunoIdList, dataInicial, dataFinal);
-
                 rowData.add(mediaGeralSim >= 0 ? mediaGeralSim : null);
-                rowData.add(countSimRealizados); // Integer
+                rowData.add(countSimRealizados);
                 rowData.add(mediaAcertosMC >= 0 ? mediaAcertosMC : null);
             }
-
             if ("Consolidado".equals(tipoRelatorio)) {
                 double mediaGeralComp = (rowData.size() > 3 && rowData.get(3) instanceof Double) ? (Double) rowData.get(3) : -1.0;
-                int indiceMediaSim = "Apenas Comportamental".equals(tipoRelatorio) ? 9 : 3;
-                double mediaGeralSim = (rowData.size() > indiceMediaSim && rowData.get(indiceMediaSim) instanceof Double) ? (Double) rowData.get(indiceMediaSim) : -1.0;
-
+                double mediaGeralSim = (rowData.size() > 9 && rowData.get(9) instanceof Double) ? (Double) rowData.get(9) : -1.0;
                 Double score = null;
                 if (mediaGeralComp >= 0 && mediaGeralSim >= 0) {
                     double compNorm = mediaGeralComp * 2.0;
@@ -532,14 +577,10 @@ public class ExportarRelatorioController {
                 }
                 rowData.add(score);
             }
-
             results.add(rowData.toArray());
         }
-
         return results;
     }
-
-
 
     private FileChooser createFileChooser(String title, String extension, String description) {
         FileChooser fileChooser = new FileChooser();
@@ -563,7 +604,6 @@ public class ExportarRelatorioController {
         CellStyle doubleStyle = workbook.createCellStyle();
         DataFormat format = workbook.createDataFormat();
         doubleStyle.setDataFormat(format.getFormat("0.0"));
-
         int rowNum = 1;
         for (Object[] record : data) {
             Row row = sheet.createRow(rowNum++);
@@ -601,7 +641,6 @@ public class ExportarRelatorioController {
         e.printStackTrace();
         showAlert(Alert.AlertType.ERROR, "Erro de Dados", "Ocorreu um erro ao buscar os dados para o relatório.");
     }
-
 
     @FXML
     private void handleVoltar() {

@@ -13,7 +13,8 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="650.0" prefWidth="800.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.ExportarRelatorioController">
+<AnchorPane prefHeight="650.0" prefWidth="800.0" style="-fx-background-color: #f8fafc;"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.ExportarRelatorioController">
     <children>
         <VBox spacing="20.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="30.0">
             <children>
@@ -32,34 +33,42 @@
                     <Label styleClass="title-medium" text="1. Escopo da Exportação" />
                     <Label styleClass="text-muted" text="Defina quais dados serão incluídos no arquivo exportado." />
                     <FlowPane hgap="30.0" vgap="20.0">
+
                         <VBox spacing="5.0" prefWidth="150.0">
                             <Label text="Período" styleClass="text-muted" />
-                            <ComboBox fx:id="periodoComboBox" disable="true" prefWidth="150.0" promptText="Definido na tela anterior" />
+                            <ComboBox fx:id="periodoComboBox" prefWidth="150.0" promptText="Personalizado" />
                         </VBox>
+
                         <VBox spacing="5.0" prefWidth="150.0">
                             <Label text="Turma" styleClass="text-muted" />
-                            <ComboBox fx:id="turmaComboBoxFiltro" disable="true" prefWidth="150.0" promptText="Todas as Turmas" />
+                            <ComboBox fx:id="turmaComboBoxFiltro" prefWidth="150.0" promptText="Todas as Turmas" />
                         </VBox>
+
+                        <VBox spacing="5.0" prefWidth="150.0">
+                            <Label text="Professor" styleClass="text-muted" />
+                            <ComboBox fx:id="professorComboBoxFiltro" prefWidth="150.0" promptText="Todos os Professores" />
+                        </VBox>
+
                         <VBox spacing="5.0" prefWidth="250.0">
                             <Label text="Aluno Específico" styleClass="text-muted" />
-                            <TextField fx:id="alunoEspecificoTextField" disable="true" promptText="(Não implementado)" />
+                            <ComboBox fx:id="alunoComboBoxFiltro" prefWidth="250.0" promptText="Digite 3+ letras para buscar..." editable="true" />
                         </VBox>
+
                         <VBox spacing="5.0" prefWidth="120.0">
                             <Label text="Data Inicial" styleClass="text-muted" />
-                            <DatePicker fx:id="dataInicialPickerFiltro" disable="true" prefWidth="120.0" promptText="dd/mm/aaaa" />
+                            <DatePicker fx:id="dataInicialPickerFiltro" prefWidth="120.0" promptText="dd/mm/aaaa" />
                         </VBox>
                         <VBox spacing="5.0" prefWidth="120.0">
                             <Label text="Data Final" styleClass="text-muted" />
-                            <DatePicker fx:id="dataFinalPickerFiltro" disable="true" prefWidth="120.0" promptText="dd/mm/aaaa" />
+                            <DatePicker fx:id="dataFinalPickerFiltro" prefWidth="120.0" promptText="dd/mm/aaaa" />
                         </VBox>
+
                         <VBox spacing="5.0" prefWidth="300.0">
                             <Label text="Conteúdo do Relatório" styleClass="text-muted" />
                             <ComboBox fx:id="conteudoRelatorioComboBox" prefWidth="300.0" promptText="Consolidado (Comportamental + Simulados)" />
                         </VBox>
                     </FlowPane>
-                    <HBox alignment="CENTER_RIGHT">
-                        <Button fx:id="prepararDadosButton" mnemonicParsing="false" styleClass="primary-button" text="Preparar Dados" style="-fx-font-size: 14px;" visible="false" managed="false" />
-                    </HBox>
+
                     <padding>
                         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                     </padding>

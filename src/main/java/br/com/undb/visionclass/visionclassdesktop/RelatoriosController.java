@@ -332,23 +332,15 @@ public class RelatoriosController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
-            ExportarRelatorioController exportController = loader.getController();
-
-            Turma turmaSelecionada = turmaComboBox.getValue();
-            User professorSelecionado = professorComboBox.getValue();
-            LocalDate dataInicial = dataInicialPicker.getValue();
-            LocalDate dataFinal = dataFinalPicker.getValue();
-
-            exportController.setFiltros(turmaSelecionada, professorSelecionado, dataInicial, dataFinal);
-
+            // O ExportarRelatorioController agora cuida de si mesmo.
 
             Stage stage = new Stage();
-            stage.setTitle("Exportar Relatório - Visão ADM");
+            // Adapte o título conforme o controller (ADM ou Professor)
+            stage.setTitle("Exportar Relatório");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
             stage.showAndWait();
-
 
         } catch (IOException e) {
             System.err.println("Erro ao abrir o modal de exportação de relatórios.");

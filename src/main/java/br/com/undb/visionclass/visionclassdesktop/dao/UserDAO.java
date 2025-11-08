@@ -310,4 +310,33 @@ public class UserDAO {
         }
         return alunos;
     }
+
+    public List<User> findAlunosByNameLike(String nome) {
+        String sql = "SELECT * FROM users " +
+                "WHERE role = 'ALUNO' AND nome LIKE ?";
+
+        List<User> users = new ArrayList<>();
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + nome + "%");
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getString("id"));
+                user.setNome(rs.getString("nome"));
+                user.setMatricula(rs.getString("matricula"));
+                user.setEmail(rs.getString("email"));
+                user.setRole(UserRole.valueOf(rs.getString("role")));
+                user.setCpf(rs.getString("cpf"));
+                user.setFoto(rs.getString("foto"));
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar alunos por nome (LIKE).");
+            e.printStackTrace();
+        }
+        return users;
+    }
 }
