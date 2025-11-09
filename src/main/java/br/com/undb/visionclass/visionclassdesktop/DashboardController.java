@@ -144,29 +144,30 @@ public class DashboardController {
 
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
-        loadCenterView("dashboard-home-view.fxml");
         setActiveButton(dashboardButton);
+        loadCenterView("dashboard-home-view.fxml");
     }
 
     @FXML
     public void onGerirUsuariosClick(ActionEvent event) {
-        loadCenterView("usuarios-view.fxml");
         setActiveButton(gerirUsuariosButton);
+        loadCenterView("usuarios-view.fxml");
     }
 
     @FXML
     public void onGerirTurmasClick(ActionEvent event) {
+        setActiveButton(gerirTurmasButton);
         User loggedInUser = UserSession.getInstance().getLoggedInUser();
         if (loggedInUser.getRole() == UserRole.ADMIN) {
             loadCenterView("turmas-view.fxml");
         } else if (loggedInUser.getRole() == UserRole.PROFESSOR) {
             loadCenterView("minhas-turmas-view.fxml");
         }
-        setActiveButton(gerirTurmasButton);
     }
 
     @FXML
     private void onGerirDisciplinasClick(ActionEvent event) {
+        setActiveButton(gerirDisciplinasButton);
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("gerenciar-disciplinas-assuntos-view.fxml"));
             Parent root = loader.load();
@@ -184,30 +185,31 @@ public class DashboardController {
 
     @FXML
     public void onRelatoriosClick(ActionEvent event) {
-        loadCenterView("relatorios-view.fxml");
         setActiveButton(relatoriosButton);
+        loadCenterView("relatorios-view.fxml");
     }
 
     @FXML
     private void onCarometroClick(ActionEvent event) {
-        loadCenterView("carometro-view.fxml");
         setActiveButton(carometroButton);
+        loadCenterView("carometro-view.fxml");
     }
 
     @FXML
     private void onBancoQuestoesClick(ActionEvent event) {
-        loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
+        loadCenterView("banco-questoes-view.fxml");
     }
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
+        loadCenterView("simulados-view.fxml");
     }
 
     @FXML
     private void onSairButtonClick() {
+        setActiveButton(sairButton);
         UserSession.getInstance().clearSession();
         HelloApplication.getScreenManager().switchTo("login-view.fxml");
     }

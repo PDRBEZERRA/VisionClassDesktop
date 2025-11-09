@@ -100,24 +100,25 @@ public class DashboardAlunoController {
 
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
-        loadCenterView("dashboard-aluno-home-view.fxml");
         setActiveButton(dashboardButton);
+        loadCenterView("dashboard-aluno-home-view.fxml");
     }
 
     @FXML
     private void onMinhasTurmasClick(ActionEvent event) {
-        loadCenterView("dashboard-aluno-turmas-view.fxml");
         setActiveButton(minhasTurmasButton);
+        loadCenterView("dashboard-aluno-turmas-view.fxml");
     }
 
     @FXML
     private void onSimuladosClick(ActionEvent event) {
-        loadCenterView("simulados-aluno-view.fxml");
         setActiveButton(simuladosButton);
+        loadCenterView("simulados-aluno-view.fxml");
     }
 
     @FXML
     private void onSairButtonClick() {
+        setActiveButton(sairButton);
         UserSession.getInstance().clearSession();
         HelloApplication.getScreenManager().switchTo("login-view.fxml");
     }
@@ -135,6 +136,7 @@ public class DashboardAlunoController {
 
     @FXML
     private void handleTrocarSenha() {
+        setActiveButton(trocarSenhaButton);
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("trocar-senha-view.fxml"));
             Parent root = loader.load();

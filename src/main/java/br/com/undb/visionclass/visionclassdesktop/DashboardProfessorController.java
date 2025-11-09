@@ -39,6 +39,8 @@ public class DashboardProfessorController {
     private Button simuladosButton;
     @FXML
     private Button relatoriosButton;
+    @FXML
+    private Button sairButton;
 
     private Button activeButton;
 
@@ -122,42 +124,43 @@ public class DashboardProfessorController {
 
     @FXML
     private void onDashboardButtonClick(ActionEvent event) {
-        loadCenterView("dashboard-professor-home-view.fxml");
         setActiveButton(dashboardButton);
+        loadCenterView("dashboard-professor-home-view.fxml");
     }
 
     @FXML
     public void onMinhasTurmasClick(ActionEvent event) {
-        loadCenterView("minhas-turmas-view.fxml");
         setActiveButton(minhasTurmasButton);
+        loadCenterView("minhas-turmas-view.fxml");
     }
 
     @FXML
     public void onCarometroClick(ActionEvent event) {
-        loadCenterView("carometro-view.fxml");
         setActiveButton(carometroButton);
+        loadCenterView("carometro-view.fxml");
     }
 
     @FXML
     public void onBancoQuestoesClick(ActionEvent event) {
-        loadCenterView("banco-questoes-view.fxml");
         setActiveButton(bancoQuestoesButton);
+        loadCenterView("banco-questoes-view.fxml");
     }
 
     @FXML
     public void onSimuladosClick(ActionEvent event) {
-        loadCenterView("simulados-view.fxml");
         setActiveButton(simuladosButton);
+        loadCenterView("simulados-view.fxml");
     }
 
     @FXML
     private void onRelatoriosClick(ActionEvent event) {
-        loadCenterView("relatorios-professor-view.fxml");
         setActiveButton(relatoriosButton);
+        loadCenterView("relatorios-professor-view.fxml");
     }
 
     @FXML
     private void onSairButtonClick() {
+        setActiveButton(sairButton);
         UserSession.getInstance().clearSession();
         HelloApplication.getScreenManager().switchTo("login-view.fxml");
     }
