@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="450.0" prefWidth="500.0" stylesheets="@login-styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.WebcamCaptureController">
+    <top>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="10.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <children>
+                <Label styleClass="title-medium" text="Capturar Foto" />
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <children>
+                        <Label text="Selecionar Câmera:" />
+                        <ComboBox fx:id="webcamComboBox" prefWidth="300.0" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <ImageView fx:id="webcamImageView" fitHeight="300.0" fitWidth="450.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+            </padding>
+            <children>
+                <Button fx:id="cancelarButton" mnemonicParsing="false" onAction="#handleCancelar" style="-fx-background-color: #e2e8f0;" text="Cancelar" />
+                <Button fx:id="capturarButton" mnemonicParsing="false" onAction="#handleCapturarFoto" styleClass="primary-button" text="Capturar" />
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>

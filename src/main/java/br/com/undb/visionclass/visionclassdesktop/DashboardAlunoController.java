@@ -12,8 +12,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.ImagePattern; // Importação Adicionada
-import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -25,13 +25,13 @@ public class DashboardAlunoController {
     @FXML
     private BorderPane mainBorderPane;
     @FXML
-    private Label userNameLabel; // Agora na sidebar
+    private Label userNameLabel;
     @FXML
-    private Circle userAvatar; // Tipo Modificado (de ImageView para Circle)
+    private Circle userAvatar;
     @FXML
     private Button dashboardButton;
     @FXML
-    private Button minhasTurmasButton; // NOVO BOTÃO
+    private Button minhasTurmasButton;
     @FXML
     private Button simuladosButton;
     @FXML
@@ -83,13 +83,11 @@ public class DashboardAlunoController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            // Linha Corrigida
             userAvatar.setFill(new ImagePattern(image));
 
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar: " + e.getMessage());
             try {
-                // Bloco Catch Corrigido
                 Image defaultImage = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 userAvatar.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {

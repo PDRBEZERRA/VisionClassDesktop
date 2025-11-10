@@ -4,17 +4,25 @@ import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.paint.ImagePattern; // Importação Adicionada
-import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,13 +47,14 @@ public class UsuarioFormController {
     @FXML
     private ComboBox<UserRole> roleComboBox;
     @FXML
-    private Circle avatarImageView; // Tipo Modificado (de ImageView para Circle)
+    private Circle avatarImageView;
     @FXML
     private Button salvarButton;
 
     private UserDAO userDAO = new UserDAO();
     private User userToEdit;
     private File selectedPhotoFile;
+    private BufferedImage imagemCapturadaBuffer;
     private DashboardController mainDashboardController;
 
     public void setMainDashboardController(DashboardController controller) {
@@ -79,9 +88,9 @@ public class UsuarioFormController {
 
         if (file != null) {
             selectedPhotoFile = file;
+            imagemCapturadaBuffer = null;
             try (FileInputStream fis = new FileInputStream(file)) {
                 Image image = new Image(fis);
-                // Linha Corrigida
                 avatarImageView.setFill(new ImagePattern(image));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -90,10 +99,45 @@ public class UsuarioFormController {
     }
 
     @FXML
+    private void onTirarFotoClick() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("webcam-capture-view.fxml"));
+            Parent root = loader.load();
+
+            Stage webcamStage = new Stage();
+            webcamStage.setTitle("Tirar Foto");
+            webcamStage.setScene(new Scene(root));
+            webcamStage.initModality(Modality.APPLICATION_MODAL);
+            webcamStage.initOwner((Stage) salvarButton.getScene().getWindow());
+            webcamStage.setResizable(false);
+
+            webcamStage.showAndWait();
+
+            WebcamCaptureController controller = loader.getController();
+            BufferedImage imagemCapturada = controller.getImagemCapturada();
+
+            if (imagemCapturada != null) {
+                this.imagemCapturadaBuffer = imagemCapturada;
+                this.selectedPhotoFile = null;
+
+                Image fxImage = SwingFXUtils.toFXImage(imagemCapturada, null);
+                avatarImageView.setFill(new ImagePattern(fxImage));
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro de Câmera", "Não foi possível abrir a câmera. Verifique as dependências.");
+        }
+    }
+
+    @FXML
     private void onSalvarButtonClick() {
         String photoPath = (userToEdit != null) ? userToEdit.getFoto() : null;
+
         if (selectedPhotoFile != null) {
             photoPath = savePhotoToFileSystem(selectedPhotoFile);
+        } else if (imagemCapturadaBuffer != null) {
+            photoPath = saveBufferedImageToFileSystem(imagemCapturadaBuffer);
         }
 
         if (userToEdit == null) {
@@ -146,6 +190,27 @@ public class UsuarioFormController {
         }
     }
 
+    private String saveBufferedImageToFileSystem(BufferedImage image) {
+        try {
+            Path targetDir = Paths.get("user_photos");
+            if (!Files.exists(targetDir)) {
+                Files.createDirectories(targetDir);
+            }
+
+            String fileName = UUID.randomUUID().toString() + "_webcam.png";
+            Path targetPath = targetDir.resolve(fileName);
+
+            File outputFile = targetPath.toFile();
+            ImageIO.write(image, "png", outputFile);
+
+            return fileName;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     private void loadAvatarImage(String photoFileName) {
         try {
@@ -165,13 +230,11 @@ public class UsuarioFormController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            // Linha Corrigida
             avatarImageView.setFill(new ImagePattern(image));
 
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar: " + e.getMessage());
             try {
-                // Bloco Catch Corrigido
                 Image defaultImage = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 avatarImageView.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {
@@ -188,5 +251,13 @@ public class UsuarioFormController {
     private void closeWindow() {
         Stage stage = (Stage) salvarButton.getScene().getWindow();
         stage.close();
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

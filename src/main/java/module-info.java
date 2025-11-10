@@ -9,6 +9,9 @@ module br.com.undb.visionclass.visionclassdesktop {
     requires org.apache.pdfbox;
     requires java.desktop;
 
+    requires javafx.swing;
+    requires webcam.capture;
+
     opens br.com.undb.visionclass.visionclassdesktop to javafx.fxml;
     opens br.com.undb.visionclass.visionclassdesktop.model to javafx.base;
 
