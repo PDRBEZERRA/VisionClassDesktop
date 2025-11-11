@@ -10,8 +10,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.ImagePattern; // Importação Adicionada
-import javafx.scene.shape.Circle; // Importação Modificada (de ImageView)
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -22,7 +22,7 @@ import java.io.IOException;
 public class AlunoCardController {
 
     @FXML
-    private Circle avatarImageView; // Tipo Modificado (de ImageView para Circle)
+    private Circle avatarImageView;
     @FXML
     private Label nomeLabel;
     @FXML
@@ -83,13 +83,11 @@ public class AlunoCardController {
                 image = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
             }
 
-            // Linha Corrigida
             avatarImageView.setFill(new ImagePattern(image));
 
         } catch (Exception e) {
             System.err.println("Erro ao carregar a imagem do avatar para o aluno: " + e.getMessage());
             try {
-                // Bloco Catch Corrigido
                 Image defaultImage = new Image(getClass().getResourceAsStream("/br/com/undb/visionclass/visionclassdesktop/images/avatar.jpg"));
                 avatarImageView.setFill(new ImagePattern(defaultImage));
             } catch (Exception ex) {

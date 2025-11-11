@@ -70,7 +70,7 @@ public class AvaliacaoComportamentalDAO {
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, avaliacao.getData().toString()); // Data como String YYYY-MM-DD
+            stmt.setString(1, avaliacao.getData().toString());
             stmt.setInt(2, avaliacao.getAssiduidade());
             stmt.setInt(3, avaliacao.getParticipacao());
             stmt.setInt(4, avaliacao.getResponsabilidade());

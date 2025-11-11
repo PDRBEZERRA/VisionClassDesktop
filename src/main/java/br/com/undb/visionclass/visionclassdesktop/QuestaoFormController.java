@@ -27,7 +27,7 @@ public class QuestaoFormController {
     @FXML
     private ComboBox<NivelDificuldade> nivelDificuldadeComboBox;
     @FXML
-    private TextField pontuacaoTextField; // NOVO CAMPO
+    private TextField pontuacaoTextField;
     @FXML
     private TextArea enunciadoTextArea;
     @FXML

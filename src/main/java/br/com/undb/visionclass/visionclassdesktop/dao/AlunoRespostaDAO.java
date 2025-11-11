@@ -254,7 +254,7 @@ public class AlunoRespostaDAO {
     }
 
     public double getMediaGeralSimulados(String alunoId) {
-        return getAggregateSimuladosMediaByDateRange(List.of(alunoId), null, null); // Chama a versão agregada sem data
+        return getAggregateSimuladosMediaByDateRange(List.of(alunoId), null, null);
     }
 
 
@@ -264,7 +264,7 @@ public class AlunoRespostaDAO {
             return -1.0;
         }
 
-        QuestaoDAO questaoDAO = new QuestaoDAO(); // Necessário para obter pontuação máxima
+        QuestaoDAO questaoDAO = new QuestaoDAO();
         double somaDasMediasIndividuaisNormalizadas = 0;
         int countAlunosComMediaValida = 0;
 

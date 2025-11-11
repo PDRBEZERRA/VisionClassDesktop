@@ -2,7 +2,6 @@ package br.com.undb.visionclass.visionclassdesktop;
 
 import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
-import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;

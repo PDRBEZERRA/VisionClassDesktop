@@ -6,15 +6,12 @@ import br.com.undb.visionclass.visionclassdesktop.dao.SimuladoDAO;
 import br.com.undb.visionclass.visionclassdesktop.dao.TurmaDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.*;
 import br.com.undb.visionclass.visionclassdesktop.session.UserSession;
-import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

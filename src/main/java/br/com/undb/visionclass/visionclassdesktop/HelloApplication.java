@@ -17,7 +17,7 @@ public class HelloApplication extends Application {
         ConnectionFactory.initializeDatabase();
 
         Pane root = new Pane();
-        Scene scene = new Scene(root, 1000, 700); // 1000x700 é um bom tamanho inicial
+        Scene scene = new Scene(root, 1000, 700);
 
         screenManager = new ScreenManager(scene);
 

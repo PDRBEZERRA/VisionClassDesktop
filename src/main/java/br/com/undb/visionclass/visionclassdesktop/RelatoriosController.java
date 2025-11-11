@@ -18,7 +18,6 @@ import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Objects;
@@ -332,10 +331,8 @@ public class RelatoriosController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
-            // O ExportarRelatorioController agora cuida de si mesmo.
 
             Stage stage = new Stage();
-            // Adapte o título conforme o controller (ADM ou Professor)
             stage.setTitle("Exportar Relatório");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);

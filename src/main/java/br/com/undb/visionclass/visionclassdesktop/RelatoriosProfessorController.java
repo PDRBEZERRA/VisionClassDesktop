@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import java.time.LocalDate;
 import javafx.scene.control.Alert;
 
 public class RelatoriosProfessorController {
@@ -369,10 +368,8 @@ public class RelatoriosProfessorController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("exportar-relatorio-view.fxml"));
             Parent root = loader.load();
 
-            // O ExportarRelatorioController agora cuida de si mesmo.
 
             Stage stage = new Stage();
-            // Adapte o título conforme o controller (ADM ou Professor)
             stage.setTitle("Exportar Relatório");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);

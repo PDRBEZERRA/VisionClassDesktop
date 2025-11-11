@@ -4,35 +4,24 @@
   <groupId>br.com.undb.visionclass</groupId>
   <artifactId>VisionClassDesktop</artifactId>
   <name>VisionClassDesktop</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <build>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
         <configuration>
-          <source>17</source>
-          <target>17</target>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
-        <executions>
-          <execution>
-            <id>default-cli</id>
-            <configuration>
-              <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
-              <launcher>app</launcher>
-              <jlinkZipName>app</jlinkZipName>
-              <jlinkImageName>app</jlinkImageName>
-              <noManPages>true</noManPages>
-              <stripDebug>true</stripDebug>
-              <noHeaderFiles>true</noHeaderFiles>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -62,6 +51,24 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.panteleyev</groupId>
+        <artifactId>jpackage-maven-plugin</artifactId>
+        <version>1.5.0</version>
+        <configuration>
+          <name>VisionClassDesktop</name>
+          <input>${project.build.directory}</input>
+          <mainJar>${project.build.finalName}.jar</mainJar>
+          <mainClass>br.com.undb.visionclass.visionclassdesktop.Launcher</mainClass>
+          <type>APP_IMAGE</type>
+          <vendor>VisionClass</vendor>
+          <appVersion>${project.version}</appVersion>
+          <destination>${project.build.directory}/jpackage-installer</destination>
+          <javaOptions>
+            <option>--enable-native-access=ALL-UNNAMED</option>
+          </javaOptions>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -104,10 +111,12 @@
     </dependency>
   </dependencies>
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <pdfbox.version>2.0.31</pdfbox.version>
+    <maven.compiler.target>17</maven.compiler.target>
+    <poi.version>5.2.5</poi.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.12.1</junit.version>
     <commons.csv.version>1.10.0</commons.csv.version>
-    <poi.version>5.2.5</poi.version>
   </properties>
 </project>

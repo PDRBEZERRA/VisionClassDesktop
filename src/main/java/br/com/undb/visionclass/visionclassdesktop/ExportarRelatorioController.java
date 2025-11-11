@@ -14,7 +14,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-// import javafx.scene.control.TextField; // Removido
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -222,11 +221,7 @@ public class ExportarRelatorioController {
 
         FileChooser fileChooser = createFileChooser("Salvar Relatório PDF", "*.pdf", "Arquivo PDF");
 
-        // --- INÍCIO DA CORREÇÃO ---
-        // Estava 'suggestFileName()' e foi mudado para 'suggestFileName(".pdf")'
         fileChooser.setInitialFileName(suggestFileName(".pdf"));
-        // --- FIM DA CORREÇÃO ---
-
         File file = fileChooser.showSaveDialog(getStage());
 
         if (file != null) {
@@ -272,9 +267,9 @@ public class ExportarRelatorioController {
             float[] colWidths = new float[pdfHeaders.length];
             float[] colPositions = new float[pdfHeaders.length];
 
-            colWidths[0] = 70;  // ID
-            colWidths[1] = 150; // Nome
-            colWidths[2] = 80;  // Matrícula
+            colWidths[0] = 70;
+            colWidths[1] = 150;
+            colWidths[2] = 80;
 
             float fixedWidth = colWidths[0] + colWidths[1] + colWidths[2];
             float remainingWidth = tableWidth - fixedWidth;
@@ -499,7 +494,6 @@ public class ExportarRelatorioController {
         return String.format("relatorio_%s_%s%s", tipo, nomeFiltro, extension);
     }
 
-    // Sobrecarga para o PDF não precisar do parâmetro
     private String suggestFileName() {
         return suggestFileName("");
     }
