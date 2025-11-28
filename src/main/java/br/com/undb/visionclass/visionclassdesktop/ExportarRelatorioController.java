@@ -7,6 +7,7 @@ import br.com.undb.visionclass.visionclassdesktop.dao.UserDAO;
 import br.com.undb.visionclass.visionclassdesktop.model.Turma;
 import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -44,6 +45,12 @@ import javafx.util.StringConverter;
 
 public class ExportarRelatorioController {
 
+    private enum ExportFormat {
+        PDF,
+        CSV,
+        EXCEL
+    }
+
     @FXML private ComboBox<String> periodoComboBox;
     @FXML private ComboBox<Turma> turmaComboBoxFiltro;
     @FXML private ComboBox<User> professorComboBoxFiltro;
@@ -73,7 +80,7 @@ public class ExportarRelatorioController {
         conteudoRelatorioComboBox.getItems().addAll("Consolidado", "Apenas Comportamental", "Apenas Simulados");
         conteudoRelatorioComboBox.setValue("Consolidado");
 
-        loadTurmasEProfessores();
+        loadCombosDataInBackground();
 
         setupAlunoSearchComboBox();
 
@@ -85,33 +92,56 @@ public class ExportarRelatorioController {
         periodoComboBox.setValue("Personalizado");
     }
 
-    private void loadTurmasEProfessores() {
-        turmaComboBoxFiltro.setConverter(new StringConverter<Turma>() {
-            @Override
-            public String toString(Turma turma) {
-                return turma == null ? "Todas as Turmas" : turma.getNome();
-            }
-            @Override
-            public Turma fromString(String string) { return null; }
-        });
-        List<Turma> turmas = turmaDAO.findAll();
-        turmaComboBoxFiltro.getItems().add(null);
-        turmaComboBoxFiltro.getItems().addAll(turmas);
-        turmaComboBoxFiltro.getSelectionModel().selectFirst();
 
-        professorComboBoxFiltro.setConverter(new StringConverter<User>() {
+    private void loadCombosDataInBackground() {
+        Task<Void> loadCombosTask = new Task<Void>() {
+            private List<Turma> turmas;
+            private List<User> professores;
+
             @Override
-            public String toString(User user) {
-                return user == null ? "Todos os Professores" : user.getNome();
+            protected Void call() throws Exception {
+                turmas = turmaDAO.findAll();
+                professores = userDAO.findByRole(UserRole.PROFESSOR);
+                return null;
             }
-            @Override
-            public User fromString(String string) { return null; }
-        });
-        List<User> professores = userDAO.findByRole(UserRole.PROFESSOR);
-        professorComboBoxFiltro.getItems().add(null);
-        professorComboBoxFiltro.getItems().addAll(professores);
-        professorComboBoxFiltro.getSelectionModel().selectFirst();
+
+            protected void onSucceeded() {
+
+                turmaComboBoxFiltro.setConverter(new StringConverter<Turma>() {
+                    @Override
+                    public String toString(Turma turma) {
+                        return turma == null ? "Todas as Turmas" : turma.getNome();
+                    }
+                    @Override
+                    public Turma fromString(String string) { return null; }
+                });
+                turmaComboBoxFiltro.getItems().add(null);
+                turmaComboBoxFiltro.getItems().addAll(turmas);
+                turmaComboBoxFiltro.getSelectionModel().selectFirst();
+
+                professorComboBoxFiltro.setConverter(new StringConverter<User>() {
+                    @Override
+                    public String toString(User user) {
+                        return user == null ? "Todos os Professores" : user.getNome();
+                    }
+                    @Override
+                    public User fromString(String string) { return null; }
+                });
+                professorComboBoxFiltro.getItems().add(null);
+                professorComboBoxFiltro.getItems().addAll(professores);
+                professorComboBoxFiltro.getSelectionModel().selectFirst();
+            }
+
+            protected void onFailed() {
+
+                showAlert(Alert.AlertType.ERROR, "Erro de Carregamento", "Não foi possível carregar os filtros de turmas e professores.");
+                getException().printStackTrace();
+            }
+        };
+
+        new Thread(loadCombosTask).start();
     }
+
 
     private void setupAlunoSearchComboBox() {
         alunoComboBoxFiltro.setConverter(new StringConverter<User>() {
@@ -209,39 +239,119 @@ public class ExportarRelatorioController {
         System.out.println("Alunos no escopo para exportação: " + (alunosIdsDoEscopo != null ? alunosIdsDoEscopo.size() : 0));
     }
 
+    private void setExportControlsDisabled(boolean disabled) {
+        exportarPDFButton.setDisable(disabled);
+        exportarCSVButton.setDisable(disabled);
+        exportarExcelButton.setDisable(disabled);
+        voltarButton.setDisable(disabled);
+    }
 
-    @FXML
-    private void handleExportarPDF() {
+    private void startExportProcess(ExportFormat format) {
         calcularAlunosDoEscopo();
-
         if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
             return;
         }
 
-        FileChooser fileChooser = createFileChooser("Salvar Relatório PDF", "*.pdf", "Arquivo PDF");
+        String extension, description;
+        switch (format) {
+            case PDF:
+                extension = "*.pdf";
+                description = "Arquivo PDF";
+                break;
+            case CSV:
+                extension = "*.csv";
+                description = "Arquivo CSV";
+                break;
+            case EXCEL:
+                extension = "*.xlsx";
+                description = "Planilha Excel";
+                break;
+            default:
+                return;
+        }
 
-        fileChooser.setInitialFileName(suggestFileName(".pdf"));
+        FileChooser fileChooser = createFileChooser("Salvar Relatório " + format.name(), extension, description);
+        fileChooser.setInitialFileName(suggestFileName(extension.substring(1)));
         File file = fileChooser.showSaveDialog(getStage());
 
         if (file != null) {
-            try {
-                List<Object[]> data = fetchDataForExport();
-                if (data.isEmpty()) {
-                    showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
-                    return;
-                }
-                String[] headers = getHeader();
-                saveAsPDF(data, headers, file, dataInicialPickerFiltro.getValue(), dataFinalPickerFiltro.getValue());
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório PDF exportado com sucesso para:\n" + file.getAbsolutePath());
+            setExportControlsDisabled(true);
+
+            ExportTask task = new ExportTask(format, file);
+
+            task.setOnSucceeded(event -> {
+                File resultFile = task.getValue();
+                setExportControlsDisabled(false);
+                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório " + format.name() + " exportado com sucesso para:\n" + resultFile.getAbsolutePath());
                 closeWindow();
-            } catch (IOException e) {
-                handleExportException("PDF", e);
-            } catch (Exception e) {
-                handleDataFetchException("PDF", e);
-            }
+            });
+
+            task.setOnFailed(event -> {
+                setExportControlsDisabled(false);
+                Throwable e = task.getException();
+                if (e instanceof IOException) {
+                    handleExportException(format.name(), (IOException) e);
+                } else if (e instanceof NullPointerException && e.getMessage().equals("No data")) {
+                    showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
+                } else {
+                    handleDataFetchException(format.name(), (Exception) e);
+                }
+            });
+
+            new Thread(task).start();
         }
     }
+
+
+    @FXML
+    private void handleExportarPDF() {
+        startExportProcess(ExportFormat.PDF);
+    }
+
+    @FXML
+    private void handleExportarCSV() {
+        startExportProcess(ExportFormat.CSV);
+    }
+
+    @FXML
+    private void handleExportarExcel() {
+        startExportProcess(ExportFormat.EXCEL);
+    }
+
+    private class ExportTask extends Task<File> {
+        private final ExportFormat format;
+        private final File file;
+
+        public ExportTask(ExportFormat format, File file) {
+            this.format = format;
+            this.file = file;
+        }
+
+        @Override
+        protected File call() throws Exception {
+            List<Object[]> data = fetchDataForExport();
+            if (data.isEmpty()) {
+                throw new NullPointerException("No data");
+            }
+
+            String[] headers = getHeader();
+
+            switch (format) {
+                case PDF:
+                    saveAsPDF(data, headers, file, dataInicialPickerFiltro.getValue(), dataFinalPickerFiltro.getValue());
+                    break;
+                case CSV:
+                    saveAsCSV(data, headers, file);
+                    break;
+                case EXCEL:
+                    saveAsExcel(data, headers, file);
+                    break;
+            }
+            return file;
+        }
+    }
+
 
     private void saveAsPDF(List<Object[]> data, String[] headers, File file, LocalDate dataInicial, LocalDate dataFinal) throws IOException {
         try (PDDocument document = new PDDocument()) {
@@ -339,6 +449,34 @@ public class ExportarRelatorioController {
         }
     }
 
+    private void saveAsCSV(List<Object[]> data, String[] headers, File file) throws IOException {
+        try (FileWriter out = new FileWriter(file);
+             CSVPrinter csvPrinter = new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(headers))) {
+            for (Object[] row : data) {
+                for (int i = 0; i < row.length; i++) {
+                    if (row[i] instanceof Double) {
+                        row[i] = String.format("%.1f", (Double) row[i]).replace(",", ".");
+                    }
+                }
+            }
+            csvPrinter.printRecords(data);
+            csvPrinter.flush();
+        }
+    }
+
+    private void saveAsExcel(List<Object[]> data, String[] headers, File file) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook();
+             FileOutputStream fileOut = new FileOutputStream(file)) {
+            Sheet sheet = workbook.createSheet("Relatório");
+            createExcelHeader(workbook, sheet, headers);
+            populateExcelSheet(workbook, sheet, data);
+            for(int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            workbook.write(fileOut);
+        }
+    }
+
     private String[] getPdfHeaders(String[] originalHeaders) {
         String[] pdfHeaders = new String[originalHeaders.length];
         for (int i = 0; i < originalHeaders.length; i++) {
@@ -400,83 +538,6 @@ public class ExportarRelatorioController {
         stream.endText();
     }
 
-    @FXML
-    private void handleExportarCSV() {
-        calcularAlunosDoEscopo();
-        if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
-            return;
-        }
-        FileChooser fileChooser = createFileChooser("Salvar Relatório CSV", "*.csv", "Arquivo CSV");
-        fileChooser.setInitialFileName(suggestFileName(".csv"));
-        File file = fileChooser.showSaveDialog(getStage());
-        if (file != null) {
-            try {
-                List<Object[]> data = fetchDataForExport();
-                if (data.isEmpty()) {
-                    showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
-                    return;
-                }
-                try (FileWriter out = new FileWriter(file);
-                     CSVPrinter csvPrinter = new CSVPrinter(out, CSVFormat.DEFAULT.withHeader(getHeader()))) {
-                    for (Object[] row : data) {
-                        for (int i = 0; i < row.length; i++) {
-                            if (row[i] instanceof Double) {
-                                row[i] = String.format("%.1f", (Double) row[i]).replace(",", ".");
-                            }
-                        }
-                    }
-                    csvPrinter.printRecords(data);
-                    csvPrinter.flush();
-                }
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório CSV exportado com sucesso para:\n" + file.getAbsolutePath());
-                closeWindow();
-            } catch (IOException e) {
-                handleExportException("CSV", e);
-            } catch (Exception e) {
-                handleDataFetchException("CSV", e);
-            }
-        }
-    }
-
-    @FXML
-    private void handleExportarExcel() {
-        calcularAlunosDoEscopo();
-        if (alunosIdsDoEscopo == null || alunosIdsDoEscopo.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Nenhum Aluno", "Não há alunos no escopo selecionado para exportar dados.");
-            return;
-        }
-        FileChooser fileChooser = createFileChooser("Salvar Relatório Excel", "*.xlsx", "Planilha Excel");
-        fileChooser.setInitialFileName(suggestFileName(".xlsx"));
-        File file = fileChooser.showSaveDialog(getStage());
-        if (file != null) {
-            try {
-                List<Object[]> data = fetchDataForExport();
-                if (data.isEmpty()) {
-                    showAlert(Alert.AlertType.INFORMATION, "Nenhum Dado", "Nenhum dado encontrado para os filtros selecionados no período.");
-                    return;
-                }
-                try (Workbook workbook = new XSSFWorkbook();
-                     FileOutputStream fileOut = new FileOutputStream(file)) {
-                    Sheet sheet = workbook.createSheet("Relatório");
-                    String[] headers = getHeader();
-                    createExcelHeader(workbook, sheet, headers);
-                    populateExcelSheet(workbook, sheet, data);
-                    for(int i = 0; i < headers.length; i++) {
-                        sheet.autoSizeColumn(i);
-                    }
-                    workbook.write(fileOut);
-                }
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório Excel exportado com sucesso para:\n" + file.getAbsolutePath());
-                closeWindow();
-            } catch (IOException e) {
-                handleExportException("Excel", e);
-            } catch (Exception e) {
-                handleDataFetchException("Excel", e);
-            }
-        }
-    }
-
     private String suggestFileName(String extension) {
         String tipo = conteudoRelatorioComboBox.getValue().toLowerCase().replace(" ", "_");
         String nomeFiltro = "";
@@ -529,6 +590,7 @@ public class ExportarRelatorioController {
     }
 
     private List<Object[]> fetchDataForExport() throws Exception {
+
         List<Object[]> results = new ArrayList<>();
         String tipoRelatorio = conteudoRelatorioComboBox.getValue();
         LocalDate dataInicial = dataInicialPickerFiltro.getValue();
@@ -579,7 +641,7 @@ public class ExportarRelatorioController {
     private FileChooser createFileChooser(String title, String extension, String description) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description + " (*" + extension + ")", extension));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description + " (" + extension + ")", extension));
         return fileChooser;
     }
 
@@ -627,13 +689,17 @@ public class ExportarRelatorioController {
     private void handleExportException(String format, IOException e) {
         System.err.println("Erro ao exportar " + format + ": " + e.getMessage());
         e.printStackTrace();
-        showAlert(Alert.AlertType.ERROR, "Erro de Exportação", "Ocorreu um erro ao gerar o arquivo " + format + ".\nVerifique se o arquivo não está aberto em outro programa.");
+        Platform.runLater(() -> {
+            showAlert(Alert.AlertType.ERROR, "Erro de Exportação", "Ocorreu um erro ao gerar o arquivo " + format + ".\nVerifique se o arquivo não está aberto em outro programa.");
+        });
     }
 
     private void handleDataFetchException(String format, Exception e) {
         System.err.println("Erro ao buscar dados para " + format + ": " + e.getMessage());
         e.printStackTrace();
-        showAlert(Alert.AlertType.ERROR, "Erro de Dados", "Ocorreu um erro ao buscar os dados para o relatório.");
+        Platform.runLater(() -> {
+            showAlert(Alert.AlertType.ERROR, "Erro de Dados", "Ocorreu um erro ao buscar os dados para o relatório.");
+        });
     }
 
     @FXML
@@ -644,7 +710,8 @@ public class ExportarRelatorioController {
     private void closeWindow() {
         Stage stage = getStage();
         if (stage != null) {
-            stage.close();
+
+            Platform.runLater(stage::close);
         }
     }
 

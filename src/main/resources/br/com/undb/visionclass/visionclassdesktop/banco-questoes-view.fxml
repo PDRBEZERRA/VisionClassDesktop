@@ -10,6 +10,8 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.layout.StackPane?>
 
 <AnchorPane prefHeight="600.0" prefWidth="780.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="br.com.undb.visionclass.visionclassdesktop.BancoQuestoesController">
     <children>
@@ -38,19 +40,27 @@
                         <ComboBox fx:id="assuntoComboBox" prefWidth="200.0" promptText="Todos os Assuntos" />
                     </children>
                 </HBox>
-                <TableView fx:id="questoesTableView" VBox.vgrow="ALWAYS">
-                    <columns>
-                        <TableColumn fx:id="idColumn" maxWidth="80.0" minWidth="60.0" prefWidth="70.0" text="ID" />
-                        <TableColumn fx:id="enunciadoColumn" prefWidth="350.0" text="Enunciado" />
-                        <TableColumn fx:id="disciplinaColumn" prefWidth="150.0" text="Disciplina" />
-                        <TableColumn fx:id="assuntoColumn" prefWidth="150.0" text="Assunto" />
-                        <TableColumn fx:id="nivelColumn" prefWidth="100.0" text="Nível" />
-                        <TableColumn fx:id="acoesColumn" prefWidth="120.0" text="Ações" />
-                    </columns>
-                    <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                    </columnResizePolicy>
-                </TableView>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <children>
+                        <TableView fx:id="questoesTableView">
+                            <columns>
+                                <TableColumn fx:id="idColumn" maxWidth="80.0" minWidth="60.0" prefWidth="70.0" text="ID" />
+                                <TableColumn fx:id="enunciadoColumn" prefWidth="350.0" text="Enunciado" />
+                                <TableColumn fx:id="disciplinaColumn" prefWidth="150.0" text="Disciplina" />
+                                <TableColumn fx:id="assuntoColumn" prefWidth="150.0" text="Assunto" />
+                                <TableColumn fx:id="nivelColumn" prefWidth="100.0" text="Nível" />
+                                <TableColumn fx:id="acoesColumn" prefWidth="120.0" text="Ações" />
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                            </columnResizePolicy>
+                        </TableView>
+
+                        <ProgressIndicator fx:id="loadingIndicator" maxHeight="60.0" maxWidth="60.0" visible="false" />
+
+                    </children>
+                </StackPane>
             </children>
         </VBox>
     </children>

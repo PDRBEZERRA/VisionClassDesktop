@@ -9,6 +9,7 @@ import br.com.undb.visionclass.visionclassdesktop.model.Questao;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
@@ -47,6 +48,9 @@ public class BancoQuestoesController {
     @FXML
     private TableColumn<Questao, Void> acoesColumn;
 
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
     private DisciplinaDAO disciplinaDAO = new DisciplinaDAO();
     private AssuntoDAO assuntoDAO = new AssuntoDAO();
     private QuestaoDAO questaoDAO = new QuestaoDAO();
@@ -55,14 +59,59 @@ public class BancoQuestoesController {
     private List<Disciplina> todasAsDisciplinas;
     private List<Assunto> todosOsAssuntos;
 
+    private static class InitialData {
+        final List<Disciplina> disciplinas;
+        final List<Assunto> assuntos;
+
+        InitialData(List<Disciplina> disciplinas, List<Assunto> assuntos) {
+            this.disciplinas = disciplinas;
+            this.assuntos = assuntos;
+        }
+    }
 
     @FXML
     public void initialize() {
-        setupTableColumns();
-        loadInitialData();
         setupFilters();
-
         questoesTableView.setItems(questoesList);
+        loadingIndicator.setVisible(true);
+        questoesTableView.setDisable(true);
+
+        loadInitialDataAndSetupTable();
+    }
+
+    private void loadInitialDataAndSetupTable() {
+        Task<InitialData> loadFiltersTask = new Task<>() {
+            @Override
+            protected InitialData call() throws Exception {
+                List<Disciplina> disciplinas = disciplinaDAO.findAll();
+                List<Assunto> assuntos = disciplinas.stream()
+                        .flatMap(d -> assuntoDAO.findByDisciplinaId(d.getId()).stream())
+                        .collect(Collectors.toList());
+                return new InitialData(disciplinas, assuntos);
+            }
+        };
+
+        loadFiltersTask.setOnSucceeded(e -> {
+            InitialData data = loadFiltersTask.getValue();
+            todasAsDisciplinas = data.disciplinas;
+            todosOsAssuntos = data.assuntos;
+
+            disciplinaComboBox.getItems().clear();
+            disciplinaComboBox.getItems().add(null);
+            disciplinaComboBox.getItems().addAll(todasAsDisciplinas);
+
+            setupTableColumns();
+
+            applyFiltersAndRefreshTable();
+        });
+
+        loadFiltersTask.setOnFailed(e -> {
+            loadingIndicator.setVisible(false);
+            showAlert(Alert.AlertType.ERROR, "Erro de Carga", "Não foi possível carregar os filtros de disciplina/assunto.");
+            loadFiltersTask.getException().printStackTrace();
+        });
+
+        new Thread(loadFiltersTask).start();
     }
 
     private void setupTableColumns() {
@@ -72,21 +121,27 @@ public class BancoQuestoesController {
 
         disciplinaColumn.setCellValueFactory(cellData -> {
             int disciplinaId = cellData.getValue().getDisciplinaId();
-            String nomeDisciplina = todasAsDisciplinas.stream()
-                    .filter(d -> d.getId() == disciplinaId)
-                    .findFirst()
-                    .map(Disciplina::getNome)
-                    .orElse("Não encontrada");
+            String nomeDisciplina = "N/A";
+            if (todasAsDisciplinas != null) { // Verificação de segurança
+                nomeDisciplina = todasAsDisciplinas.stream()
+                        .filter(d -> d.getId() == disciplinaId)
+                        .findFirst()
+                        .map(Disciplina::getNome)
+                        .orElse("Não encontrada");
+            }
             return new SimpleStringProperty(nomeDisciplina);
         });
 
         assuntoColumn.setCellValueFactory(cellData -> {
             int assuntoId = cellData.getValue().getAssuntoId();
-            String nomeAssunto = todosOsAssuntos.stream()
-                    .filter(a -> a.getId() == assuntoId)
-                    .findFirst()
-                    .map(Assunto::getNome)
-                    .orElse("Não encontrado");
+            String nomeAssunto = "N/A";
+            if (todosOsAssuntos != null) { // Verificação de segurança
+                nomeAssunto = todosOsAssuntos.stream()
+                        .filter(a -> a.getId() == assuntoId)
+                        .findFirst()
+                        .map(Assunto::getNome)
+                        .orElse("Não encontrado");
+            }
             return new SimpleStringProperty(nomeAssunto);
         });
 
@@ -147,18 +202,6 @@ public class BancoQuestoesController {
         }
     }
 
-    private void loadInitialData() {
-        todasAsDisciplinas = disciplinaDAO.findAll();
-        todosOsAssuntos = todasAsDisciplinas.stream()
-                .flatMap(d -> assuntoDAO.findByDisciplinaId(d.getId()).stream())
-                .collect(Collectors.toList());
-
-        disciplinaComboBox.getItems().clear();
-        disciplinaComboBox.getItems().add(null);
-        disciplinaComboBox.getItems().addAll(todasAsDisciplinas);
-
-        applyFiltersAndRefreshTable();
-    }
 
     private void applyFiltersAndRefreshTable() {
         Disciplina disciplinaSelecionada = disciplinaComboBox.getValue();
@@ -167,16 +210,44 @@ public class BancoQuestoesController {
         Integer disciplinaId = (disciplinaSelecionada != null) ? disciplinaSelecionada.getId() : null;
         Integer assuntoId = (assuntoSelecionado != null) ? assuntoSelecionado.getId() : null;
 
-        questoesList.setAll(questaoDAO.findByFilters(disciplinaId, assuntoId));
+        Task<List<Questao>> loadTableTask = new Task<>() {
+            @Override
+            protected List<Questao> call() throws Exception {
+                return questaoDAO.findByFilters(disciplinaId, assuntoId);
+            }
+        };
+
+        loadTableTask.setOnSucceeded(e -> {
+            questoesList.setAll(loadTableTask.getValue());
+            loadingIndicator.setVisible(false);
+            questoesTableView.setDisable(false);
+        });
+
+        loadTableTask.setOnFailed(e -> {
+            loadingIndicator.setVisible(false);
+            questoesTableView.setDisable(false);
+            showAlert(Alert.AlertType.ERROR, "Erro de Carga", "Não foi possível carregar as questões.");
+            loadTableTask.getException().printStackTrace();
+        });
+
+        loadingIndicator.setVisible(true);
+        questoesTableView.setDisable(true);
+        questoesList.clear();
+
+        new Thread(loadTableTask).start();
     }
 
     private void setupFilters() {
         disciplinaComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             assuntoComboBox.getItems().clear();
             assuntoComboBox.setValue(null);
-            if (newVal != null) {
+            if (newVal != null && todosOsAssuntos != null) {
                 assuntoComboBox.getItems().add(null);
-                assuntoComboBox.getItems().addAll(assuntoDAO.findByDisciplinaId(newVal.getId()));
+                assuntoComboBox.getItems().addAll(
+                        todosOsAssuntos.stream()
+                                .filter(a -> a.getDisciplinaId() == newVal.getId())
+                                .collect(Collectors.toList())
+                );
             }
             applyFiltersAndRefreshTable();
         });
@@ -196,11 +267,7 @@ public class BancoQuestoesController {
         if (questaoCompleta != null) {
             abrirFormularioQuestao(questaoCompleta);
         } else {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Erro");
-            alert.setHeaderText("Não foi possível carregar a questão.");
-            alert.setContentText("A questão com ID " + questao.getId() + " não foi encontrada no banco de dados.");
-            alert.showAndWait();
+            showAlert(Alert.AlertType.ERROR, "Erro", "Não foi possível carregar a questão.");
         }
     }
 
@@ -225,11 +292,19 @@ public class BancoQuestoesController {
 
             stage.showAndWait();
 
-            loadInitialData();
+            applyFiltersAndRefreshTable();
 
         } catch (IOException e) {
             System.err.println("Erro ao abrir o formulário de questão.");
             e.printStackTrace();
         }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

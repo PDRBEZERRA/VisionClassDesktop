@@ -5,14 +5,12 @@ import br.com.undb.visionclass.visionclassdesktop.model.User;
 import br.com.undb.visionclass.visionclassdesktop.model.UserRole;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -34,6 +32,9 @@ public class UsuariosController {
     @FXML
     private TableColumn<User, UserRole> roleColumn;
 
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
     private UserDAO userDAO = new UserDAO();
     private DashboardController mainDashboardController;
 
@@ -47,13 +48,43 @@ public class UsuariosController {
         emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
         matriculaColumn.setCellValueFactory(new PropertyValueFactory<>("matricula"));
         roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
+
+        usersTableView.setItems(FXCollections.observableArrayList());
+
         loadUsersData();
     }
 
     public void loadUsersData() {
-        List<User> userList = userDAO.findAll();
-        ObservableList<User> observableUserList = FXCollections.observableArrayList(userList);
-        usersTableView.setItems(observableUserList);
+        Task<List<User>> loadUsersTask = new Task<>() {
+            @Override
+            protected List<User> call() throws Exception {
+                return userDAO.findAll();
+            }
+        };
+
+        loadUsersTask.setOnRunning(e -> {
+            usersTableView.setDisable(true);
+            usersTableView.setItems(FXCollections.observableArrayList());
+            loadingIndicator.setVisible(true);
+        });
+
+        loadUsersTask.setOnSucceeded(e -> {
+            List<User> userList = loadUsersTask.getValue();
+            ObservableList<User> observableUserList = FXCollections.observableArrayList(userList);
+            usersTableView.setItems(observableUserList);
+
+            loadingIndicator.setVisible(false);
+            usersTableView.setDisable(false);
+        });
+
+        loadUsersTask.setOnFailed(e -> {
+            loadingIndicator.setVisible(false);
+            usersTableView.setDisable(false);
+            showAlert(Alert.AlertType.ERROR, "Erro de Carregamento", "Não foi possível carregar a lista de utilizadores.");
+            loadUsersTask.getException().printStackTrace();
+        });
+
+        new Thread(loadUsersTask).start();
     }
 
     @FXML
@@ -112,9 +143,33 @@ public class UsuariosController {
 
         Optional<ButtonType> result = confirmationAlert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            userDAO.delete(selectedUser.getId());
-            loadUsersData();
-            showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Utilizador excluído com sucesso.");
+
+            Task<Void> deleteTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    userDAO.delete(selectedUser.getId());
+                    return null;
+                }
+            };
+
+            deleteTask.setOnRunning(e -> {
+                loadingIndicator.setVisible(true);
+                usersTableView.setDisable(true);
+            });
+
+            deleteTask.setOnSucceeded(e -> {
+                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Utilizador excluído com sucesso.");
+                loadUsersData();
+            });
+
+            deleteTask.setOnFailed(e -> {
+                loadingIndicator.setVisible(false);
+                usersTableView.setDisable(false);
+                showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Não foi possível excluir o utilizador.");
+                deleteTask.getException().printStackTrace();
+            });
+
+            new Thread(deleteTask).start();
         }
     }
 
